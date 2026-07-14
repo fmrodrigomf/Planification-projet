@@ -69,6 +69,14 @@
 
   #app{display:flex;height:100vh;overflow:hidden;}
 
+  #mobileMenuBtn{
+    display:none;position:fixed;top:calc(14px + env(safe-area-inset-top));left:14px;z-index:45;
+    width:40px;height:40px;border-radius:8px;background:var(--graphite-2);color:#fff;border:none;
+    font-size:17px;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer;
+  }
+  #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(10,12,14,.5);z-index:39;}
+  body.sidebar-open #sidebarOverlay{display:block;}
+
   /* ---------- SIDEBAR ---------- */
   #sidebar{
     width:280px;
@@ -121,6 +129,10 @@
   .empty-side{padding:16px 14px;font-size:12px;color:#7f8993;line-height:1.6;}
 
   .sidebar-footer{padding:12px 20px 18px;border-top:1px solid #384049;}
+  .save-status{height:16px;font-size:11px;font-family:var(--font-mono);margin-bottom:8px;transition:opacity .2s ease;}
+  .save-status.saving{color:var(--amber);}
+  .save-status.saved{color:#7fbf8f;}
+  .save-status.error{color:#e08070;}
   .footer-btn{
     width:100%;background:#2c353d;border:1px solid #3a444d;color:#e9e6df;padding:8px 10px;
     border-radius:4px;font-size:12.5px;font-weight:600;cursor:pointer;margin-bottom:8px;
@@ -139,6 +151,15 @@
   .dv-empty h2{font-family:var(--font-display);font-size:22px;color:var(--graphite);margin:6px 0;}
   .dv-empty p{font-size:13.5px;max-width:360px;line-height:1.6;}
   .dashboard-header{margin-bottom:20px;}
+  .seance-summary-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
+  .seance-summary-card{
+    flex:1;min-width:220px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px;
+    padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:border-color .12s,transform .12s;
+  }
+  .seance-summary-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+  .ssc-icon{font-size:26px;flex-shrink:0;}
+  .ssc-body{flex:1;min-width:0;}
+  .ssc-title{font-family:var(--font-display);font-size:14.5px;color:var(--graphite);margin-bottom:6px;font-weight:600;}
   .dashboard-header h2{font-family:var(--font-display);font-size:26px;margin:0 0 4px;color:var(--graphite);}
   .dashboard-header p{color:var(--steel);font-size:13.5px;margin:0;}
   .alert-section{margin-bottom:24px;}
@@ -215,6 +236,17 @@
   .popt-items-preview{font-size:11.5px;color:var(--steel-light);margin-top:5px;line-height:1.5;}
   .notes-textarea{width:100%;min-height:220px;border:1px solid var(--line);border-radius:5px;padding:12px 14px;font-size:13.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;line-height:1.6;}
   .notes-textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+  .seance-add-row{display:flex;gap:8px;margin-bottom:18px;}
+  .seance-add-row input{flex:1;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13.5px;background:var(--paper-2);color:var(--graphite);}
+  .seance-add-row input:focus{outline:2px solid var(--amber);outline-offset:-1px;}
+  .seance-list{display:flex;flex-direction:column;gap:8px;}
+  .seance-item{display:flex;align-items:center;gap:10px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
+  .seance-item.done{opacity:.42;}
+  .seance-item .seance-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
+  .seance-item .seance-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
+  .seance-item.done .seance-text{text-decoration:line-through;}
+  .seance-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:16px;flex-shrink:0;}
+  .seance-del:hover{color:var(--danger);}
   .notes-saved-hint{font-size:11px;color:var(--steel-light);margin-top:6px;font-family:var(--font-mono);}
 
   .tabs{display:flex;gap:2px;margin-top:4px;}
@@ -351,6 +383,33 @@
   #toast{position:fixed;bottom:22px;right:22px;background:var(--graphite-2);color:#fff;padding:11px 18px;border-radius:5px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(8px);transition:all .2s ease;pointer-events:none;z-index:60;}
   #toast.show{opacity:1;transform:translateY(0);}
 
+  @media (max-width: 860px){
+    #mobileMenuBtn{display:flex;}
+    #sidebar{
+      position:fixed;left:0;top:0;bottom:0;z-index:40;width:82vw;max-width:320px;min-width:0;
+      transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.4);
+      padding-top:env(safe-area-inset-top);
+    }
+    body.sidebar-open #sidebar{transform:translateX(0);}
+    #main{width:100%;}
+    #projectHeader{padding:64px 16px 0;}
+    #dashboardView, #settingsView, #seanceView, #tabContent{padding:64px 16px 60px;}
+    .ph-meta, .settings-grid, .fiche-fields{grid-template-columns:1fr !important;}
+    .project-card-grid{grid-template-columns:1fr;}
+    .stat-strip{gap:12px;}
+    .stat-box{flex:1;min-width:100px;}
+    #reportPreview{padding:20px 16px;}
+    .modal{width:92vw;max-height:88vh;padding:20px;}
+    .fg-item, .fg-add{width:100px;}
+    .fg-item img{width:100px;height:76px;}
+    .proj-title-display{font-size:22px !important;}
+  }
+  @media (max-width: 480px){
+    .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .tab-btn{padding:11px 12px;white-space:nowrap;}
+    .options-panel-list{flex-direction:column;}
+  }
+
   @media print{
     body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
     #sidebar, #projectHeader, #reportActions, #toast{display:none !important;}
@@ -361,6 +420,8 @@
 </style>
 </head>
 <body>
+<button id="mobileMenuBtn">☰</button>
+<div id="sidebarOverlay"></div>
 <div id="app">
   <aside id="sidebar">
     <div class="brand">
@@ -370,22 +431,20 @@
     </div>
     <button id="newProjectBtn">+ Nouveau projet</button>
     <button id="dashboardNavBtn" class="nav-btn">🏠 Tableau de bord</button>
+    <button id="seanceMatinNavBtn" class="nav-btn">🌅 Séance du matin</button>
+    <button id="seanceOpeNavBtn" class="nav-btn">🛠 Séance OPE</button>
     <button id="settingsNavBtn" class="nav-btn">⚙ Réglages</button>
     <div class="sidebar-label">Projets</div>
     <div id="projectList"></div>
     <div class="sidebar-footer">
-      <button id="themeToggleBtn" class="footer-btn">🌙 Mode sombre</button>
-      <div class="footer-row">
-        <button id="exportBtn" class="footer-btn small">⬇ Exporter</button>
-        <button id="importBtn" class="footer-btn small">⬆ Importer</button>
-      </div>
-      <input type="file" id="importFileInput" accept="application/json" hidden>
+      <div class="save-status" id="saveStatusBadge"></div>
     </div>
   </aside>
 
   <main id="main">
     <div id="dashboardView"></div>
     <div id="settingsView" style="display:none;"></div>
+    <div id="seanceView" style="display:none;"></div>
 
     <div id="projectView" style="display:none;">
       <div id="projectHeader">
@@ -400,8 +459,9 @@
         </div>
         <div class="ph-summary" id="phSummary"></div>
         <div class="tabs">
-          <button class="tab-btn active" data-tab="checklist">Checklist planification <span class="count" id="tabCountChecklist">0/0</span></button>
+          <button class="tab-btn active" data-tab="checklist" id="tabBtnChecklist">Checklist planification <span class="count" id="tabCountChecklist">0/0</span></button>
           <button class="tab-btn" data-tab="fiche">Fiche de visite de chantier</button>
+          <button class="tab-btn" data-tab="notes">Notes générales</button>
           <button class="tab-btn" data-tab="rapport">Rapport</button>
         </div>
       </div>
@@ -625,8 +685,8 @@ function showLightbox(src){
 /* ============================= IMAGE COMPRESSION ============================= */
 
 function compressImage(file, maxWidth, quality){
-  maxWidth = maxWidth || 1000;
-  quality = quality || 0.6;
+  maxWidth = maxWidth || 800;
+  quality = quality || 0.5;
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
@@ -648,7 +708,7 @@ function compressImage(file, maxWidth, quality){
 }
 
 function dataSizeOk(data){
-  try{ return new Blob([JSON.stringify(data)]).size < 4.5 * 1024 * 1024; }
+  try{ return new Blob([JSON.stringify(data)]).size < 3 * 1024 * 1024; }
   catch(e){ return true; }
 }
 
@@ -656,19 +716,55 @@ function dataSizeOk(data){
 
 /* ============================= STORAGE HELPERS ============================= */
 
+let writeQueues = {};
+let saveStatusIdleTimer = null;
+
+function setSaveStatus(state){
+  const el = $('#saveStatusBadge');
+  if(!el) return;
+  clearTimeout(saveStatusIdleTimer);
+  if(state === 'saving'){
+    el.className = 'save-status saving';
+    el.textContent = '● Sauvegarde…';
+  } else if(state === 'error'){
+    el.className = 'save-status error';
+    el.textContent = '⚠ Échec — nouvelle tentative en cours';
+  } else {
+    el.className = 'save-status saved';
+    el.textContent = '✓ Synchronisé';
+    saveStatusIdleTimer = setTimeout(() => { el.className = 'save-status'; el.textContent = ''; }, 2500);
+  }
+}
+
 async function withRetry(fn, label, retries){
   retries = (retries === undefined) ? 2 : retries;
+  setSaveStatus('saving');
   let lastErr;
   for(let i = 0; i <= retries; i++){
-    try{ return await fn(); }
+    try{
+      const r = await fn();
+      setSaveStatus('saved');
+      return r;
+    }
     catch(e){
       lastErr = e;
       if(i < retries) await new Promise(r => setTimeout(r, 500 * (i+1)));
     }
   }
+  setSaveStatus('error');
   console.error(label + ' failed after retries', lastErr);
   showToast('⚠ Échec de la sauvegarde (' + label + ') — vérifiez votre connexion');
   throw lastErr;
+}
+
+// Ensures writes to the same storage key never overlap: each new write waits
+// for the previous one (success or failure) to finish before starting, which
+// avoids the server-side race conditions that were causing frequent save errors.
+function queuedWrite(key, fn){
+  const prev = writeQueues[key] || Promise.resolve();
+  const run = prev.catch(() => {}).then(fn);
+  writeQueues[key] = run.catch(() => {});
+  return run;
 }
 
 async function loadSettings(){
@@ -678,7 +774,7 @@ async function loadSettings(){
   }catch(e){ return { theme:'light' }; }
 }
 async function saveSettings(){
-  try{ await withRetry(() => window.storage.set('settings', JSON.stringify(appSettings), false), 'réglages'); }
+  try{ await queuedWrite('settings', () => withRetry(() => window.storage.set('settings', JSON.stringify(appSettings), false), 'réglages')); }
   catch(e){}
 }
 function applyTheme(){
@@ -701,7 +797,7 @@ async function loadProjects(){
   }catch(e){ projects = []; }
 }
 async function saveProjects(){
-  try{ await withRetry(() => window.storage.set('projects', JSON.stringify(projects), false), 'liste des projets'); }
+  try{ await queuedWrite('projects', () => withRetry(() => window.storage.set('projects', JSON.stringify(projects), false), 'liste des projets')); }
   catch(e){}
 }
 async function loadProjectData(id){
@@ -709,7 +805,7 @@ async function loadProjectData(id){
     const res = await window.storage.get('project:' + id, false);
     if(res && res.value) return JSON.parse(res.value);
   }catch(e){}
-  return { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, lastModified:null };
+  return { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, generalNotes:'', customChecklist:[], lastModified:null };
 }
 function scheduleSaveProjectData(){
   clearTimeout(saveTimer);
@@ -720,11 +816,17 @@ async function saveProjectDataNow(){
   currentData.lastModified = Date.now();
   const id = currentProjectId;
   const payload = JSON.stringify(currentData);
-  try{ await withRetry(() => window.storage.set('project:' + id, payload, false), 'projet'); }
+  try{ await queuedWrite('project:' + id, () => withRetry(() => window.storage.set('project:' + id, payload, false), 'projet')); }
   catch(e){}
 }
 async function flushPendingSave(){
   if(saveTimer){ clearTimeout(saveTimer); saveTimer = null; await saveProjectDataNow(); }
+}
+
+async function flushAllPending(){
+  await flushPendingSave();
+  await flushSeanceSave('matin');
+  await flushSeanceSave('ope');
 }
 
 /* ============================= PROGRESS CALC (base template + active project options) ============================= */
@@ -743,7 +845,10 @@ function getActiveOptionDefs(data){
 
 // Returns the full checklist template for a given project's data: the fixed base
 // template plus one extra "partie" holding a section per active project option.
-function projectTemplate(data){
+// The base checklist only applies to projects with Flux = "PRJ" — other flux values
+// don't have a defined checklist yet.
+function projectTemplate(data, flux){
+  if(flux !== 'PRJ') return [];
   const opts = getActiveOptionDefs(data);
   if(!opts.length) return CHECKLIST_TEMPLATE;
   const virtualPartie = {
@@ -754,15 +859,15 @@ function projectTemplate(data){
   return CHECKLIST_TEMPLATE.concat([virtualPartie]);
 }
 
-function projectTotalItems(data){
+function projectTotalItems(data, flux){
   let n = 0;
-  projectTemplate(data).forEach(p => p.sections.forEach(s => n += s.items.length));
+  projectTemplate(data, flux).forEach(p => p.sections.forEach(s => n += s.items.length));
   return n;
 }
 
-function countChecked(data){
+function countChecked(data, flux){
   let n = 0;
-  projectTemplate(data).forEach(p => p.sections.forEach(s => {
+  projectTemplate(data, flux).forEach(p => p.sections.forEach(s => {
     s.items.forEach((_, idx) => {
       const k = itemKey(s.id, idx);
       if(data.checklist[k] && data.checklist[k].checked) n++;
@@ -774,14 +879,16 @@ function countChecked(data){
 let projectStatsCache = {};
 
 async function getProjectStats(id, forceRefresh){
+  const proj = projects.find(x => x.id === id);
+  const flux = proj ? proj.numFlux : null;
   if(id === currentProjectId && currentData){
-    const s = { checked: countChecked(currentData), total: projectTotalItems(currentData), lastModified: currentData.lastModified || null };
+    const s = { checked: countChecked(currentData, flux), total: projectTotalItems(currentData, flux), lastModified: currentData.lastModified || null };
     projectStatsCache[id] = s;
     return s;
   }
   if(!forceRefresh && projectStatsCache[id]) return projectStatsCache[id];
   const d = await loadProjectData(id);
-  const s = { checked: countChecked(d), total: projectTotalItems(d), lastModified: d.lastModified || null };
+  const s = { checked: countChecked(d, flux), total: projectTotalItems(d, flux), lastModified: d.lastModified || null };
   projectStatsCache[id] = s;
   return s;
 }
@@ -791,12 +898,16 @@ async function getProjectStats(id, forceRefresh){
 function hideAllViews(){
   $('#dashboardView').style.display = 'none';
   $('#settingsView').style.display = 'none';
+  $('#seanceView').style.display = 'none';
   $('#projectView').style.display = 'none';
+  document.body.classList.remove('sidebar-open');
 }
 
 async function renderSidebar(){
   $('#dashboardNavBtn').classList.toggle('active', currentView === 'dashboard');
   $('#settingsNavBtn').classList.toggle('active', currentView === 'settings');
+  $('#seanceMatinNavBtn').classList.toggle('active', currentView === 'seance_matin');
+  $('#seanceOpeNavBtn').classList.toggle('active', currentView === 'seance_ope');
   const list = $('#projectList');
   if(projects.length === 0){
     list.innerHTML = '<div class="empty-side">Aucun projet pour l\u2019instant. Cliquez sur « + Nouveau projet » pour commencer une checklist.</div>';
@@ -805,15 +916,16 @@ async function renderSidebar(){
   const rows = [];
   for(const p of projects){
     const stats = await getProjectStats(p.id);
-    const pct = Math.round((stats.checked / stats.total) * 100);
+    const pct = stats.total ? Math.round((stats.checked / stats.total) * 100) : 0;
     const isActive = currentView === 'project' && p.id === currentProjectId;
+    const progressHtml = stats.total
+      ? `<div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div><div class="pbar-label">${stats.checked}/${stats.total} POINTS · ${pct}%</div>`
+      : `<div class="pbar-label">Flux ${escapeHtml(p.numFlux || '—')} · pas de checklist</div>`;
     rows.push(`
       <div class="project-item ${isActive?'active':''}" data-id="${p.id}">
         <div class="pname">${escapeHtml(p.name || 'Sans nom')}</div>
         <div class="pclient">${escapeHtml(p.client || 'Client non défini')}</div>
-        <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
-        <div class="pbar-label">${stats.checked}/${stats.total} POINTS · ${pct}%</div>
-      </div>
+        ${progressHtml}      </div>
     `);
   }
   list.innerHTML = rows.join('');
@@ -823,20 +935,23 @@ async function renderSidebar(){
 /* ============================= DASHBOARD ============================= */
 
 async function renderDashboardView(){
-  await flushPendingSave();
+  await flushAllPending();
   currentView = 'dashboard';
   hideAllViews();
   const dv = $('#dashboardView');
   dv.style.display = 'block';
   await renderSidebar();
 
+  const seanceSummaryHtml = buildSeanceSummaryHtml();
+
   if(projects.length === 0){
-    dv.innerHTML = `
+    dv.innerHTML = seanceSummaryHtml + `
       <div class="dv-empty">
         <div class="glyph">◎</div>
         <h2>Bienvenue sur Gestion de Projet</h2>
         <p>Créez votre premier projet pour démarrer une checklist de planification et une fiche de visite de chantier.</p>
       </div>`;
+    wireSeanceSummaryClicks(dv);
     return;
   }
 
@@ -847,7 +962,7 @@ async function renderDashboardView(){
     const s = await getProjectStats(p.id, true);
     totalChecked += s.checked;
     totalPossible += s.total;
-    const pct = Math.round((s.checked / s.total) * 100);
+    const pct = s.total ? Math.round((s.checked / s.total) * 100) : 0;
     const isOverdue = !!(p.echeance && p.echeance < todayStr && s.checked < s.total);
     const refTime = s.lastModified || p.createdAt || Date.now();
     const daysSince = Math.floor((Date.now() - refTime) / 86400000);
@@ -869,10 +984,12 @@ async function renderDashboardView(){
     <div class="project-card" data-id="${r.p.id}">
       <div class="pc-name">${escapeHtml(r.p.name)}</div>
       <div class="pc-client">${escapeHtml(r.p.client || 'Client non défini')}</div>
+      ${r.total ? `
       <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
       <div class="pbar-label">${r.checked}/${r.total} POINTS · ${r.pct}%</div>
+      ` : `<div class="pbar-label">Flux ${escapeHtml(r.p.numFlux || '—')} · pas de checklist</div>`}
       <div class="badge-row">
-        ${r.checked===r.total?'<span class="badge done">Terminé</span>':''}
+        ${(r.total && r.checked===r.total)?'<span class="badge done">Terminé</span>':''}
         ${r.isOverdue?'<span class="badge overdue">En retard</span>':''}
         ${r.isStalled?'<span class="badge stalled">Inactif '+r.daysSince+'j</span>':''}
       </div>
@@ -880,6 +997,7 @@ async function renderDashboardView(){
   `).join('');
 
   dv.innerHTML = `
+    ${seanceSummaryHtml}
     <div class="dashboard-header">
       <h2>Tableau de bord</h2>
       <p>${projects.length} projet(s) · ${totalChecked}/${totalPossible} points cochés au total</p>
@@ -887,8 +1005,142 @@ async function renderDashboardView(){
     ${alertsHtml}
     <div class="project-card-grid">${cardsHtml}</div>
   `;
+  wireSeanceSummaryClicks(dv);
   dv.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
 }
+
+/* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
+
+let seanceMatin = [];
+let seanceOpe = [];
+
+function getSeanceState(id){ return id === 'matin' ? seanceMatin : seanceOpe; }
+function setSeanceState(id, arr){ if(id === 'matin') seanceMatin = arr; else seanceOpe = arr; }
+function seanceStorageKey(id){ return id === 'matin' ? 'seance_matin' : 'seance_ope'; }
+function seanceTitleFor(id){ return id === 'matin' ? 'Séance du matin' : 'Séance OPE'; }
+function seanceIconFor(id){ return id === 'matin' ? '🌅' : '🛠'; }
+
+function seancePct(id){
+  const items = getSeanceState(id);
+  const total = items.length;
+  const checked = items.filter(it => it.checked).length;
+  const pct = total === 0 ? 100 : Math.round((checked / total) * 100);
+  return { total, checked, pct };
+}
+
+function buildSeanceSummaryHtml(){
+  const cards = ['matin', 'ope'].map(id => {
+    const { total, checked, pct } = seancePct(id);
+    const label = total === 0 ? 'Rien à cocher — 100%' : `${checked}/${total} points · ${pct}%`;
+    return `
+      <div class="seance-summary-card" data-seance="${id}">
+        <div class="ssc-icon">${seanceIconFor(id)}</div>
+        <div class="ssc-body">
+          <div class="ssc-title">${seanceTitleFor(id)}</div>
+          <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+          <div class="pbar-label">${label}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  return `<div class="seance-summary-row">${cards}</div>`;
+}
+
+function wireSeanceSummaryClicks(container){
+  container.querySelectorAll('[data-seance]').forEach(el => el.addEventListener('click', () => renderSeanceView(el.dataset.seance)));
+}
+
+async function loadSeance(key){
+  try{
+    const res = await window.storage.get(key, false);
+    return res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ return []; }
+}
+async function saveSeance(id){
+  const key = seanceStorageKey(id);
+  const arr = getSeanceState(id);
+  try{ await queuedWrite(key, () => withRetry(() => window.storage.set(key, JSON.stringify(arr), false), seanceTitleFor(id))); }
+  catch(e){}
+}
+
+let seanceSaveTimers = {};
+function scheduleSaveSeance(id){
+  clearTimeout(seanceSaveTimers[id]);
+  seanceSaveTimers[id] = setTimeout(() => saveSeance(id), 400);
+}
+async function flushSeanceSave(id){
+  if(seanceSaveTimers[id]){ clearTimeout(seanceSaveTimers[id]); seanceSaveTimers[id] = null; await saveSeance(id); }
+}
+
+async function renderSeanceView(id){
+  await flushAllPending();
+  currentView = 'seance_' + id;
+  hideAllViews();
+  const container = $('#seanceView');
+  container.style.display = 'block';
+  await renderSidebar();
+
+  const items = getSeanceState(id);
+  const ordered = items.filter(it => !it.checked).concat(items.filter(it => it.checked));
+
+  container.innerHTML = `
+    <div class="dashboard-header">
+      <h2>${seanceTitleFor(id)}</h2>
+      <p>Coche un point pour le faire descendre en bas de liste, en transparence. Rien n'est supprimé, sauf si tu cliques sur ×.</p>
+    </div>
+    <div class="seance-add-row">
+      <input type="text" id="seanceNewItem" placeholder="Ajouter un point…">
+      <button class="btn btn-primary" id="seanceAddBtn">+ Ajouter</button>
+    </div>
+    <div class="seance-list">
+      ${ordered.length ? ordered.map(it => `
+        <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
+          <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
+          <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+          <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+        </div>
+      `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
+    </div>
+  `;
+
+  function addItem(){
+    const input = $('#seanceNewItem');
+    const text = input.value.trim();
+    if(!text) return;
+    const arr = getSeanceState(id);
+    arr.unshift({ id: uid(), text, checked:false });
+    input.value = '';
+    scheduleSaveSeance(id);
+    renderSeanceView(id);
+  }
+  $('#seanceAddBtn').addEventListener('click', addItem);
+  $('#seanceNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
+
+  container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
+    const arr = getSeanceState(id);
+    const it = arr.find(x => x.id === cb.dataset.id);
+    if(it) it.checked = cb.checked;
+    scheduleSaveSeance(id);
+    renderSeanceView(id);
+  }));
+  container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    const arr = getSeanceState(id).filter(x => x.id !== btn.dataset.id);
+    setSeanceState(id, arr);
+    saveSeance(id);
+    renderSeanceView(id);
+  }));
+  container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
+    const arr = getSeanceState(id);
+    const it = arr.find(x => x.id === span.dataset.id);
+    const newText = span.textContent.trim();
+    if(it && newText && it.text !== newText){ it.text = newText; saveSeance(id); }
+  }));
+}
+
+$('#seanceMatinNavBtn').addEventListener('click', () => renderSeanceView('matin'));
+$('#seanceOpeNavBtn').addEventListener('click', () => renderSeanceView('ope'));
 
 /* ============================= SETTINGS (dropdown options) ============================= */
 
@@ -907,7 +1159,7 @@ function scheduleSaveNotes(){
   clearTimeout(notesSaveTimer);
   notesSaveTimer = setTimeout(async () => {
     try{
-      await withRetry(() => window.storage.set('projectNotes', notesText, false), 'bloc-notes');
+      await queuedWrite('projectNotes', () => withRetry(() => window.storage.set('projectNotes', notesText, false), 'bloc-notes'));
       const hint = $('#notesSavedHint');
       if(hint) hint.textContent = 'Enregistré à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
     }catch(e){}
@@ -922,7 +1174,7 @@ async function loadAppOptions(){
   }catch(e){ return { coordinateurs:[], flux:[], projectOptions:[] }; }
 }
 async function saveAppOptions(){
-  try{ await withRetry(() => window.storage.set('appOptions', JSON.stringify(appOptions), false), 'réglages listes'); }
+  try{ await queuedWrite('appOptions', () => withRetry(() => window.storage.set('appOptions', JSON.stringify(appOptions), false), 'réglages listes')); }
   catch(e){}
 }
 
@@ -946,7 +1198,7 @@ function buildOptionListHtml(key, title, placeholder){
 }
 
 async function renderSettingsView(){
-  await flushPendingSave();
+  await flushAllPending();
   currentView = 'settings';
   hideAllViews();
   const sv = $('#settingsView');
@@ -958,7 +1210,18 @@ async function renderSettingsView(){
       <h2>Réglages</h2>
       <p>Cette liste alimente le menu déroulant « Coordinateur » dans tous les projets. Le champ « Flux » propose un choix fixe (MI-0 / MI-1 / MI-2 / PRJ).</p>
     </div>
-    <div class="settings-grid">
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>🎨 Apparence &amp; données</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <button id="themeToggleBtn" class="btn btn-ghost" style="align-self:flex-start;">${appSettings.theme === 'dark' ? '☀️ Passer en mode clair' : '🌙 Passer en mode sombre'}</button>
+        <div class="footer-row" style="max-width:360px;">
+          <button id="exportBtn" class="btn btn-ghost" style="flex:1;">⬇ Exporter mes données</button>
+          <button id="importBtn" class="btn btn-ghost" style="flex:1;">⬆ Importer une sauvegarde</button>
+        </div>
+        <input type="file" id="importFileInput" accept="application/json" hidden>
+      </div>
+    </div>
+    <div class="settings-grid" style="margin-top:20px;">
       ${buildOptionListHtml('coordinateurs', 'Coordinateurs', 'ex. Jean Dupont')}
     </div>
     <div class="fiche-section" style="margin-top:20px;">
@@ -1013,6 +1276,17 @@ async function renderSettingsView(){
 
   $('#poptAddBtn').addEventListener('click', () => openProjectOptionModal(null));
   $('#notesTextarea').addEventListener('input', e => { notesText = e.target.value; scheduleSaveNotes(); });
+  $('#themeToggleBtn').addEventListener('click', () => {
+    toggleTheme();
+    $('#themeToggleBtn').textContent = appSettings.theme === 'dark' ? '☀️ Passer en mode clair' : '🌙 Passer en mode sombre';
+  });
+  $('#exportBtn').addEventListener('click', exportAllData);
+  $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
+  $('#importFileInput').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if(f) importAllData(f);
+    e.target.value = '';
+  });
   sv.querySelectorAll('.popt-edit').forEach(btn => btn.addEventListener('click', () => openProjectOptionModal(+btn.dataset.idx)));
   sv.querySelectorAll('.popt-del').forEach(btn => btn.addEventListener('click', async () => {
     const idx = +btn.dataset.idx;
@@ -1076,17 +1350,19 @@ async function createProject(formVals, activeOptions){
   }, formVals || {});
   projects.unshift(p);
   await saveProjects();
-  await window.storage.set('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, lastModified:Date.now() }), false);
+  await withRetry(() => window.storage.set('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, generalNotes:'', customChecklist:[], lastModified:Date.now() }), false), 'nouveau projet');
   await openProject(p.id);
   showToast('Projet créé');
 }
 
 async function openProject(id){
-  await flushPendingSave();
+  await flushAllPending();
   currentProjectId = id;
   currentData = await loadProjectData(id);
   if(!currentData.fichePhotos) currentData.fichePhotos = [];
   if(!currentData.activeOptions) currentData.activeOptions = {};
+  if(!currentData.customChecklist) currentData.customChecklist = [];
+  if(currentData.generalNotes === undefined) currentData.generalNotes = '';
   currentView = 'project';
   currentTab = 'checklist';
   searchQuery = '';
@@ -1152,6 +1428,12 @@ function renderProjectHeader(){
   titleEl.title = p.name || 'Sans nom';
   fitTitleText();
 
+  const checklistApplicable = p.numFlux === 'PRJ';
+  $('#tabBtnChecklist').style.display = checklistApplicable ? 'flex' : 'none';
+  if(!checklistApplicable && currentTab === 'checklist'){
+    currentTab = 'fiche';
+  }
+
   const parts = [
     ['Client', p.client], ['N° commande', p.numCommande], ['Coordinateur', p.coordinateur],
     ['Flux', p.numFlux], ['Date', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
@@ -1164,9 +1446,15 @@ function renderProjectHeader(){
   updateChecklistTabCount();
 }
 
+function getCurrentProjectFlux(){
+  const p = projects.find(x => x.id === currentProjectId);
+  return p ? p.numFlux : null;
+}
+
 function updateChecklistTabCount(){
-  const checked = countChecked(currentData);
-  const total = projectTotalItems(currentData);
+  const flux = getCurrentProjectFlux();
+  const checked = countChecked(currentData, flux);
+  const total = projectTotalItems(currentData, flux);
   $('#tabCountChecklist').textContent = `${checked}/${total}`;
 }
 
@@ -1319,14 +1607,8 @@ $('#editProjectInfoBtn').addEventListener('click', () => {
 $('#dashboardNavBtn').addEventListener('click', renderDashboardView);
 $('#settingsNavBtn').addEventListener('click', renderSettingsView);
 $('#newProjectBtn').addEventListener('click', () => openProjectFormModal(null));
-$('#themeToggleBtn').addEventListener('click', toggleTheme);
-$('#exportBtn').addEventListener('click', exportAllData);
-$('#importBtn').addEventListener('click', () => $('#importFileInput').click());
-$('#importFileInput').addEventListener('change', e => {
-  const f = e.target.files[0];
-  if(f) importAllData(f);
-  e.target.value = '';
-});
+$('#mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+$('#sidebarOverlay').addEventListener('click', () => document.body.classList.remove('sidebar-open'));
 
 /* ============================= TABS ============================= */
 
@@ -1338,6 +1620,7 @@ function renderTabs(){
   $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
   if(currentTab === 'checklist') renderChecklistTab();
   else if(currentTab === 'fiche') renderFicheTab();
+  else if(currentTab === 'notes') renderNotesTab();
   else renderRapportTab();
 }
 
@@ -1356,12 +1639,24 @@ function itemMatchesStatus(checked){
 
 function renderChecklistTab(){
   const container = $('#tabContent');
+  const flux = getCurrentProjectFlux();
+
+  if(flux !== 'PRJ'){
+    container.innerHTML = `
+      <div class="no-results" style="padding:60px 20px;">
+        <div style="font-size:34px;margin-bottom:10px;">🚧</div>
+        <p style="margin:0 0 4px;font-weight:600;color:var(--graphite);">Aucune checklist disponible pour le flux « ${escapeHtml(flux || '—')} » pour l'instant.</p>
+        <p style="margin:0;">La checklist de planification n'existe actuellement que pour le flux « PRJ ». Les checklists pour les autres flux arriveront bientôt.</p>
+      </div>`;
+    return;
+  }
+
   const filtering = !!searchQuery || statusFilter !== 'all';
 
   const hadFocus = document.activeElement && document.activeElement.id === 'checklistSearch';
   const caret = hadFocus ? document.activeElement.selectionStart : null;
 
-  const parties = projectTemplate(currentData).map(partie => {
+  const parties = projectTemplate(currentData, flux).map(partie => {
     let partieChecked = 0, partieTotal = 0;
     const sectionBlocks = partie.sections.map(sec => {
       let secChecked = 0;
@@ -1598,13 +1893,88 @@ function renderFicheTab(){
 
 /* ============================= RAPPORT TAB ============================= */
 
+/* ============================= NOTES GÉNÉRALES TAB ============================= */
+
+function renderNotesTab(){
+  const container = $('#tabContent');
+  const notes = currentData.generalNotes || '';
+  const items = currentData.customChecklist || [];
+  const ordered = items.filter(it => !it.checked).concat(items.filter(it => it.checked));
+
+  container.innerHTML = `
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>📝 Notes générales</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <textarea id="projNotesTextarea" class="notes-textarea" placeholder="Notes générales sur ce projet…">${escapeHtml(notes)}</textarea>
+      </div>
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>☑ Points complémentaires</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Ajoute ici tout point spécifique à ce projet qui ne fait pas partie de la checklist standard. Coche-le une fois fait : il descend en bas de liste, en transparence, sans être supprimé.</p>
+        <div class="seance-add-row">
+          <input type="text" id="customChecklistNewItem" placeholder="Ajouter un point…">
+          <button class="btn btn-primary" id="customChecklistAddBtn">+ Ajouter</button>
+        </div>
+        <div class="seance-list">
+          ${ordered.length ? ordered.map(it => `
+            <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
+              <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
+              <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+              <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+            </div>
+          `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
+        </div>
+      </div>
+    </div>
+  `;
+
+  $('#projNotesTextarea').addEventListener('input', e => {
+    currentData.generalNotes = e.target.value;
+    scheduleSaveProjectData();
+  });
+
+  function addItem(){
+    const input = $('#customChecklistNewItem');
+    const text = input.value.trim();
+    if(!text) return;
+    if(!currentData.customChecklist) currentData.customChecklist = [];
+    currentData.customChecklist.unshift({ id: uid(), text, checked:false });
+    input.value = '';
+    scheduleSaveProjectData();
+    renderNotesTab();
+  }
+  $('#customChecklistAddBtn').addEventListener('click', addItem);
+  $('#customChecklistNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
+
+  container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
+    const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
+    if(it) it.checked = cb.checked;
+    scheduleSaveProjectData();
+    renderNotesTab();
+  }));
+  container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    currentData.customChecklist = (currentData.customChecklist || []).filter(x => x.id !== btn.dataset.id);
+    scheduleSaveProjectData();
+    renderNotesTab();
+  }));
+  container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
+    const it = (currentData.customChecklist || []).find(x => x.id === span.dataset.id);
+    const newText = span.textContent.trim();
+    if(it && newText && it.text !== newText){ it.text = newText; scheduleSaveProjectData(); }
+  }));
+}
+
 function buildReportHtmlFragment(){
   const p = projects.find(x => x.id === currentProjectId);
-  const checked = countChecked(currentData);
-  const total = projectTotalItems(currentData);
-  const pct = Math.round((checked/total)*100);
+  const flux = p ? p.numFlux : null;
+  const checked = countChecked(currentData, flux);
+  const total = projectTotalItems(currentData, flux);
+  const pct = total ? Math.round((checked/total)*100) : 0;
 
-  const checklistHtml = projectTemplate(currentData).map(partie => {
+  const checklistHtml = total ? projectTemplate(currentData, flux).map(partie => {
     const secs = partie.sections.map(sec => {
       const items = sec.items.map((label, idx) => {
         const k = itemKey(sec.id, idx);
@@ -1619,7 +1989,7 @@ function buildReportHtmlFragment(){
       return `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}`;
     }).join('');
     return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
-  }).join('');
+  }).join('') : `<p style="color:var(--steel);font-style:italic;">Aucune checklist de planification disponible pour le flux « ${escapeHtml(flux || '—')} ».</p>`;
 
   const ficheHtml = FICHE_TEMPLATE.map(sec => {
     const rows = sec.fields.map(f => {
@@ -1636,6 +2006,17 @@ function buildReportHtmlFragment(){
       ${galleryPhotos.map(ph => `<div class="rp-gallery-item"><img src="${ph.dataUrl}"><div class="rp-gallery-caption">${escapeHtml(ph.caption||'')}</div></div>`).join('')}
     </div>` : '';
 
+  const genNotes = (currentData.generalNotes || '').trim();
+  const ccItems = currentData.customChecklist || [];
+  const notesHtml = (genNotes || ccItems.length) ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">NOTES GÉNÉRALES</h3>
+    ${genNotes ? `<p style="white-space:pre-wrap;font-size:13px;color:var(--graphite);">${escapeHtml(genNotes)}</p>` : ''}
+    ${ccItems.length ? `<h4 class="rp-h4">Points complémentaires</h4>${ccItems.map(it => `
+      <div class="rp-item ${it.checked?'done':'pending'}">
+        <div class="mark">${it.checked?'✓':'○'}</div>
+        <div>${escapeHtml(it.text)}</div>
+      </div>`).join('')}` : ''}` : '';
+
   return `
     <h2 class="rp-title">${escapeHtml(p.name || 'Projet')}</h2>
     <div class="rp-sub">Rapport complet de projet — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
@@ -1646,20 +2027,22 @@ function buildReportHtmlFragment(){
       <div><b>Coordinateur :</b> ${escapeHtml(p.coordinateur || '—')}</div>
       <div><b>Date :</b> ${p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '—'}</div>
       <div><b>Échéance :</b> ${p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</div>
-      <div><b>Avancement checklist :</b> ${checked}/${total} (${pct}%)</div>
+      <div><b>Avancement checklist :</b> ${total ? `${checked}/${total} (${pct}%)` : 'Non applicable pour ce flux'}</div>
     </div>
     <h3 class="rp-h3" style="background:var(--amber-dark)">CHECKLIST DE PLANIFICATION</h3>
     ${checklistHtml}
     <h3 class="rp-h3" style="background:var(--amber-dark)">FICHE DE VISITE DE CHANTIER</h3>
     ${ficheHtml}
     ${galleryHtml}
+    ${notesHtml}
   `;
 }
 
 function renderRapportTab(){
   const container = $('#tabContent');
-  const checked = countChecked(currentData);
-  const total = projectTotalItems(currentData);
+  const flux = getCurrentProjectFlux();
+  const checked = countChecked(currentData, flux);
+  const total = projectTotalItems(currentData, flux);
   const remaining = total - checked;
   let filledFiche = 0, totalFiche = 0;
   FICHE_TEMPLATE.forEach(s => s.fields.forEach(f => { totalFiche++; if(currentData.fiche[f.id]) filledFiche++; }));
@@ -1705,7 +2088,7 @@ function downloadReport(){
 /* ============================= EXPORT / IMPORT ALL DATA ============================= */
 
 async function exportAllData(){
-  await flushPendingSave();
+  await flushAllPending();
   const payload = { version:1, exportedAt:new Date().toISOString(), projects, projectData:{} };
   for(const p of projects){
     payload.projectData[p.id] = (p.id === currentProjectId && currentData) ? currentData : await loadProjectData(p.id);
@@ -1732,8 +2115,8 @@ async function importAllData(file){
     for(const p of payload.projects){
       const idx = projects.findIndex(x => x.id === p.id);
       if(idx >= 0) projects[idx] = p; else projects.push(p);
-      const d = (payload.projectData && payload.projectData[p.id]) ? payload.projectData[p.id] : { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{} };
-      await withRetry(() => window.storage.set('project:' + p.id, JSON.stringify(d), false), 'import');
+      const d = (payload.projectData && payload.projectData[p.id]) ? payload.projectData[p.id] : { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, generalNotes:'', customChecklist:[] };
+      await queuedWrite('project:' + p.id, () => withRetry(() => window.storage.set('project:' + p.id, JSON.stringify(d), false), 'import'));
     }
     projectStatsCache = {};
     await saveProjects();
@@ -1753,6 +2136,8 @@ async function init(){
   applyTheme();
   appOptions = await loadAppOptions();
   notesText = await loadNotes();
+  seanceMatin = await loadSeance('seance_matin');
+  seanceOpe = await loadSeance('seance_ope');
   await loadProjects();
   await renderDashboardView();
 }
