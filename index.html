@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gestion de Projet">
+<meta name="theme-color" content="#232a31">
+<title>Gestion de Projet</title>
+<script>
+(function(){
+  try{
+    const c=document.createElement('canvas');c.width=512;c.height=512;
+    const ctx=c.getContext('2d');
+    const r=100;ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(512-r,0);ctx.quadraticCurveTo(512,0,512,r);ctx.lineTo(512,512-r);ctx.quadraticCurveTo(512,512,512-r,512);ctx.lineTo(r,512);ctx.quadraticCurveTo(0,512,0,512-r);ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
+    const bg=ctx.createLinearGradient(0,0,512,512);bg.addColorStop(0,'#2e3740');bg.addColorStop(1,'#1c2126');ctx.fillStyle=bg;ctx.fill();
+    const glow=ctx.createRadialGradient(256,256,40,256,256,230);glow.addColorStop(0,'rgba(217,123,31,0.30)');glow.addColorStop(1,'rgba(217,123,31,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(256,256,230,0,Math.PI*2);ctx.fill();
+    ctx.font='250px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🦺',256,270);
+    ctx.beginPath();ctx.arc(256,256,248,0,Math.PI*2);ctx.strokeStyle='rgba(217,123,31,0.35)';ctx.lineWidth=6;ctx.stroke();
+    const lnk=document.createElement('link');lnk.rel='apple-touch-icon';lnk.href=c.toDataURL('image/png');document.head.appendChild(lnk);
+    const fav=document.createElement('link');fav.rel='icon';fav.type='image/png';fav.href=c.toDataURL('image/png');document.head.appendChild(fav);
+  }catch(e){}
+})();
+</script>
+<style>
+  :root{
+    --graphite:#232a31;
+    --graphite-2:#2e3740;
+    --steel:#5b6b78;
+    --steel-light:#8a97a3;
+    --paper:#f4f2ee;
+    --paper-2:#ffffff;
+    --line:#dcd8d0;
+    --amber:#d97b1f;
+    --amber-dark:#b6640f;
+    --amber-tint:#fbe9d5;
+    --ok:#3f7d52;
+    --ok-tint:#e3efe6;
+    --danger:#c2401f;
+    --font-display:'Zilla Slab','Georgia',serif;
+    --font-body:'Inter','Segoe UI',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  body.theme-dark{
+    --paper:#1b1f24;
+    --paper-2:#242a31;
+    --graphite:#f1efe9;
+    --graphite-2:#3a4550;
+    --line:#3a4149;
+    --steel:#aab3ba;
+    --steel-light:#7f8993;
+    --amber-tint:#3a2c15;
+    --ok-tint:#1c2e22;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:var(--paper);
+    color:var(--graphite);
+    -webkit-font-smoothing:antialiased;
+    transition:background .15s ease,color .15s ease;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#c9c3b8;border-radius:6px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  #app{display:flex;height:100vh;overflow:hidden;}
+
+  /* ---------- SIDEBAR ---------- */
+  #sidebar{
+    width:280px;
+    min-width:280px;
+    background:var(--graphite-dark,#232a31);
+    color:#e9e6df;
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid #171c20;
+  }
+  .brand{
+    padding:22px 20px 16px;
+    border-bottom:1px solid #384049;
+  }
+  .brand .mark{display:flex;align-items:baseline;gap:8px;}
+  .brand .mark .num{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--amber);}
+  .brand h1{font-family:var(--font-display);font-size:21px;font-weight:600;margin:6px 0 2px;color:#fff;letter-spacing:.01em;}
+  .brand p{margin:0;font-size:12px;color:#9aa4ad;}
+  #newProjectBtn{
+    margin:16px 20px 8px;background:var(--amber);color:#1c1305;border:none;padding:11px 14px;
+    border-radius:3px;font-weight:700;font-size:13.5px;cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:8px;letter-spacing:.01em;transition:background .15s ease;
+  }
+  #newProjectBtn:hover{background:#e78a2d;}
+  #newProjectBtn:active{background:var(--amber-dark);}
+
+  .nav-btn{
+    margin:6px 20px 4px;background:none;border:1px solid #384049;color:#e9e6df;padding:9px 12px;
+    border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;
+    display:flex;align-items:center;gap:8px;transition:all .12s ease;
+  }
+  .nav-btn:hover{background:#2c353d;}
+  .nav-btn.active{background:var(--amber);color:#1c1305;border-color:var(--amber);}
+
+  .sidebar-label{padding:14px 20px 4px;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#7f8993;font-weight:700;}
+
+  #projectList{flex:1;overflow-y:auto;padding:4px 10px 10px;min-height:60px;}
+  .project-item{
+    padding:12px 12px;border-radius:4px;cursor:pointer;margin-bottom:4px;
+    border:1px solid transparent;transition:background .12s ease, border-color .12s ease;
+  }
+  .project-item:hover{background:#2c353d;}
+  .project-item.active{background:#333e47;border-color:#48545f;}
+  .project-item .pname{font-weight:600;font-size:14px;color:#f2efe9;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .project-item .pclient{font-size:11.5px;color:#9aa4ad;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pbar{height:5px;background:#1d2327;border-radius:3px;overflow:hidden;}
+  body.theme-dark .pbar{background:#10141a;}
+  .pbar-fill{height:100%;background:linear-gradient(90deg,var(--amber),#f0a94f);border-radius:3px;transition:width .25s ease;}
+  .pbar-label{font-family:var(--font-mono);font-size:10px;color:#7f8993;margin-top:5px;}
+  .empty-side{padding:16px 14px;font-size:12px;color:#7f8993;line-height:1.6;}
+
+  .sidebar-footer{padding:12px 20px 18px;border-top:1px solid #384049;}
+  .footer-btn{
+    width:100%;background:#2c353d;border:1px solid #3a444d;color:#e9e6df;padding:8px 10px;
+    border-radius:4px;font-size:12.5px;font-weight:600;cursor:pointer;margin-bottom:8px;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+  .footer-btn:hover{background:#333e47;}
+  .footer-row{display:flex;gap:8px;}
+  .footer-btn.small{flex:1;margin-bottom:0;font-size:11.5px;padding:7px 6px;}
+
+  /* ---------- MAIN ---------- */
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+  #dashboardView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+  .dv-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:82%;color:var(--steel);text-align:center;padding:40px;}
+  .dv-empty .glyph{font-family:var(--font-display);font-size:56px;color:var(--line);margin-bottom:6px;}
+  .dv-empty h2{font-family:var(--font-display);font-size:22px;color:var(--graphite);margin:6px 0;}
+  .dv-empty p{font-size:13.5px;max-width:360px;line-height:1.6;}
+  .dashboard-header{margin-bottom:20px;}
+  .dashboard-header h2{font-family:var(--font-display);font-size:26px;margin:0 0 4px;color:var(--graphite);}
+  .dashboard-header p{color:var(--steel);font-size:13.5px;margin:0;}
+  .alert-section{margin-bottom:24px;}
+  .alert-section h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--steel);margin:0 0 10px;}
+  .alert-row{
+    display:flex;justify-content:space-between;align-items:center;background:var(--paper-2);
+    border:1px solid var(--line);border-left:3px solid var(--danger);border-radius:4px;
+    padding:10px 14px;margin-bottom:8px;cursor:pointer;font-size:13px;
+  }
+  .alert-row:hover{border-color:var(--steel);}
+  .alert-row.stalled{border-left-color:var(--amber-dark);}
+  .alert-row b{color:var(--graphite);}
+  .alert-row .a-info{color:var(--steel);font-size:12px;font-family:var(--font-mono);}
+  .project-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+  .project-card{background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:16px 18px;cursor:pointer;transition:border-color .12s,transform .12s;}
+  .project-card:hover{border-color:var(--amber);transform:translateY(-2px);}
+  .project-card .pc-name{font-family:var(--font-display);font-size:16px;color:var(--graphite);margin-bottom:2px;}
+  .project-card .pc-client{font-size:12px;color:var(--steel);margin-bottom:10px;}
+  .badge-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+  .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em;}
+  .badge.overdue{background:#fbeceb;color:var(--danger);}
+  .badge.stalled{background:var(--amber-tint);color:var(--amber-dark);}
+  .badge.done{background:var(--ok-tint);color:var(--ok);}
+
+  #projectView{flex-direction:column;height:100%;}
+  #projectHeader{padding:20px 32px 0;background:var(--paper-2);border-bottom:1px solid var(--line);}
+  .ph-top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;}
+  .ph-title-row{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+  .proj-title-display{
+    font-family:var(--font-display);font-weight:600;color:var(--graphite);margin:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;line-height:1.25;
+  }
+  .ph-actions{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  .icon-btn{
+    background:none;border:1px solid var(--line);color:var(--steel);width:34px;height:34px;border-radius:4px;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .12s ease;
+  }
+  .icon-btn:hover{border-color:var(--steel);color:var(--graphite);background:var(--paper);}
+  .icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:#fbeceb;}
+
+  .ph-summary{display:flex;flex-wrap:wrap;gap:5px 4px;font-size:12.5px;color:var(--steel);margin:8px 0 16px;align-items:center;}
+  .phs-item{display:inline-flex;gap:4px;}
+  .phs-item b{color:var(--graphite);font-weight:600;}
+  .phs-sep{color:var(--line);}
+
+  /* shared form fields used inside the create/edit project modal */
+  .echeance-toggle{display:flex;gap:4px;margin-bottom:6px;}
+  .etg-btn{flex:1;border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:5px 8px;border-radius:3px;font-size:11px;font-weight:600;cursor:pointer;}
+  .etg-btn.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
+  #pfEcheanceWeeksWrap{display:flex;align-items:center;gap:8px;}
+  #pfEcheanceWeeksWrap input{width:70px;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:13px;background:var(--paper);color:var(--graphite);}
+  .echeance-hint{font-size:11.5px;color:var(--steel);font-family:var(--font-mono);}
+  .modal select{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);}
+  .modal select:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+  .modal-scroll{max-height:70vh;overflow-y:auto;padding-right:4px;}
+
+  #settingsView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
+  .settings-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .settings-item{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--graphite);}
+  .settings-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:15px;line-height:1;}
+  .settings-del:hover{color:var(--danger);}
+  .settings-empty{font-size:12.5px;color:var(--steel-light);padding:6px 2px;}
+  .settings-add-row{display:flex;gap:8px;}
+  .settings-add-input{flex:1;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--graphite);}
+  .settings-hint{font-size:12.5px;color:var(--steel);line-height:1.5;margin:0 0 12px;}
+  .popt-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .popt-item{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:10px 12px;}
+  .popt-item-head{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--graphite);}
+  .popt-count{font-family:var(--font-mono);font-size:11px;color:var(--steel);flex:1;}
+  .popt-edit,.popt-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:14px;}
+  .popt-edit:hover{color:var(--amber-dark);}
+  .popt-del:hover{color:var(--danger);}
+  .popt-items-preview{font-size:11.5px;color:var(--steel-light);margin-top:5px;line-height:1.5;}
+  .notes-textarea{width:100%;min-height:220px;border:1px solid var(--line);border-radius:5px;padding:12px 14px;font-size:13.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;line-height:1.6;}
+  .notes-textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+  .notes-saved-hint{font-size:11px;color:var(--steel-light);margin-top:6px;font-family:var(--font-mono);}
+
+  .tabs{display:flex;gap:2px;margin-top:4px;}
+  .tab-btn{background:none;border:none;padding:11px 18px;font-size:13.5px;font-weight:600;color:var(--steel);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px;font-family:var(--font-body);}
+  .tab-btn .count{font-family:var(--font-mono);font-size:10.5px;background:var(--paper);color:var(--steel);padding:1px 6px;border-radius:9px;}
+  .tab-btn.active{color:var(--graphite);border-bottom-color:var(--amber);}
+  .tab-btn.active .count{background:var(--amber-tint);color:var(--amber-dark);}
+  .tab-btn:hover{color:var(--graphite);}
+
+  #tabContent{flex:1;overflow-y:auto;padding:26px 32px 60px;}
+
+  .checklist-toolbar{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+  .options-panel{background:var(--amber-tint);border:1px solid var(--amber);border-radius:6px;padding:12px 16px;margin-bottom:18px;}
+  .options-panel-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber-dark);margin-bottom:9px;}
+  .options-panel-list{display:flex;flex-wrap:wrap;gap:10px 20px;}
+  .option-toggle{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--graphite);cursor:pointer;}
+  .option-toggle input{width:16px;height:16px;accent-color:var(--amber-dark);cursor:pointer;}
+  .opt-count{font-family:var(--font-mono);font-size:11px;color:var(--steel);}
+  #checklistSearch{flex:1;min-width:200px;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13.5px;background:var(--paper-2);color:var(--graphite);}
+  #checklistSearch:focus{outline:2px solid var(--amber);outline-offset:-1px;}
+  .filter-pills{display:flex;gap:6px;}
+  .pill{border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .pill.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
+  .no-results{padding:30px;text-align:center;color:var(--steel);font-size:13.5px;}
+
+  /* ---------- CHECKLIST ---------- */
+  .partie{margin-bottom:22px;background:var(--paper-2);border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .partie-head{padding:13px 18px;background:var(--graphite-2);color:#fff;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+  .partie-head h3{font-family:var(--font-display);font-size:15.5px;margin:0;font-weight:600;letter-spacing:.01em;}
+  .partie-head .partie-progress{font-family:var(--font-mono);font-size:11px;color:var(--amber);display:flex;align-items:center;gap:8px;}
+  .partie-progress .mini-bar{width:60px;height:5px;background:#1d2327;border-radius:3px;overflow:hidden;}
+  .partie-progress .mini-bar-fill{height:100%;background:var(--amber);}
+  .chevron{transition:transform .15s ease;font-size:11px;color:#aab3ba;}
+  .partie.collapsed .chevron{transform:rotate(-90deg);}
+  .partie-body{padding:6px 18px 14px;}
+  .partie.collapsed .partie-body{display:none;}
+
+  .section-block{margin-top:10px;}
+  .section-head{display:flex;align-items:center;justify-content:space-between;padding:8px 4px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .section-head h4{margin:0;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--steel);font-weight:700;}
+  .section-head .sec-count{font-family:var(--font-mono);font-size:11px;color:var(--steel-light);}
+  .section-items{padding:4px 0 8px;}
+  .section-block.collapsed .section-items{display:none;}
+  .section-block.collapsed .section-head .chev-s{transform:rotate(-90deg);}
+  .chev-s{font-size:10px;color:var(--steel-light);margin-right:6px;transition:transform .15s ease;}
+
+  .item-row{display:flex;gap:11px;padding:8px 4px;border-bottom:1px dashed var(--line);}
+  .item-row:last-child{border-bottom:none;}
+  .item-check{width:18px;height:18px;margin-top:2px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
+  .item-main{flex:1;min-width:0;}
+  .item-label{font-size:13.5px;color:var(--graphite);line-height:1.4;cursor:pointer;}
+  .item-row.done .item-label{color:var(--ok);text-decoration:line-through;text-decoration-color:#b7d2bd;}
+  .item-note{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;min-height:32px;}
+  .item-note::placeholder{color:var(--steel-light);}
+  .item-note:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+
+  .item-photos{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;}
+  .photo-thumb{position:relative;width:48px;height:48px;border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+  .photo-thumb img{width:100%;height:100%;object-fit:cover;cursor:pointer;display:block;}
+  .photo-del{position:absolute;top:-1px;right:-1px;background:var(--danger);color:#fff;border:none;width:16px;height:16px;border-radius:50%;font-size:10px;line-height:1;cursor:pointer;padding:0;}
+  .photo-add-btn{width:48px;height:48px;border:1px dashed var(--steel-light);border-radius:4px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--steel);flex-shrink:0;}
+  .photo-add-btn:hover{border-color:var(--amber);color:var(--amber-dark);}
+
+  /* ---------- FICHE ---------- */
+  .fiche-section{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;margin-bottom:18px;overflow:hidden;}
+  .fiche-section-head{padding:12px 18px;background:var(--paper);border-bottom:1px solid var(--line);}
+  .fiche-section-head h4{margin:0;font-family:var(--font-display);font-size:15px;color:var(--graphite);}
+  .fiche-fields{padding:16px 18px 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;}
+  .fiche-field{margin-bottom:6px;}
+  .fiche-field.wide{grid-column:1 / -1;}
+  .fiche-field label{display:block;font-size:12px;color:var(--steel);margin-bottom:5px;font-weight:600;line-height:1.35;}
+  .fiche-field input[type=text], .fiche-field select, .fiche-field textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-size:13px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);}
+  .fiche-field textarea{min-height:64px;resize:vertical;}
+  .fiche-field input:focus, .fiche-field select:focus, .fiche-field textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+
+  .fg-grid{display:flex;flex-wrap:wrap;gap:14px;}
+  .fg-item{width:120px;position:relative;}
+  .fg-item img{width:120px;height:90px;object-fit:cover;border-radius:5px;border:1px solid var(--line);cursor:pointer;display:block;}
+  .fg-del{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:12px;cursor:pointer;padding:0;}
+  .fg-caption{width:120px;margin-top:4px;font-size:11px;padding:4px 6px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--graphite);}
+  .fg-add{width:120px;height:90px;border:1px dashed var(--steel-light);border-radius:5px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12.5px;color:var(--steel);flex-direction:column;gap:4px;text-align:center;}
+  .fg-add:hover{border-color:var(--amber);color:var(--amber-dark);}
+
+  /* ---------- RAPPORT ---------- */
+  #reportActions{display:flex;gap:10px;margin-bottom:20px;}
+  .btn{border:none;padding:10px 16px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .btn-primary{background:var(--amber);color:#1c1305;}
+  .btn-primary:hover{background:#e78a2d;}
+  .btn-ghost{background:var(--paper-2);color:var(--graphite);border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--paper);}
+  .btn-danger-solid{background:var(--danger);color:#fff;}
+  .btn-danger-solid:hover{background:#a2381c;}
+
+  #reportPreview{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:36px 40px;max-width:820px;font-family:var(--font-body);}
+  #reportPreview h2.rp-title{font-family:var(--font-display);font-size:26px;margin:0 0 4px;color:var(--graphite);}
+  #reportPreview .rp-sub{color:var(--steel);font-size:13px;margin-bottom:22px;}
+  #reportPreview .rp-meta-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 24px;font-size:13px;margin-bottom:26px;padding-bottom:20px;border-bottom:2px solid var(--graphite);}
+  #reportPreview .rp-meta-grid div b{color:var(--steel);font-weight:600;}
+  #reportPreview h3.rp-h3{font-family:var(--font-display);font-size:17px;color:#fff;background:var(--graphite-2);padding:8px 14px;margin:26px 0 10px;border-radius:4px;}
+  #reportPreview h4.rp-h4{font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--amber-dark);margin:16px 0 6px;border-bottom:1px solid var(--line);padding-bottom:4px;}
+  #reportPreview .rp-item{display:flex;gap:8px;font-size:13px;padding:4px 0;align-items:flex-start;flex-wrap:wrap;}
+  #reportPreview .rp-item .mark{width:16px;flex-shrink:0;font-weight:700;}
+  #reportPreview .rp-item.done .mark{color:var(--ok);}
+  #reportPreview .rp-item.pending .mark{color:var(--danger);}
+  #reportPreview .rp-item .note{color:var(--steel);font-style:italic;margin-top:1px;}
+  #reportPreview .rp-photos{display:flex;gap:6px;margin:4px 0 4px 24px;flex-wrap:wrap;width:100%;}
+  #reportPreview .rp-photo{width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  #reportPreview .rp-fiche-row{font-size:13px;padding:5px 0;border-bottom:1px dashed var(--line);}
+  #reportPreview .rp-fiche-row b{color:var(--graphite);}
+  #reportPreview .rp-fiche-row .val{color:var(--steel);}
+  #reportPreview .rp-fiche-row .val.empty{color:var(--steel-light);}
+  #reportPreview .rp-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:10px;}
+  #reportPreview .rp-gallery-item img{width:100%;height:110px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
+  #reportPreview .rp-gallery-caption{font-size:11px;color:var(--steel);margin-top:4px;}
+
+  .stat-strip{display:flex;gap:24px;margin-bottom:22px;flex-wrap:wrap;}
+  .stat-box{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:14px 18px;min-width:120px;}
+  .stat-box .n{font-family:var(--font-display);font-size:26px;color:var(--graphite);}
+  .stat-box .l{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--steel-light);margin-top:2px;}
+
+  /* modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(20,24,27,.55);display:flex;align-items:center;justify-content:center;z-index:50;}
+  .lightbox-backdrop{background:rgba(10,12,14,.88);}
+  .lightbox-img{max-width:90vw;max-height:90vh;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .modal{background:var(--paper-2);border-radius:8px;padding:26px 28px;width:420px;max-width:92vw;box-shadow:0 20px 50px rgba(0,0,0,.35);}
+  .modal h3{font-family:var(--font-display);font-size:19px;margin:0 0 16px;color:var(--graphite);}
+  .modal label{display:block;font-size:11.5px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px;}
+  .modal input{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);}
+  .modal input:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+  .btn-text{background:none;border:none;color:var(--steel);font-size:13px;cursor:pointer;padding:9px 12px;}
+  .confirm-msg{font-size:14px;color:var(--graphite);line-height:1.5;margin:0;}
+
+  #toast{position:fixed;bottom:22px;right:22px;background:var(--graphite-2);color:#fff;padding:11px 18px;border-radius:5px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);opacity:0;transform:translateY(8px);transition:all .2s ease;pointer-events:none;z-index:60;}
+  #toast.show{opacity:1;transform:translateY(0);}
+
+  @media print{
+    body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
+    #sidebar, #projectHeader, #reportActions, #toast{display:none !important;}
+    #tabContent{padding:0;overflow:visible;}
+    #reportPreview{border:none;padding:0;max-width:100%;}
+    .partie, .fiche-section, .checklist-toolbar, .options-panel{display:none !important;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="mark"><span class="num">PLANIFICATION</span></div>
+      <h1>Gestion de Projet</h1>
+      <p>Checklist &amp; visites de site</p>
+    </div>
+    <button id="newProjectBtn">+ Nouveau projet</button>
+    <button id="dashboardNavBtn" class="nav-btn">🏠 Tableau de bord</button>
+    <button id="settingsNavBtn" class="nav-btn">⚙ Réglages</button>
+    <div class="sidebar-label">Projets</div>
+    <div id="projectList"></div>
+    <div class="sidebar-footer">
+      <button id="themeToggleBtn" class="footer-btn">🌙 Mode sombre</button>
+      <div class="footer-row">
+        <button id="exportBtn" class="footer-btn small">⬇ Exporter</button>
+        <button id="importBtn" class="footer-btn small">⬆ Importer</button>
+      </div>
+      <input type="file" id="importFileInput" accept="application/json" hidden>
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="dashboardView"></div>
+    <div id="settingsView" style="display:none;"></div>
+
+    <div id="projectView" style="display:none;">
+      <div id="projectHeader">
+        <div class="ph-top">
+          <div class="ph-title-row">
+            <h2 id="projTitleDisplay" class="proj-title-display"></h2>
+          </div>
+          <div class="ph-actions">
+            <button class="icon-btn" id="editProjectInfoBtn" title="Modifier les informations">✎</button>
+            <button class="icon-btn danger" id="deleteProjectBtn" title="Supprimer le projet">✕</button>
+          </div>
+        </div>
+        <div class="ph-summary" id="phSummary"></div>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="checklist">Checklist planification <span class="count" id="tabCountChecklist">0/0</span></button>
+          <button class="tab-btn" data-tab="fiche">Fiche de visite de chantier</button>
+          <button class="tab-btn" data-tab="rapport">Rapport</button>
+        </div>
+      </div>
+      <div id="tabContent"></div>
+    </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================= DATA TEMPLATES ============================= */
+
+const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ'];
+
+const CHECKLIST_TEMPLATE = [
+  { id:'p1', title:"PARTIE 1 — Édition de l'offre", sections:[
+    { id:'p1-analyse', title:'Analyse du besoin', items:[
+      "Besoin client défini","Relevé sur site effectué","Photos réalisées",
+      "Contraintes techniques identifiées","Contraintes d'accès identifiées",
+      "Contraintes sécurité identifiées","Budget estimé","Planning estimatif"
+    ]},
+    { id:'p1-etude', title:'Étude technique', items:[
+      "Plans réalisés","Schémas réalisés","Liste matériel réalisée","Chiffrage terminé",
+      "Temps de main-d'œuvre calculés","Sous-traitance chiffrée","Validation technique","Validation VAC"
+    ]},
+    { id:'p1-offre', title:'Offre', items:[
+      "Offre éditée","Offre envoyée","Relance effectuée","Offre acceptée","Bon de commande reçu"
+    ]}
+  ]},
+  { id:'p2', title:'PARTIE 2 — Approvisionnement', sections:[
+    { id:'p2-commandes', title:'Commandes', items:[
+      "Toutes les pièces commandées","Délais fournisseurs validés","Sous-traitance commandée","Matériel spécifique réservé"
+    ]},
+    { id:'p2-reception', title:'Réception', items:[
+      "Matériel réceptionné","Quantités vérifiées","Conformité vérifiée","Manquants signalés",
+      "Non-conformités traitées","Tout le matériel disponible"
+    ]}
+  ]},
+  { id:'p3', title:'PARTIE 3 — Réalisation du projet', sections:[
+    { id:'p3-visite', title:'Visite préalable', items:[
+      "Visite sur site","Formulaire (Visite de chantier)","Analyse besoin (Pression, débit, qualité d'air)",
+      "Contrat de maintenance déjà existant ? (amorce client)",
+      "Impact des modifications sur l'installation existante analysé",
+      "Écart entre l'existant et le projet identifié"
+    ]},
+    { id:'p3-planif', title:'Planification', items:[
+      "Visite","Planification des fabrications (à développer)","Planification des préparations",
+      "FAT identifiée","Options identifiées","Kick-off planifié","Date intervention fixée",
+      "Techniciens affectés","Sous-traitants réservés","Camion réservé","Moyens de levage réservés",
+      "Outillage réservé","Plan de prévention établi","Client informé","Date confirmée","Mail de confirmation envoyé"
+    ]},
+    { id:'p3-docs', title:'Documents', items:[
+      "Bons de livraison édités","Bon de préparation édité","Commentaire ajouté dans Bexio",
+      "Groupage GLATE réalisé","Ticket GLATE ouvert","Fiches d'intervention imprimées","Étiquettes créées"
+    ]},
+    { id:'p3-atelier', title:'Atelier', items:[
+      "Préparation réalisée","Fabrication terminée","Contrôle qualité effectué","FAT réalisée","Matériel prêt"
+    ]},
+    { id:'p3-dossiers', title:'Dossiers', items:[
+      "Dossier technicien préparé","Dossier magasin préparé","Dossier préparation préparé"
+    ]},
+    { id:'p3-execution', title:'Exécution et accompagnement', items:[
+      "Matériel chargé","Équipe briefée","Temps saisis","Modifications consignées","Hôtel réservé",
+      "Photos réalisées","Essais réalisés","Mise en service","Formation client","Nettoyage","PV de réception signé"
+    ]},
+    { id:'p3-revision', title:'Révision documentaire', items:[
+      "Schémas mis à jour","Documentation archivée et à jour","Certificats archivés","Photos archivées",
+      "Documentation commune mise à jour"
+    ]},
+    { id:'p3-cloture', title:'Clôture du projet', items:[
+      "Vérifier les pièces remplacées dans GLATE","Mettre à jour les références GLATE",
+      "Vérifier l'impact sur le contrat de maintenance","Mettre à jour le contrat de maintenance",
+      "Comparer l'installation finale avec l'installation d'origine",
+      "Vérifier que toutes les modifications sont reportées dans GLATE",
+      "Vérifier les paramètres de fonctionnement (pression, qualité de l'air, débit, etc.)",
+      "Valider la cohérence entre le projet, GLATE et le contrat de maintenance",
+      "Vérifier la marge du projet","Contrôler les écarts","Clôturer les commandes",
+      "Contrôler les factures fournisseurs","Projet clôturé dans l'ERP","Commande terminée"
+    ]},
+    { id:'p3-facturation', title:'Facturation', items:[
+      "Heures validées","Matériel validé","Sous-traitance validée","Facture éditée","Facture envoyée"
+    ]}
+  ]}
+];
+
+const FICHE_TEMPLATE = [
+  { id:'info-gen', title:'Informations générales', fields:[
+    {id:'client', label:'Nom client', type:'text'},
+    {id:'num-au', label:'N° AU', type:'text'},
+    {id:'adresse-site', label:'Adresse du site', type:'text'},
+    {id:'contact-site', label:'Nom du contact sur site', type:'text'},
+    {id:'tel', label:'Numéro de téléphone', type:'text'},
+    {id:'adresse-livraison', label:'Adresse de livraison', type:'text'},
+    {id:'acces-site', label:"Accès au site (horaires, restrictions)", type:'textarea', wide:true},
+    {id:'regles-securite', label:'Règles de sécurité du site (EPI, formation, accès, etc.)', type:'textarea', wide:true},
+    {id:'phs', label:'PHS', type:'select', options:['','Non','Client','VAC']}
+  ]},
+  { id:'infra', title:'Infrastructure et accessibilité', fields:[
+    {id:'dim-portes', label:'Dimensions des portes et accès', type:'text'},
+    {id:'levage', label:'Nécessité d\u2019un moyen de levage (grue / transpalette / chèvre)', type:'text'},
+    {id:'emplacement', label:'Emplacement de l\u2019installation (intérieur / extérieur / toiture)', type:'text'},
+    {id:'type-sol', label:'Type de sol (dalle, structure, vibration)', type:'text'},
+    {id:'type-mur', label:'Type de mur (béton, placo, plâtre, parpaing)', type:'text'},
+    {id:'acces-type', label:'Accès (ascenseur / monte-charge / escalier / marche H=cm)', type:'text'},
+    {id:'stationnement', label:'Stationnement (parking / souterrain / rue) — hauteur / largeur maxi', type:'text'},
+    {id:'environnement', label:'Environnement (poussières, humidité, contraintes)', type:'text'},
+    {id:'detecteur-incendie', label:'Détecteur incendie', type:'select', options:['','Oui','Non']},
+    {id:'bruit', label:'Bruit', type:'select', options:['','Oui','Non']},
+    {id:'materiels-specifiques', label:'Matériels spécifiques (échelles, nacelles, fabrication marche)', type:'text'},
+    {id:'hauteur-chariot', label:'Hauteur chariot, grue', type:'text'},
+    {id:'plan-acces', label:"Plan d'accès (description / renvoi document)", type:'textarea', wide:true}
+  ]},
+  { id:'maintenance', title:'Maintenance et accès futur', fields:[
+    {id:'espaces-maintenance', label:'Espaces disponibles pour maintenance', type:'select', options:['','Oui','Non']},
+    {id:'maintenance-sans-arret', label:'Possibilité de maintenance sans arrêt de production', type:'select', options:['','Oui','Non']},
+    {id:'contact-fm', label:'Contact FM / concierge', type:'text'},
+    {id:'horaire-maintenance', label:'Horaire souhaité pour maintenance', type:'text'}
+  ]},
+  { id:'point-specifique', title:'Point spécifique', fields:[
+    {id:'deplacement-materiel', label:'Si déplacement matériel, accès toujours bon', type:'select', options:['','Oui','Non']},
+    {id:'passage-reseau', label:'Passage réseau — pente, contrainte', type:'text'},
+    {id:'vanne-reseau', label:'Vanne réseau', type:'select', options:['','Oui','Non']},
+    {id:'vanne-compresseur', label:'Vanne compresseur', type:'select', options:['','Oui','Non']},
+    {id:'vanne-secheur', label:'Vanne sécheur', type:'select', options:['','Oui','Non']},
+    {id:'diametre-reseau', label:'Diamètre réseau', type:'text'},
+    {id:'diametre-sortie', label:'Diamètre sortie compresseurs', type:'text'},
+    {id:'boitier-ventilation', label:'Boîtier ventilation', type:'select', options:['','Oui','Non']},
+    {id:'cable-compresseur', label:'Câble relié dans compresseur', type:'select', options:['','Oui','Non']},
+    {id:'passage-mcr', label:'Passage pour remonter MCR', type:'text'},
+    {id:'reseau-dur-flexible', label:'Réseau dur sur machine ou flexible', type:'text'},
+    {id:'filtre-secheur', label:'Filtre sécheur — fixation, passage, photos, type', type:'text'},
+    {id:'ecoulements', label:'Écoulements (siphon, WOS, passage, fixation, photos, type)', type:'text'},
+    {id:'soupape-cuve', label:'Soupape sur cuve', type:'text'},
+    {id:'capteur-pression', label:'Capteur de pression ou pressostat sur cuve', type:'text'},
+    {id:'dossier-photos', label:'Dossier photos', type:'select', options:['','Oui','Non']}
+  ]},
+  { id:'elec-mcr', title:'Élec / MCR', fields:[
+    {id:'prise-compresseur', label:'Prise compresseur', type:'select', options:['','OK','NOK']},
+    {id:'disjoncteur-compresseur', label:'Disjoncteur (compresseur)', type:'select', options:['','OK','NOK']},
+    {id:'prise-secheur', label:'Prise sécheur', type:'select', options:['','OK','NOK']},
+    {id:'disjoncteur-secheur', label:'Disjoncteur (sécheur)', type:'select', options:['','OK','NOK']},
+    {id:'prise-accessoire', label:'Prise accessoire', type:'select', options:['','OK','NOK']},
+    {id:'disjoncteur-accessoire', label:'Disjoncteur (accessoire)', type:'select', options:['','OK','NOK']},
+    {id:'cable-entre-compresseurs', label:'Câble entre compresseurs — passage, fixation, photos, type', type:'text'},
+    {id:'remontee-alarme', label:'Remontée alarme — passage, fixation, photos, type', type:'text'},
+    {id:'boitier-deporte', label:'Boîtier déporté — passage, fixation, photos, type', type:'text'},
+    {id:'boitier-ventilation-2', label:'Boîtier ventilation — passage, fixation, photos, type', type:'text'},
+    {id:'enregistreur', label:'Enregistreur — passage, fixation, photos, type', type:'text'},
+    {id:'mcr', label:'MCR (non / filaire / Modbus)', type:'text'},
+    {id:'cvcs', label:'CVCS (oui / non / à fournir)', type:'text'}
+  ]},
+  { id:'remarques', title:'Remarques et contraintes particulières', fields:[
+    {id:'remarques-texte', label:'Remarques', type:'textarea', wide:true}
+  ]}
+];
+
+/* ============================= STATE ============================= */
+
+let projects = [];
+let currentProjectId = null;
+let currentView = 'dashboard'; // 'dashboard' | 'project'
+let currentData = null;
+let currentTab = 'checklist';
+let saveTimer = null;
+let searchQuery = '';
+let statusFilter = 'all';
+let appSettings = { theme:'light' };
+
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function uid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+function itemKey(sectionId, idx){ return sectionId + '__' + idx; }
+function normalize(str){ return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function showToast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1900);
+}
+
+/* ============================= CUSTOM CONFIRM ============================= */
+
+function customConfirm(message, opts){
+  opts = opts || {};
+  const okText = opts.okText || 'Confirmer';
+  const cancelText = opts.cancelText || 'Annuler';
+  const danger = opts.danger !== false;
+  return new Promise(resolve => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>${danger ? '⚠ Confirmation' : 'Confirmation'}</h3>
+        <p class="confirm-msg">${escapeHtml(message)}</p>
+        <div class="modal-actions">
+          <button class="btn-text" id="cfCancel">${escapeHtml(cancelText)}</button>
+          <button class="btn ${danger?'btn-danger-solid':'btn-primary'}" id="cfOk">${escapeHtml(okText)}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    function close(v){ document.body.removeChild(backdrop); resolve(v); }
+    backdrop.querySelector('#cfCancel').addEventListener('click', () => close(false));
+    backdrop.querySelector('#cfOk').addEventListener('click', () => close(true));
+    backdrop.addEventListener('click', e => { if(e.target === backdrop) close(false); });
+  });
+}
+
+function showLightbox(src){
+  const bd = document.createElement('div');
+  bd.className = 'modal-backdrop lightbox-backdrop';
+  bd.innerHTML = `<img src="${src}" class="lightbox-img">`;
+  bd.addEventListener('click', () => document.body.removeChild(bd));
+  document.body.appendChild(bd);
+}
+
+/* ============================= IMAGE COMPRESSION ============================= */
+
+function compressImage(file, maxWidth, quality){
+  maxWidth = maxWidth || 1000;
+  quality = quality || 0.6;
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = Math.round(h * maxWidth / w); w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function dataSizeOk(data){
+  try{ return new Blob([JSON.stringify(data)]).size < 4.5 * 1024 * 1024; }
+  catch(e){ return true; }
+}
+
+/* ============================= THEME & SETTINGS ============================= */
+
+/* ============================= STORAGE HELPERS ============================= */
+
+async function withRetry(fn, label, retries){
+  retries = (retries === undefined) ? 2 : retries;
+  let lastErr;
+  for(let i = 0; i <= retries; i++){
+    try{ return await fn(); }
+    catch(e){
+      lastErr = e;
+      if(i < retries) await new Promise(r => setTimeout(r, 500 * (i+1)));
+    }
+  }
+  console.error(label + ' failed after retries', lastErr);
+  showToast('⚠ Échec de la sauvegarde (' + label + ') — vérifiez votre connexion');
+  throw lastErr;
+}
+
+async function loadSettings(){
+  try{
+    const res = await window.storage.get('settings', false);
+    return res && res.value ? JSON.parse(res.value) : { theme:'light' };
+  }catch(e){ return { theme:'light' }; }
+}
+async function saveSettings(){
+  try{ await withRetry(() => window.storage.set('settings', JSON.stringify(appSettings), false), 'réglages'); }
+  catch(e){}
+}
+function applyTheme(){
+  document.body.classList.toggle('theme-dark', appSettings.theme === 'dark');
+  const btn = $('#themeToggleBtn');
+  if(btn) btn.textContent = appSettings.theme === 'dark' ? '☀️ Mode clair' : '🌙 Mode sombre';
+}
+function toggleTheme(){
+  appSettings.theme = appSettings.theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+  saveSettings();
+}
+
+/* ============================= STORAGE ============================= */
+
+async function loadProjects(){
+  try{
+    const res = await window.storage.get('projects', false);
+    projects = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){ projects = []; }
+}
+async function saveProjects(){
+  try{ await withRetry(() => window.storage.set('projects', JSON.stringify(projects), false), 'liste des projets'); }
+  catch(e){}
+}
+async function loadProjectData(id){
+  try{
+    const res = await window.storage.get('project:' + id, false);
+    if(res && res.value) return JSON.parse(res.value);
+  }catch(e){}
+  return { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, lastModified:null };
+}
+function scheduleSaveProjectData(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveProjectDataNow, 400);
+}
+async function saveProjectDataNow(){
+  if(!currentProjectId || !currentData) return;
+  currentData.lastModified = Date.now();
+  const id = currentProjectId;
+  const payload = JSON.stringify(currentData);
+  try{ await withRetry(() => window.storage.set('project:' + id, payload, false), 'projet'); }
+  catch(e){}
+}
+async function flushPendingSave(){
+  if(saveTimer){ clearTimeout(saveTimer); saveTimer = null; await saveProjectDataNow(); }
+}
+
+/* ============================= PROGRESS CALC (base template + active project options) ============================= */
+
+function totalItemCount(){
+  let n = 0;
+  CHECKLIST_TEMPLATE.forEach(p => p.sections.forEach(s => n += s.items.length));
+  return n;
+}
+const BASE_TOTAL_ITEMS = totalItemCount();
+
+function getActiveOptionDefs(data){
+  const active = (data && data.activeOptions) || {};
+  return (appOptions.projectOptions || []).filter(o => active[o.id]);
+}
+
+// Returns the full checklist template for a given project's data: the fixed base
+// template plus one extra "partie" holding a section per active project option.
+function projectTemplate(data){
+  const opts = getActiveOptionDefs(data);
+  if(!opts.length) return CHECKLIST_TEMPLATE;
+  const virtualPartie = {
+    id: 'p_options',
+    title: 'OPTIONS DU PROJET — Modules spécifiques',
+    sections: opts.map(o => ({ id: 'opt_' + o.id, title: o.name, items: o.items || [] }))
+  };
+  return CHECKLIST_TEMPLATE.concat([virtualPartie]);
+}
+
+function projectTotalItems(data){
+  let n = 0;
+  projectTemplate(data).forEach(p => p.sections.forEach(s => n += s.items.length));
+  return n;
+}
+
+function countChecked(data){
+  let n = 0;
+  projectTemplate(data).forEach(p => p.sections.forEach(s => {
+    s.items.forEach((_, idx) => {
+      const k = itemKey(s.id, idx);
+      if(data.checklist[k] && data.checklist[k].checked) n++;
+    });
+  }));
+  return n;
+}
+
+let projectStatsCache = {};
+
+async function getProjectStats(id, forceRefresh){
+  if(id === currentProjectId && currentData){
+    const s = { checked: countChecked(currentData), total: projectTotalItems(currentData), lastModified: currentData.lastModified || null };
+    projectStatsCache[id] = s;
+    return s;
+  }
+  if(!forceRefresh && projectStatsCache[id]) return projectStatsCache[id];
+  const d = await loadProjectData(id);
+  const s = { checked: countChecked(d), total: projectTotalItems(d), lastModified: d.lastModified || null };
+  projectStatsCache[id] = s;
+  return s;
+}
+
+/* ============================= RENDER: SIDEBAR ============================= */
+
+function hideAllViews(){
+  $('#dashboardView').style.display = 'none';
+  $('#settingsView').style.display = 'none';
+  $('#projectView').style.display = 'none';
+}
+
+async function renderSidebar(){
+  $('#dashboardNavBtn').classList.toggle('active', currentView === 'dashboard');
+  $('#settingsNavBtn').classList.toggle('active', currentView === 'settings');
+  const list = $('#projectList');
+  if(projects.length === 0){
+    list.innerHTML = '<div class="empty-side">Aucun projet pour l\u2019instant. Cliquez sur « + Nouveau projet » pour commencer une checklist.</div>';
+    return;
+  }
+  const rows = [];
+  for(const p of projects){
+    const stats = await getProjectStats(p.id);
+    const pct = Math.round((stats.checked / stats.total) * 100);
+    const isActive = currentView === 'project' && p.id === currentProjectId;
+    rows.push(`
+      <div class="project-item ${isActive?'active':''}" data-id="${p.id}">
+        <div class="pname">${escapeHtml(p.name || 'Sans nom')}</div>
+        <div class="pclient">${escapeHtml(p.client || 'Client non défini')}</div>
+        <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+        <div class="pbar-label">${stats.checked}/${stats.total} POINTS · ${pct}%</div>
+      </div>
+    `);
+  }
+  list.innerHTML = rows.join('');
+  $$('.project-item').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+}
+
+/* ============================= DASHBOARD ============================= */
+
+async function renderDashboardView(){
+  await flushPendingSave();
+  currentView = 'dashboard';
+  hideAllViews();
+  const dv = $('#dashboardView');
+  dv.style.display = 'block';
+  await renderSidebar();
+
+  if(projects.length === 0){
+    dv.innerHTML = `
+      <div class="dv-empty">
+        <div class="glyph">◎</div>
+        <h2>Bienvenue sur Gestion de Projet</h2>
+        <p>Créez votre premier projet pour démarrer une checklist de planification et une fiche de visite de chantier.</p>
+      </div>`;
+    return;
+  }
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const rows = [];
+  let totalChecked = 0, totalPossible = 0;
+  for(const p of projects){
+    const s = await getProjectStats(p.id, true);
+    totalChecked += s.checked;
+    totalPossible += s.total;
+    const pct = Math.round((s.checked / s.total) * 100);
+    const isOverdue = !!(p.echeance && p.echeance < todayStr && s.checked < s.total);
+    const refTime = s.lastModified || p.createdAt || Date.now();
+    const daysSince = Math.floor((Date.now() - refTime) / 86400000);
+    const isStalled = daysSince > 14 && s.checked < s.total;
+    rows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince });
+  }
+
+  const overdue = rows.filter(r => r.isOverdue);
+  const stalled = rows.filter(r => r.isStalled && !r.isOverdue);
+
+  const alertsHtml = (overdue.length || stalled.length) ? `
+    <div class="alert-section">
+      <h3>⚠ Alertes</h3>
+      ${overdue.map(r => `<div class="alert-row" data-id="${r.p.id}"><span><b>${escapeHtml(r.p.name)}</b> — échéance dépassée (${new Date(r.p.echeance).toLocaleDateString('fr-FR')})</span><span class="a-info">${r.checked}/${r.total}</span></div>`).join('')}
+      ${stalled.map(r => `<div class="alert-row stalled" data-id="${r.p.id}"><span><b>${escapeHtml(r.p.name)}</b> — aucune activité depuis ${r.daysSince} jours</span><span class="a-info">${r.checked}/${r.total}</span></div>`).join('')}
+    </div>` : '';
+
+  const cardsHtml = rows.map(r => `
+    <div class="project-card" data-id="${r.p.id}">
+      <div class="pc-name">${escapeHtml(r.p.name)}</div>
+      <div class="pc-client">${escapeHtml(r.p.client || 'Client non défini')}</div>
+      <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
+      <div class="pbar-label">${r.checked}/${r.total} POINTS · ${r.pct}%</div>
+      <div class="badge-row">
+        ${r.checked===r.total?'<span class="badge done">Terminé</span>':''}
+        ${r.isOverdue?'<span class="badge overdue">En retard</span>':''}
+        ${r.isStalled?'<span class="badge stalled">Inactif '+r.daysSince+'j</span>':''}
+      </div>
+    </div>
+  `).join('');
+
+  dv.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Tableau de bord</h2>
+      <p>${projects.length} projet(s) · ${totalChecked}/${totalPossible} points cochés au total</p>
+    </div>
+    ${alertsHtml}
+    <div class="project-card-grid">${cardsHtml}</div>
+  `;
+  dv.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+}
+
+/* ============================= SETTINGS (dropdown options) ============================= */
+
+let appOptions = { coordinateurs:[], flux:[], projectOptions:[] };
+
+let notesText = '';
+let notesSaveTimer = null;
+
+async function loadNotes(){
+  try{
+    const res = await window.storage.get('projectNotes', false);
+    return res && res.value ? res.value : '';
+  }catch(e){ return ''; }
+}
+function scheduleSaveNotes(){
+  clearTimeout(notesSaveTimer);
+  notesSaveTimer = setTimeout(async () => {
+    try{
+      await withRetry(() => window.storage.set('projectNotes', notesText, false), 'bloc-notes');
+      const hint = $('#notesSavedHint');
+      if(hint) hint.textContent = 'Enregistré à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    }catch(e){}
+  }, 500);
+}
+
+async function loadAppOptions(){
+  try{
+    const res = await window.storage.get('appOptions', false);
+    const v = res && res.value ? JSON.parse(res.value) : {};
+    return { coordinateurs: v.coordinateurs || [], flux: v.flux || [], projectOptions: v.projectOptions || [] };
+  }catch(e){ return { coordinateurs:[], flux:[], projectOptions:[] }; }
+}
+async function saveAppOptions(){
+  try{ await withRetry(() => window.storage.set('appOptions', JSON.stringify(appOptions), false), 'réglages listes'); }
+  catch(e){}
+}
+
+function buildOptionListHtml(key, title, placeholder){
+  const items = appOptions[key] || [];
+  const rows = items.map((v,i) => `<div class="settings-item"><span>${escapeHtml(v)}</span><button class="settings-del" data-key="${key}" data-idx="${i}">×</button></div>`).join('');
+  return `
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>${escapeHtml(title)}</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <div class="settings-list" data-key="${key}">
+          ${rows || '<div class="settings-empty">Aucune valeur pour l\u2019instant.</div>'}
+        </div>
+        <div class="settings-add-row">
+          <input type="text" class="settings-add-input" data-key="${key}" placeholder="${escapeHtml(placeholder)}">
+          <button class="btn btn-primary settings-add-btn" data-key="${key}">+ Ajouter</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function renderSettingsView(){
+  await flushPendingSave();
+  currentView = 'settings';
+  hideAllViews();
+  const sv = $('#settingsView');
+  sv.style.display = 'block';
+  await renderSidebar();
+
+  sv.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Réglages</h2>
+      <p>Cette liste alimente le menu déroulant « Coordinateur » dans tous les projets. Le champ « Flux » propose un choix fixe (MI-0 / MI-1 / MI-2 / PRJ).</p>
+    </div>
+    <div class="settings-grid">
+      ${buildOptionListHtml('coordinateurs', 'Coordinateurs', 'ex. Jean Dupont')}
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🧩 Options de projet</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Définis des modules d'étapes optionnels (ex. « Tableau électrique »). Tu pourras ensuite les cocher au cas par cas à la création d'un projet, ou via « Modifier les informations » sur un projet existant — les étapes correspondantes s'ajoutent uniquement à ce projet-là.</p>
+        <div class="popt-list">
+          ${(appOptions.projectOptions && appOptions.projectOptions.length) ? appOptions.projectOptions.map((o,i) => `
+            <div class="popt-item">
+              <div class="popt-item-head">
+                <b>${escapeHtml(o.name)}</b>
+                <span class="popt-count">${(o.items||[]).length} point(s)</span>
+                <button class="popt-edit" data-idx="${i}" title="Modifier">✎</button>
+                <button class="popt-del" data-idx="${i}" title="Supprimer">×</button>
+              </div>
+              <div class="popt-items-preview">${(o.items||[]).map(t=>escapeHtml(t)).join(' · ')}</div>
+            </div>
+          `).join('') : '<div class="settings-empty">Aucune option définie pour l\u2019instant.</div>'}
+        </div>
+        <button class="btn btn-ghost" id="poptAddBtn" style="align-self:flex-start;">+ Nouvelle option de projet</button>
+      </div>
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>📝 Bloc-notes</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Note ici tout ce qui te sert de pense-bête : points de mise à jour, choses à ne pas oublier, changements à faire sur l'appli... Ce bloc est commun à toute l'appli et se sauvegarde automatiquement.</p>
+        <textarea id="notesTextarea" class="notes-textarea" placeholder="Écris ici tes notes…">${escapeHtml(notesText)}</textarea>
+        <div class="notes-saved-hint" id="notesSavedHint"></div>
+      </div>
+    </div>
+  `;
+
+  function addValue(key){
+    const input = sv.querySelector(`.settings-add-input[data-key="${key}"]`);
+    const val = input.value.trim();
+    if(!val) return;
+    if(!appOptions[key]) appOptions[key] = [];
+    if(appOptions[key].includes(val)){ showToast('Déjà présent dans la liste'); return; }
+    appOptions[key].push(val);
+    saveAppOptions();
+    renderSettingsView();
+  }
+
+  sv.querySelectorAll('.settings-add-btn').forEach(btn => btn.addEventListener('click', () => addValue(btn.dataset.key)));
+  sv.querySelectorAll('.settings-add-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter') addValue(inp.dataset.key); }));
+  sv.querySelectorAll('.settings-del').forEach(btn => btn.addEventListener('click', () => {
+    const key = btn.dataset.key, idx = +btn.dataset.idx;
+    appOptions[key].splice(idx, 1);
+    saveAppOptions();
+    renderSettingsView();
+  }));
+
+  $('#poptAddBtn').addEventListener('click', () => openProjectOptionModal(null));
+  $('#notesTextarea').addEventListener('input', e => { notesText = e.target.value; scheduleSaveNotes(); });
+  sv.querySelectorAll('.popt-edit').forEach(btn => btn.addEventListener('click', () => openProjectOptionModal(+btn.dataset.idx)));
+  sv.querySelectorAll('.popt-del').forEach(btn => btn.addEventListener('click', async () => {
+    const idx = +btn.dataset.idx;
+    const o = appOptions.projectOptions[idx];
+    const ok = await customConfirm(`Supprimer l'option « ${o.name} » ? Les projets qui l'avaient activée perdront ces étapes.`, { okText:'Supprimer' });
+    if(!ok) return;
+    appOptions.projectOptions.splice(idx, 1);
+    saveAppOptions();
+    renderSettingsView();
+  }));
+}
+
+function openProjectOptionModal(editIdx){
+  const existing = (editIdx !== null && editIdx !== undefined) ? appOptions.projectOptions[editIdx] : null;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>${existing ? 'Modifier l\u2019option' : 'Nouvelle option de projet'}</h3>
+      <label>Nom de l'option</label>
+      <input type="text" id="poptName" placeholder="ex. Tableau électrique" value="${existing ? escapeHtml(existing.name) : ''}">
+      <label>Étapes associées (une par ligne)</label>
+      <textarea id="poptItems" rows="6" style="width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:13px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);resize:vertical;">${existing ? escapeHtml((existing.items||[]).join('\n')) : ''}</textarea>
+      <div class="modal-actions">
+        <button class="btn-text" id="poptCancel">Annuler</button>
+        <button class="btn btn-primary" id="poptSave">${existing ? 'Enregistrer' : 'Créer l\u2019option'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  backdrop.querySelector('#poptName').focus();
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  backdrop.querySelector('#poptCancel').addEventListener('click', close);
+  backdrop.querySelector('#poptSave').addEventListener('click', () => {
+    const name = backdrop.querySelector('#poptName').value.trim();
+    const items = backdrop.querySelector('#poptItems').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if(!name){ showToast('Donne un nom à cette option'); return; }
+    if(!appOptions.projectOptions) appOptions.projectOptions = [];
+    if(existing){
+      existing.name = name;
+      existing.items = items;
+    } else {
+      appOptions.projectOptions.push({ id: uid(), name, items });
+    }
+    close();
+    saveAppOptions();
+    renderSettingsView();
+  });
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape'){ close(); } });
+}
+
+/* ============================= PROJECT LIFECYCLE ============================= */
+
+async function createProject(formVals, activeOptions){
+  const p = Object.assign({
+    id: uid(), name: 'Nouveau projet', client: '', numCommande: '', numFlux: '', coordinateur: '',
+    date: new Date().toISOString().slice(0,10),
+    echeanceType: 'weeks', echeanceWeeks: null, echeance: '',
+    createdAt: Date.now()
+  }, formVals || {});
+  projects.unshift(p);
+  await saveProjects();
+  await window.storage.set('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, lastModified:Date.now() }), false);
+  await openProject(p.id);
+  showToast('Projet créé');
+}
+
+async function openProject(id){
+  await flushPendingSave();
+  currentProjectId = id;
+  currentData = await loadProjectData(id);
+  if(!currentData.fichePhotos) currentData.fichePhotos = [];
+  if(!currentData.activeOptions) currentData.activeOptions = {};
+  currentView = 'project';
+  currentTab = 'checklist';
+  searchQuery = '';
+  statusFilter = 'all';
+  hideAllViews();
+  $('#projectView').style.display = 'flex';
+  $('#projectView').style.flexDirection = 'column';
+  $('#projectView').style.height = '100%';
+  renderProjectHeader();
+  renderTabs();
+  await renderSidebar();
+}
+
+async function deleteCurrentProject(){
+  if(!currentProjectId) return;
+  const p = projects.find(x => x.id === currentProjectId);
+  const ok = await customConfirm(`Supprimer définitivement le projet « ${p ? p.name : ''} » et toutes ses données (checklist, fiche, photos) ?`, { okText:'Supprimer' });
+  if(!ok) return;
+  try{ await window.storage.delete('project:' + currentProjectId, false); }catch(e){}
+  delete projectStatsCache[currentProjectId];
+  projects = projects.filter(x => x.id !== currentProjectId);
+  await saveProjects();
+  currentProjectId = null;
+  currentData = null;
+  await renderDashboardView();
+  showToast('Projet supprimé');
+}
+
+function populateOptionSelect(selectEl, list, currentVal){
+  const opts = ['<option value="">—</option>'];
+  const set = new Set(list);
+  if(currentVal && !set.has(currentVal)) opts.push(`<option value="${escapeHtml(currentVal)}">${escapeHtml(currentVal)} (hors liste)</option>`);
+  list.forEach(v => opts.push(`<option value="${escapeHtml(v)}" ${v===currentVal?'selected':''}>${escapeHtml(v)}</option>`));
+  selectEl.innerHTML = opts.join('');
+  selectEl.value = currentVal || '';
+}
+
+function fitTitleText(){
+  const el = $('#projTitleDisplay');
+  if(!el || !el.parentElement) return;
+  const maxWidth = el.parentElement.clientWidth;
+  if(!maxWidth) return;
+  let fontSize = 26;
+  el.style.fontSize = fontSize + 'px';
+  while(el.scrollWidth > maxWidth && fontSize > 13){
+    fontSize -= 1;
+    el.style.fontSize = fontSize + 'px';
+  }
+}
+window.addEventListener('resize', () => { if(currentView === 'project') fitTitleText(); });
+
+function formatEcheanceLabel(p){
+  if(!p.echeance) return '—';
+  const d = new Date(p.echeance).toLocaleDateString('fr-FR');
+  return p.echeanceType === 'weeks' && p.echeanceWeeks ? `${d} (${p.echeanceWeeks} sem.)` : d;
+}
+
+function renderProjectHeader(){
+  const p = projects.find(x => x.id === currentProjectId);
+  if(!p) return;
+  const titleEl = $('#projTitleDisplay');
+  titleEl.textContent = p.name || 'Sans nom';
+  titleEl.title = p.name || 'Sans nom';
+  fitTitleText();
+
+  const parts = [
+    ['Client', p.client], ['N° commande', p.numCommande], ['Coordinateur', p.coordinateur],
+    ['Flux', p.numFlux], ['Date', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
+    ['Échéance', p.echeance ? formatEcheanceLabel(p) : '']
+  ];
+  $('#phSummary').innerHTML = parts.map(([label, val], i) =>
+    `<span class="phs-item"><b>${label} :</b> ${escapeHtml(val || '—')}</span>${i < parts.length-1 ? '<span class="phs-sep">·</span>' : ''}`
+  ).join('');
+
+  updateChecklistTabCount();
+}
+
+function updateChecklistTabCount(){
+  const checked = countChecked(currentData);
+  const total = projectTotalItems(currentData);
+  $('#tabCountChecklist').textContent = `${checked}/${total}`;
+}
+
+/* ============================= CREATE / EDIT PROJECT MODAL (shared) ============================= */
+
+function buildProjectFormFieldsHtml(p, activeOptionsMap){
+  p = p || {};
+  const mode = p.echeanceType || 'weeks';
+  const opts = appOptions.projectOptions || [];
+  return `
+    <label>Nom du client</label>
+    <input type="text" id="pfClient" value="${escapeHtml(p.client||'')}" placeholder="ex. Nom du client">
+    <label>N° de commande</label>
+    <input type="text" id="pfNumCommande" value="${escapeHtml(p.numCommande||'')}" placeholder="ex. BC-2026-014">
+    <label>Nom du projet</label>
+    <input type="text" id="pfName" value="${escapeHtml(p.name||'')}" placeholder="ex. PRJ 4F-752">
+    <label>Coordinateur</label>
+    <select id="pfCoord"></select>
+    <label>Flux</label>
+    <select id="pfFlux"></select>
+    <label>Date</label>
+    <input type="date" id="pfDate" value="${p.date||''}">
+    <label>Échéance</label>
+    <div class="echeance-toggle">
+      <button type="button" class="etg-btn" data-mode="weeks">Semaines</button>
+      <button type="button" class="etg-btn" data-mode="date">Date fixe</button>
+    </div>
+    <div id="pfEcheanceWeeksWrap"><input type="number" id="pfEcheanceWeeks" min="1" step="1" placeholder="ex. 6" value="${p.echeanceWeeks||''}"><span class="echeance-hint" id="pfEcheanceHint"></span></div>
+    <div id="pfEcheanceDateWrap" style="display:none;"><input type="date" id="pfEcheanceDate" value="${mode==='date' ? (p.echeance||'') : ''}"></div>
+    ${opts.length ? `
+    <label>Options de projet</label>
+    <div class="options-panel" style="margin-top:0;">
+      <div class="options-panel-list">
+        ${opts.map(o => `<label class="option-toggle"><input type="checkbox" class="pf-opt-check" data-opt="${o.id}" ${activeOptionsMap && activeOptionsMap[o.id] ? 'checked':''}> ${escapeHtml(o.name)} <span class="opt-count">(${(o.items||[]).length} pts)</span></label>`).join('')}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+function wireProjectFormFields(backdrop, p){
+  p = p || {};
+  populateOptionSelect(backdrop.querySelector('#pfCoord'), appOptions.coordinateurs || [], p.coordinateur || '');
+  populateOptionSelect(backdrop.querySelector('#pfFlux'), FLUX_OPTIONS, p.numFlux || '');
+
+  const mode0 = p.echeanceType || 'weeks';
+  const weeksWrap = backdrop.querySelector('#pfEcheanceWeeksWrap');
+  const dateWrap = backdrop.querySelector('#pfEcheanceDateWrap');
+  const hint = backdrop.querySelector('#pfEcheanceHint');
+  const etgBtns = backdrop.querySelectorAll('.etg-btn');
+  let currentMode = mode0;
+
+  function updateHint(){
+    const w = parseFloat(backdrop.querySelector('#pfEcheanceWeeks').value);
+    if(currentMode === 'weeks' && w){
+      const base = p.createdAt || Date.now();
+      const d = new Date(base + w * 7 * 86400000);
+      hint.textContent = '= ' + d.toLocaleDateString('fr-FR');
+    } else {
+      hint.textContent = '';
+    }
+  }
+  function setMode(mode){
+    currentMode = mode;
+    etgBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    weeksWrap.style.display = mode === 'weeks' ? 'flex' : 'none';
+    dateWrap.style.display = mode === 'date' ? 'block' : 'none';
+    updateHint();
+  }
+  etgBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  backdrop.querySelector('#pfEcheanceWeeks').addEventListener('input', updateHint);
+  setMode(mode0);
+
+  return {
+    getEcheanceMode: () => currentMode
+  };
+}
+
+function readProjectFormValues(backdrop, base, echeanceMode){
+  const p = Object.assign({}, base);
+  p.client = backdrop.querySelector('#pfClient').value.trim();
+  p.numCommande = backdrop.querySelector('#pfNumCommande').value.trim();
+  p.name = backdrop.querySelector('#pfName').value.trim() || 'Nouveau projet';
+  p.coordinateur = backdrop.querySelector('#pfCoord').value;
+  p.numFlux = backdrop.querySelector('#pfFlux').value;
+  p.date = backdrop.querySelector('#pfDate').value || '';
+  p.echeanceType = echeanceMode;
+  if(echeanceMode === 'weeks'){
+    const w = parseFloat(backdrop.querySelector('#pfEcheanceWeeks').value);
+    p.echeanceWeeks = isNaN(w) ? null : w;
+    p.echeance = p.echeanceWeeks ? new Date((p.createdAt || Date.now()) + p.echeanceWeeks * 7 * 86400000).toISOString().slice(0,10) : '';
+  } else {
+    p.echeance = backdrop.querySelector('#pfEcheanceDate').value || '';
+  }
+  const activeOptions = {};
+  backdrop.querySelectorAll('.pf-opt-check').forEach(cb => { activeOptions[cb.dataset.opt] = cb.checked; });
+  return { p, activeOptions };
+}
+
+function openProjectFormModal(existingProject){
+  const isEdit = !!existingProject;
+  const activeOptionsMap = isEdit ? (currentData && currentData.activeOptions) || {} : {};
+  const base = isEdit ? existingProject : { date: new Date().toISOString().slice(0,10), createdAt: Date.now(), echeanceType:'weeks' };
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>${isEdit ? 'Modifier les informations' : 'Nouveau projet'}</h3>
+      <div class="modal-scroll">${buildProjectFormFieldsHtml(base, activeOptionsMap)}</div>
+      <div class="modal-actions">
+        <button class="btn-text" id="pfCancel">Annuler</button>
+        <button class="btn btn-primary" id="pfSave">${isEdit ? 'Enregistrer' : 'Créer le projet'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const ctl = wireProjectFormFields(backdrop, base);
+  backdrop.querySelector('#pfClient').focus();
+
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  backdrop.querySelector('#pfCancel').addEventListener('click', close);
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  backdrop.querySelector('#pfSave').addEventListener('click', async () => {
+    const { p: formVals, activeOptions } = readProjectFormValues(backdrop, base, ctl.getEcheanceMode());
+    close();
+    if(isEdit){
+      Object.assign(existingProject, formVals);
+      if(currentData){
+        currentData.activeOptions = activeOptions;
+        scheduleSaveProjectData();
+      }
+      await saveProjects();
+      renderProjectHeader();
+      renderTabs();
+      await renderSidebar();
+      showToast('Informations mises à jour');
+    } else {
+      await createProject(formVals, activeOptions);
+    }
+  });
+}
+
+$('#deleteProjectBtn').addEventListener('click', deleteCurrentProject);
+$('#editProjectInfoBtn').addEventListener('click', () => {
+  const p = projects.find(x => x.id === currentProjectId);
+  if(p) openProjectFormModal(p);
+});
+$('#dashboardNavBtn').addEventListener('click', renderDashboardView);
+$('#settingsNavBtn').addEventListener('click', renderSettingsView);
+$('#newProjectBtn').addEventListener('click', () => openProjectFormModal(null));
+$('#themeToggleBtn').addEventListener('click', toggleTheme);
+$('#exportBtn').addEventListener('click', exportAllData);
+$('#importBtn').addEventListener('click', () => $('#importFileInput').click());
+$('#importFileInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(f) importAllData(f);
+  e.target.value = '';
+});
+
+/* ============================= TABS ============================= */
+
+$$('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => { currentTab = btn.dataset.tab; renderTabs(); });
+});
+
+function renderTabs(){
+  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+  if(currentTab === 'checklist') renderChecklistTab();
+  else if(currentTab === 'fiche') renderFicheTab();
+  else renderRapportTab();
+}
+
+/* ============================= CHECKLIST TAB ============================= */
+
+function itemMatchesSearch(label, note){
+  if(!searchQuery) return true;
+  const nq = normalize(searchQuery);
+  return normalize(label).includes(nq) || normalize(note || '').includes(nq);
+}
+function itemMatchesStatus(checked){
+  if(statusFilter === 'all') return true;
+  if(statusFilter === 'todo') return !checked;
+  return checked;
+}
+
+function renderChecklistTab(){
+  const container = $('#tabContent');
+  const filtering = !!searchQuery || statusFilter !== 'all';
+
+  const hadFocus = document.activeElement && document.activeElement.id === 'checklistSearch';
+  const caret = hadFocus ? document.activeElement.selectionStart : null;
+
+  const parties = projectTemplate(currentData).map(partie => {
+    let partieChecked = 0, partieTotal = 0;
+    const sectionBlocks = partie.sections.map(sec => {
+      let secChecked = 0;
+      const visibleItems = [];
+      sec.items.forEach((label, idx) => {
+        const k = itemKey(sec.id, idx);
+        const st = currentData.checklist[k] || { checked:false, note:'', photos:[] };
+        if(st.checked){ secChecked++; partieChecked++; }
+        partieTotal++;
+        if(itemMatchesSearch(label, st.note) && itemMatchesStatus(st.checked)){
+          const photos = st.photos || [];
+          const photosHtml = photos.map((ph,pi) => `
+            <div class="photo-thumb"><img src="${ph}" data-key="${k}" data-idx="${pi}"><button class="photo-del" data-key="${k}" data-idx="${pi}">×</button></div>
+          `).join('');
+          visibleItems.push(`
+            <div class="item-row ${st.checked?'done':''}" data-key="${k}">
+              <input type="checkbox" class="item-check" ${st.checked?'checked':''} data-key="${k}">
+              <div class="item-main">
+                <div class="item-label" data-key="${k}">${escapeHtml(label)}</div>
+                <textarea class="item-note" placeholder="Ajouter une note…" data-key="${k}">${escapeHtml(st.note||'')}</textarea>
+                <div class="item-photos">
+                  ${photosHtml}
+                  <label class="photo-add-btn">📷<input type="file" accept="image/*" capture="environment" class="photo-input" data-key="${k}" hidden></label>
+                </div>
+              </div>
+            </div>
+          `);
+        }
+      });
+      if(filtering && visibleItems.length === 0) return '';
+      const collapsedKey = 'sec_' + sec.id;
+      const isCollapsed = filtering ? false : !!currentData.collapsed[collapsedKey];
+      return `
+        <div class="section-block ${isCollapsed?'collapsed':''}" data-sec="${sec.id}">
+          <div class="section-head" data-toggle-sec="${sec.id}">
+            <h4><span class="chev-s">▾</span>${escapeHtml(sec.title)}</h4>
+            <span class="sec-count">${secChecked}/${sec.items.length}</span>
+          </div>
+          <div class="section-items">${visibleItems.join('')}</div>
+        </div>
+      `;
+    }).filter(Boolean);
+
+    if(filtering && sectionBlocks.length === 0) return '';
+    const collapsedKeyP = 'partie_' + partie.id;
+    const isCollapsedP = filtering ? false : !!currentData.collapsed[collapsedKeyP];
+    const pct = partieTotal ? Math.round((partieChecked/partieTotal)*100) : 0;
+    return `
+      <div class="partie ${isCollapsedP?'collapsed':''}" data-partie="${partie.id}">
+        <div class="partie-head" data-toggle-partie="${partie.id}">
+          <h3><span class="chevron">▾</span> ${escapeHtml(partie.title)}</h3>
+          <div class="partie-progress">
+            <div class="mini-bar"><div class="mini-bar-fill" style="width:${pct}%"></div></div>
+            ${partieChecked}/${partieTotal}
+          </div>
+        </div>
+        <div class="partie-body">${sectionBlocks.join('')}</div>
+      </div>
+    `;
+  }).filter(Boolean);
+
+  const toolbarHtml = `
+    <div class="checklist-toolbar">
+      <input type="text" id="checklistSearch" placeholder="Rechercher un point de la checklist…" value="${escapeHtml(searchQuery)}">
+      <div class="filter-pills">
+        <button class="pill ${statusFilter==='all'?'active':''}" data-filter="all">Tous</button>
+        <button class="pill ${statusFilter==='todo'?'active':''}" data-filter="todo">À faire</button>
+        <button class="pill ${statusFilter==='done'?'active':''}" data-filter="done">Fait</button>
+      </div>
+    </div>
+  `;
+
+  const bodyHtml = parties.length ? parties.join('') : (filtering ? '<div class="no-results">Aucun point ne correspond à la recherche / au filtre.</div>' : '');
+  container.innerHTML = toolbarHtml + bodyHtml;
+
+  if(hadFocus){
+    const si = $('#checklistSearch');
+    si.focus();
+    if(caret !== null) si.setSelectionRange(caret, caret);
+  }
+
+  $('#checklistSearch').addEventListener('input', e => { searchQuery = e.target.value; renderChecklistTab(); });
+  $$('.pill').forEach(btn => btn.addEventListener('click', () => { statusFilter = btn.dataset.filter; renderChecklistTab(); }));
+
+  $$('[data-toggle-partie]').forEach(el => el.addEventListener('click', () => {
+    const key = 'partie_' + el.dataset.togglePartie;
+    currentData.collapsed[key] = !currentData.collapsed[key];
+    scheduleSaveProjectData();
+    renderChecklistTab();
+  }));
+  $$('[data-toggle-sec]').forEach(el => el.addEventListener('click', () => {
+    const key = 'sec_' + el.dataset.toggleSec;
+    currentData.collapsed[key] = !currentData.collapsed[key];
+    scheduleSaveProjectData();
+    renderChecklistTab();
+  }));
+  $$('.item-check').forEach(cb => cb.addEventListener('change', () => {
+    const k = cb.dataset.key;
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    currentData.checklist[k].checked = cb.checked;
+    updateChecklistTabCount();
+    scheduleSaveProjectData();
+    renderSidebar();
+    renderChecklistTab();
+  }));
+  $$('.item-label').forEach(lbl => lbl.addEventListener('click', () => {
+    const k = lbl.dataset.key;
+    const cb = document.querySelector(`.item-check[data-key="${k}"]`);
+    cb.checked = !cb.checked;
+    cb.dispatchEvent(new Event('change'));
+  }));
+  $$('.item-note').forEach(ta => ta.addEventListener('input', () => {
+    const k = ta.dataset.key;
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    currentData.checklist[k].note = ta.value;
+    scheduleSaveProjectData();
+  }));
+  $$('.photo-input').forEach(inp => inp.addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const k = inp.dataset.key;
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    if(!currentData.checklist[k].photos) currentData.checklist[k].photos = [];
+    if(currentData.checklist[k].photos.length >= 3){ showToast('Maximum 3 photos par point'); return; }
+    try{
+      const dataUrl = await compressImage(file);
+      currentData.checklist[k].photos.push(dataUrl);
+      if(!dataSizeOk(currentData)){
+        currentData.checklist[k].photos.pop();
+        showToast('Limite de stockage atteinte — photo non ajoutée');
+        return;
+      }
+      scheduleSaveProjectData();
+      renderChecklistTab();
+    }catch(err){ showToast('Impossible de charger la photo'); }
+  }));
+  $$('.photo-del').forEach(btn => btn.addEventListener('click', async e => {
+    e.stopPropagation();
+    const ok = await customConfirm('Supprimer cette photo ?', { okText:'Supprimer' });
+    if(!ok) return;
+    const k = btn.dataset.key, idx = +btn.dataset.idx;
+    currentData.checklist[k].photos.splice(idx, 1);
+    scheduleSaveProjectData();
+    renderChecklistTab();
+  }));
+  $$('.photo-thumb img').forEach(img => img.addEventListener('click', e => { e.stopPropagation(); showLightbox(img.src); }));
+}
+
+/* ============================= FICHE TAB ============================= */
+
+function renderFicheGallery(){
+  const photos = currentData.fichePhotos || [];
+  const items = photos.map((ph, i) => `
+    <div class="fg-item">
+      <img src="${ph.dataUrl}" data-idx="${i}" class="fg-img">
+      <button class="fg-del" data-idx="${i}">×</button>
+      <input type="text" class="fg-caption" data-idx="${i}" placeholder="Légende…" value="${escapeHtml(ph.caption||'')}">
+    </div>
+  `).join('');
+  return `
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>📷 Photos du site</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <div class="fg-grid">
+          ${items}
+          <label class="fg-add">📷<span>Ajouter une photo</span><input type="file" accept="image/*" capture="environment" id="ficheGalleryInput" hidden></label>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderFicheTab(){
+  const container = $('#tabContent');
+  const fieldSectionsHtml = FICHE_TEMPLATE.map(sec => {
+    const fieldsHtml = sec.fields.map(f => {
+      const val = currentData.fiche[f.id] || '';
+      let control = '';
+      if(f.type === 'textarea'){
+        control = `<textarea data-fid="${f.id}">${escapeHtml(val)}</textarea>`;
+      } else if(f.type === 'select'){
+        const opts = f.options.map(o => `<option value="${escapeHtml(o)}" ${o===val?'selected':''}>${o===''?'—':escapeHtml(o)}</option>`).join('');
+        control = `<select data-fid="${f.id}">${opts}</select>`;
+      } else {
+        control = `<input type="text" data-fid="${f.id}" value="${escapeHtml(val)}">`;
+      }
+      return `<div class="fiche-field ${f.wide?'wide':''}"><label>${escapeHtml(f.label)}</label>${control}</div>`;
+    }).join('');
+    return `<div class="fiche-section"><div class="fiche-section-head"><h4>${escapeHtml(sec.title)}</h4></div><div class="fiche-fields">${fieldsHtml}</div></div>`;
+  }).join('');
+
+  container.innerHTML = renderFicheGallery() + fieldSectionsHtml;
+
+  const galleryInput = $('#ficheGalleryInput');
+  if(galleryInput){
+    galleryInput.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if(!file) return;
+      if(!currentData.fichePhotos) currentData.fichePhotos = [];
+      if(currentData.fichePhotos.length >= 8){ showToast('Maximum 8 photos dans la galerie'); return; }
+      try{
+        const dataUrl = await compressImage(file);
+        currentData.fichePhotos.push({ dataUrl, caption:'' });
+        if(!dataSizeOk(currentData)){
+          currentData.fichePhotos.pop();
+          showToast('Limite de stockage atteinte — photo non ajoutée');
+          return;
+        }
+        scheduleSaveProjectData();
+        renderFicheTab();
+      }catch(err){ showToast('Impossible de charger la photo'); }
+    });
+  }
+  $$('.fg-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer cette photo ?', { okText:'Supprimer' });
+    if(!ok) return;
+    currentData.fichePhotos.splice(+btn.dataset.idx, 1);
+    scheduleSaveProjectData();
+    renderFicheTab();
+  }));
+  $$('.fg-caption').forEach(inp => inp.addEventListener('input', () => {
+    currentData.fichePhotos[+inp.dataset.idx].caption = inp.value;
+    scheduleSaveProjectData();
+  }));
+  $$('.fg-img').forEach(img => img.addEventListener('click', () => showLightbox(img.src)));
+
+  container.querySelectorAll('[data-fid]').forEach(el => {
+    el.addEventListener('input', () => { currentData.fiche[el.dataset.fid] = el.value; scheduleSaveProjectData(); });
+    if(el.tagName === 'SELECT'){
+      el.addEventListener('change', () => { currentData.fiche[el.dataset.fid] = el.value; scheduleSaveProjectData(); });
+    }
+  });
+}
+
+/* ============================= RAPPORT TAB ============================= */
+
+function buildReportHtmlFragment(){
+  const p = projects.find(x => x.id === currentProjectId);
+  const checked = countChecked(currentData);
+  const total = projectTotalItems(currentData);
+  const pct = Math.round((checked/total)*100);
+
+  const checklistHtml = projectTemplate(currentData).map(partie => {
+    const secs = partie.sections.map(sec => {
+      const items = sec.items.map((label, idx) => {
+        const k = itemKey(sec.id, idx);
+        const st = currentData.checklist[k] || { checked:false, note:'', photos:[] };
+        const photosHtml = (st.photos && st.photos.length) ? `<div class="rp-photos">${st.photos.map(ph=>`<img src="${ph}" class="rp-photo">`).join('')}</div>` : '';
+        return `<div class="rp-item ${st.checked?'done':'pending'}">
+          <div class="mark">${st.checked?'✓':'○'}</div>
+          <div><div>${escapeHtml(label)}</div>${st.note?`<div class="note">${escapeHtml(st.note)}</div>`:''}</div>
+          ${photosHtml}
+        </div>`;
+      }).join('');
+      return `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}`;
+    }).join('');
+    return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
+  }).join('');
+
+  const ficheHtml = FICHE_TEMPLATE.map(sec => {
+    const rows = sec.fields.map(f => {
+      const val = currentData.fiche[f.id];
+      return `<div class="rp-fiche-row"><b>${escapeHtml(f.label)} : </b><span class="val ${val?'':'empty'}">${val?escapeHtml(val):'non renseigné'}</span></div>`;
+    }).join('');
+    return `<h3 class="rp-h3">${escapeHtml(sec.title)}</h3>${rows}`;
+  }).join('');
+
+  const galleryPhotos = currentData.fichePhotos || [];
+  const galleryHtml = galleryPhotos.length ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">PHOTOS DU SITE</h3>
+    <div class="rp-gallery">
+      ${galleryPhotos.map(ph => `<div class="rp-gallery-item"><img src="${ph.dataUrl}"><div class="rp-gallery-caption">${escapeHtml(ph.caption||'')}</div></div>`).join('')}
+    </div>` : '';
+
+  return `
+    <h2 class="rp-title">${escapeHtml(p.name || 'Projet')}</h2>
+    <div class="rp-sub">Rapport complet de projet — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    <div class="rp-meta-grid">
+      <div><b>Client :</b> ${escapeHtml(p.client || '—')}</div>
+      <div><b>N° de commande :</b> ${escapeHtml(p.numCommande || '—')}</div>
+      <div><b>Flux :</b> ${escapeHtml(p.numFlux || '—')}</div>
+      <div><b>Coordinateur :</b> ${escapeHtml(p.coordinateur || '—')}</div>
+      <div><b>Date :</b> ${p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '—'}</div>
+      <div><b>Échéance :</b> ${p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</div>
+      <div><b>Avancement checklist :</b> ${checked}/${total} (${pct}%)</div>
+    </div>
+    <h3 class="rp-h3" style="background:var(--amber-dark)">CHECKLIST DE PLANIFICATION</h3>
+    ${checklistHtml}
+    <h3 class="rp-h3" style="background:var(--amber-dark)">FICHE DE VISITE DE CHANTIER</h3>
+    ${ficheHtml}
+    ${galleryHtml}
+  `;
+}
+
+function renderRapportTab(){
+  const container = $('#tabContent');
+  const checked = countChecked(currentData);
+  const total = projectTotalItems(currentData);
+  const remaining = total - checked;
+  let filledFiche = 0, totalFiche = 0;
+  FICHE_TEMPLATE.forEach(s => s.fields.forEach(f => { totalFiche++; if(currentData.fiche[f.id]) filledFiche++; }));
+
+  container.innerHTML = `
+    <div id="reportActions">
+      <button class="btn btn-primary" id="downloadReportBtn">⬇ Télécharger le rapport (HTML)</button>
+      <button class="btn btn-ghost" id="printReportBtn">🖶 Imprimer / Enregistrer en PDF</button>
+    </div>
+    <div class="stat-strip">
+      <div class="stat-box"><div class="n">${checked}/${total}</div><div class="l">Points cochés</div></div>
+      <div class="stat-box"><div class="n">${remaining}</div><div class="l">Points restants</div></div>
+      <div class="stat-box"><div class="n">${filledFiche}/${totalFiche}</div><div class="l">Champs fiche renseignés</div></div>
+    </div>
+    <div id="reportPreview">${buildReportHtmlFragment()}</div>
+  `;
+  $('#downloadReportBtn').addEventListener('click', downloadReport);
+  $('#printReportBtn').addEventListener('click', () => window.print());
+}
+
+function downloadReport(){
+  const p = projects.find(x => x.id === currentProjectId);
+  const fragment = buildReportHtmlFragment();
+  const styles = document.querySelector('style').innerHTML;
+  const full = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport — ${escapeHtml(p.name)}</title>
+  <style>${styles}
+  body{padding:40px;background:#fff;}
+  #reportPreview{border:none;padding:0;max-width:820px;margin:0 auto;}
+  </style></head><body><div id="reportPreview">${fragment}</div></body></html>`;
+  const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeName = (p.name || 'projet').replace(/[^a-z0-9]+/gi,'_').toLowerCase();
+  a.href = url;
+  a.download = `rapport_${safeName}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Rapport téléchargé');
+}
+
+/* ============================= EXPORT / IMPORT ALL DATA ============================= */
+
+async function exportAllData(){
+  await flushPendingSave();
+  const payload = { version:1, exportedAt:new Date().toISOString(), projects, projectData:{} };
+  for(const p of projects){
+    payload.projectData[p.id] = (p.id === currentProjectId && currentData) ? currentData : await loadProjectData(p.id);
+  }
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `gestion_de_projet_sauvegarde_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Sauvegarde exportée');
+}
+
+async function importAllData(file){
+  try{
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    if(!payload || !Array.isArray(payload.projects)) throw new Error('format invalide');
+    const ok = await customConfirm(`Importer ${payload.projects.length} projet(s) ? Les projets ayant le même identifiant seront remplacés.`, { okText:'Importer', danger:false });
+    if(!ok) return;
+    for(const p of payload.projects){
+      const idx = projects.findIndex(x => x.id === p.id);
+      if(idx >= 0) projects[idx] = p; else projects.push(p);
+      const d = (payload.projectData && payload.projectData[p.id]) ? payload.projectData[p.id] : { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{} };
+      await withRetry(() => window.storage.set('project:' + p.id, JSON.stringify(d), false), 'import');
+    }
+    projectStatsCache = {};
+    await saveProjects();
+    currentProjectId = null;
+    currentData = null;
+    await renderDashboardView();
+    showToast('Import terminé');
+  }catch(e){
+    showToast("Échec de l'import : fichier invalide");
+  }
+}
+
+/* ============================= INIT ============================= */
+
+async function init(){
+  appSettings = await loadSettings();
+  applyTheme();
+  appOptions = await loadAppOptions();
+  notesText = await loadNotes();
+  await loadProjects();
+  await renderDashboardView();
+}
+init();
+
+window.addEventListener('beforeunload', () => { if(saveTimer) saveProjectDataNow(); });
+</script>
+</body>
+</html>
