@@ -714,68 +714,52 @@ function dataSizeOk(data){
 
 /* ============================= THEME & SETTINGS ============================= */
 
-/* ============================= STORAGE HELPERS ============================= */
+/* ============================= LOCAL STORAGE (device-local, like CarbuTrack) =============================
+   Everything is saved to the browser's localStorage: instant, synchronous, no network involved.
+   This means data lives only on this device/browser — it is NOT shared between different people
+   or different browsers. Requires the file to be hosted/opened outside claude.ai (localStorage is
+   disabled inside claude.ai's artifact preview). */
 
-let writeQueues = {};
+const LS_PREFIX = 'gestionProjet_';
+
+function lsGet(key){
+  try{ return localStorage.getItem(LS_PREFIX + key); }
+  catch(e){ return null; }
+}
+function lsSet(key, value){
+  try{ localStorage.setItem(LS_PREFIX + key, value); return true; }
+  catch(e){
+    console.error('localStorage set failed for ' + key, e);
+    showToast('⚠ Stockage local plein — libère de la place (ex. supprime d\u2019anciennes photos)');
+    return false;
+  }
+}
+function lsDelete(key){
+  try{ localStorage.removeItem(LS_PREFIX + key); }catch(e){}
+}
+
 let saveStatusIdleTimer = null;
-
-function setSaveStatus(state){
+function flashSaveStatus(ok){
   const el = $('#saveStatusBadge');
   if(!el) return;
   clearTimeout(saveStatusIdleTimer);
-  if(state === 'saving'){
-    el.className = 'save-status saving';
-    el.textContent = '● Sauvegarde…';
-  } else if(state === 'error'){
-    el.className = 'save-status error';
-    el.textContent = '⚠ Échec — nouvelle tentative en cours';
-  } else {
+  if(ok){
     el.className = 'save-status saved';
-    el.textContent = '✓ Synchronisé';
-    saveStatusIdleTimer = setTimeout(() => { el.className = 'save-status'; el.textContent = ''; }, 2500);
+    el.textContent = '✓ Enregistré';
+  } else {
+    el.className = 'save-status error';
+    el.textContent = '⚠ Stockage plein';
+    return;
   }
+  saveStatusIdleTimer = setTimeout(() => { el.className = 'save-status'; el.textContent = ''; }, 1600);
 }
 
-async function withRetry(fn, label, retries){
-  retries = (retries === undefined) ? 2 : retries;
-  setSaveStatus('saving');
-  let lastErr;
-  for(let i = 0; i <= retries; i++){
-    try{
-      const r = await fn();
-      setSaveStatus('saved');
-      return r;
-    }
-    catch(e){
-      lastErr = e;
-      if(i < retries) await new Promise(r => setTimeout(r, 500 * (i+1)));
-    }
-  }
-  setSaveStatus('error');
-  console.error(label + ' failed after retries', lastErr);
-  showToast('⚠ Échec de la sauvegarde (' + label + ') — vérifiez votre connexion');
-  throw lastErr;
+function loadSettings(){
+  const v = lsGet('settings');
+  return v ? JSON.parse(v) : { theme:'light' };
 }
-
-// Ensures writes to the same storage key never overlap: each new write waits
-// for the previous one (success or failure) to finish before starting, which
-// avoids the server-side race conditions that were causing frequent save errors.
-function queuedWrite(key, fn){
-  const prev = writeQueues[key] || Promise.resolve();
-  const run = prev.catch(() => {}).then(fn);
-  writeQueues[key] = run.catch(() => {});
-  return run;
-}
-
-async function loadSettings(){
-  try{
-    const res = await window.storage.get('settings', false);
-    return res && res.value ? JSON.parse(res.value) : { theme:'light' };
-  }catch(e){ return { theme:'light' }; }
-}
-async function saveSettings(){
-  try{ await queuedWrite('settings', () => withRetry(() => window.storage.set('settings', JSON.stringify(appSettings), false), 'réglages')); }
-  catch(e){}
+function saveSettings(){
+  flashSaveStatus(lsSet('settings', JSON.stringify(appSettings)));
 }
 function applyTheme(){
   document.body.classList.toggle('theme-dark', appSettings.theme === 'dark');
@@ -790,43 +774,35 @@ function toggleTheme(){
 
 /* ============================= STORAGE ============================= */
 
-async function loadProjects(){
-  try{
-    const res = await window.storage.get('projects', false);
-    projects = res && res.value ? JSON.parse(res.value) : [];
-  }catch(e){ projects = []; }
+function loadProjects(){
+  const v = lsGet('projects');
+  projects = v ? JSON.parse(v) : [];
 }
-async function saveProjects(){
-  try{ await queuedWrite('projects', () => withRetry(() => window.storage.set('projects', JSON.stringify(projects), false), 'liste des projets')); }
-  catch(e){}
+function saveProjects(){
+  flashSaveStatus(lsSet('projects', JSON.stringify(projects)));
 }
-async function loadProjectData(id){
-  try{
-    const res = await window.storage.get('project:' + id, false);
-    if(res && res.value) return JSON.parse(res.value);
-  }catch(e){}
+function loadProjectData(id){
+  const v = lsGet('project:' + id);
+  if(v) return JSON.parse(v);
   return { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, generalNotes:'', customChecklist:[], lastModified:null };
 }
 function scheduleSaveProjectData(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveProjectDataNow, 400);
+  saveTimer = setTimeout(() => saveProjectDataNow(), 300);
 }
-async function saveProjectDataNow(){
+function saveProjectDataNow(){
   if(!currentProjectId || !currentData) return;
   currentData.lastModified = Date.now();
-  const id = currentProjectId;
-  const payload = JSON.stringify(currentData);
-  try{ await queuedWrite('project:' + id, () => withRetry(() => window.storage.set('project:' + id, payload, false), 'projet')); }
-  catch(e){}
+  flashSaveStatus(lsSet('project:' + currentProjectId, JSON.stringify(currentData)));
 }
-async function flushPendingSave(){
-  if(saveTimer){ clearTimeout(saveTimer); saveTimer = null; await saveProjectDataNow(); }
+function flushPendingSaveSilent(){
+  if(saveTimer){ clearTimeout(saveTimer); saveTimer = null; saveProjectDataNow(); }
 }
 
 async function flushAllPending(){
-  await flushPendingSave();
-  await flushSeanceSave('matin');
-  await flushSeanceSave('ope');
+  flushPendingSaveSilent();
+  flushSeanceSaveSilent('matin');
+  flushSeanceSaveSilent('ope');
 }
 
 /* ============================= PROGRESS CALC (base template + active project options) ============================= */
@@ -1050,26 +1026,23 @@ function wireSeanceSummaryClicks(container){
   container.querySelectorAll('[data-seance]').forEach(el => el.addEventListener('click', () => renderSeanceView(el.dataset.seance)));
 }
 
-async function loadSeance(key){
-  try{
-    const res = await window.storage.get(key, false);
-    return res && res.value ? JSON.parse(res.value) : [];
-  }catch(e){ return []; }
+function loadSeance(key){
+  const v = lsGet(key);
+  return v ? JSON.parse(v) : [];
 }
-async function saveSeance(id){
+function saveSeance(id){
   const key = seanceStorageKey(id);
   const arr = getSeanceState(id);
-  try{ await queuedWrite(key, () => withRetry(() => window.storage.set(key, JSON.stringify(arr), false), seanceTitleFor(id))); }
-  catch(e){}
+  flashSaveStatus(lsSet(key, JSON.stringify(arr)));
 }
 
 let seanceSaveTimers = {};
 function scheduleSaveSeance(id){
   clearTimeout(seanceSaveTimers[id]);
-  seanceSaveTimers[id] = setTimeout(() => saveSeance(id), 400);
+  seanceSaveTimers[id] = setTimeout(() => saveSeance(id), 300);
 }
-async function flushSeanceSave(id){
-  if(seanceSaveTimers[id]){ clearTimeout(seanceSaveTimers[id]); seanceSaveTimers[id] = null; await saveSeance(id); }
+function flushSeanceSaveSilent(id){
+  if(seanceSaveTimers[id]){ clearTimeout(seanceSaveTimers[id]); seanceSaveTimers[id] = null; saveSeance(id); }
 }
 
 async function renderSeanceView(id){
@@ -1149,33 +1122,25 @@ let appOptions = { coordinateurs:[], flux:[], projectOptions:[] };
 let notesText = '';
 let notesSaveTimer = null;
 
-async function loadNotes(){
-  try{
-    const res = await window.storage.get('projectNotes', false);
-    return res && res.value ? res.value : '';
-  }catch(e){ return ''; }
+function loadNotes(){
+  return lsGet('projectNotes') || '';
 }
 function scheduleSaveNotes(){
   clearTimeout(notesSaveTimer);
-  notesSaveTimer = setTimeout(async () => {
-    try{
-      await queuedWrite('projectNotes', () => withRetry(() => window.storage.set('projectNotes', notesText, false), 'bloc-notes'));
-      const hint = $('#notesSavedHint');
-      if(hint) hint.textContent = 'Enregistré à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-    }catch(e){}
-  }, 500);
+  notesSaveTimer = setTimeout(() => {
+    lsSet('projectNotes', notesText);
+    const hint = $('#notesSavedHint');
+    if(hint) hint.textContent = 'Enregistré à ' + new Date().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }, 300);
 }
 
-async function loadAppOptions(){
-  try{
-    const res = await window.storage.get('appOptions', false);
-    const v = res && res.value ? JSON.parse(res.value) : {};
-    return { coordinateurs: v.coordinateurs || [], flux: v.flux || [], projectOptions: v.projectOptions || [] };
-  }catch(e){ return { coordinateurs:[], flux:[], projectOptions:[] }; }
+function loadAppOptions(){
+  const v = lsGet('appOptions');
+  const parsed = v ? JSON.parse(v) : {};
+  return { coordinateurs: parsed.coordinateurs || [], flux: parsed.flux || [], projectOptions: parsed.projectOptions || [] };
 }
-async function saveAppOptions(){
-  try{ await queuedWrite('appOptions', () => withRetry(() => window.storage.set('appOptions', JSON.stringify(appOptions), false), 'réglages listes')); }
-  catch(e){}
+function saveAppOptions(){
+  flashSaveStatus(lsSet('appOptions', JSON.stringify(appOptions)));
 }
 
 function buildOptionListHtml(key, title, placeholder){
@@ -1213,6 +1178,7 @@ async function renderSettingsView(){
     <div class="fiche-section">
       <div class="fiche-section-head"><h4>🎨 Apparence &amp; données</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Toutes les données de cette appli sont enregistrées localement, dans ce navigateur, sur cet appareil uniquement — elles ne sont pas partagées avec d'autres personnes ni d'autres appareils. Utilise « Exporter » / « Importer » pour transférer ou sauvegarder tes projets ailleurs.</p>
         <button id="themeToggleBtn" class="btn btn-ghost" style="align-self:flex-start;">${appSettings.theme === 'dark' ? '☀️ Passer en mode clair' : '🌙 Passer en mode sombre'}</button>
         <div class="footer-row" style="max-width:360px;">
           <button id="exportBtn" class="btn btn-ghost" style="flex:1;">⬇ Exporter mes données</button>
@@ -1350,7 +1316,7 @@ async function createProject(formVals, activeOptions){
   }, formVals || {});
   projects.unshift(p);
   await saveProjects();
-  await withRetry(() => window.storage.set('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, generalNotes:'', customChecklist:[], lastModified:Date.now() }), false), 'nouveau projet');
+  lsSet('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, generalNotes:'', customChecklist:[], lastModified:Date.now() }));
   await openProject(p.id);
   showToast('Projet créé');
 }
@@ -1381,7 +1347,7 @@ async function deleteCurrentProject(){
   const p = projects.find(x => x.id === currentProjectId);
   const ok = await customConfirm(`Supprimer définitivement le projet « ${p ? p.name : ''} » et toutes ses données (checklist, fiche, photos) ?`, { okText:'Supprimer' });
   if(!ok) return;
-  try{ await window.storage.delete('project:' + currentProjectId, false); }catch(e){}
+  lsDelete('project:' + currentProjectId);
   delete projectStatsCache[currentProjectId];
   projects = projects.filter(x => x.id !== currentProjectId);
   await saveProjects();
@@ -2116,10 +2082,10 @@ async function importAllData(file){
       const idx = projects.findIndex(x => x.id === p.id);
       if(idx >= 0) projects[idx] = p; else projects.push(p);
       const d = (payload.projectData && payload.projectData[p.id]) ? payload.projectData[p.id] : { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, generalNotes:'', customChecklist:[] };
-      await queuedWrite('project:' + p.id, () => withRetry(() => window.storage.set('project:' + p.id, JSON.stringify(d), false), 'import'));
+      lsSet('project:' + p.id, JSON.stringify(d));
     }
     projectStatsCache = {};
-    await saveProjects();
+    saveProjects();
     currentProjectId = null;
     currentData = null;
     await renderDashboardView();
@@ -2132,18 +2098,22 @@ async function importAllData(file){
 /* ============================= INIT ============================= */
 
 async function init(){
-  appSettings = await loadSettings();
+  appSettings = loadSettings();
   applyTheme();
-  appOptions = await loadAppOptions();
-  notesText = await loadNotes();
-  seanceMatin = await loadSeance('seance_matin');
-  seanceOpe = await loadSeance('seance_ope');
-  await loadProjects();
+  appOptions = loadAppOptions();
+  notesText = loadNotes();
+  seanceMatin = loadSeance('seance_matin');
+  seanceOpe = loadSeance('seance_ope');
+  loadProjects();
   await renderDashboardView();
 }
 init();
 
-window.addEventListener('beforeunload', () => { if(saveTimer) saveProjectDataNow(); });
+window.addEventListener('beforeunload', () => {
+  if(saveTimer) saveProjectDataNow();
+  Object.keys(seanceSaveTimers).forEach(id => { if(seanceSaveTimers[id]) saveSeance(id); });
+  if(notesSaveTimer){ clearTimeout(notesSaveTimer); lsSet('projectNotes', notesText); }
+});
 </script>
 </body>
 </html>
