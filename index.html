@@ -215,6 +215,12 @@
   .modal select{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);}
   .modal select:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
   .modal-scroll{max-height:70vh;overflow-y:auto;padding-right:4px;}
+  .manual-modal{width:560px;}
+  .manual-scroll{max-height:65vh;}
+  .manual-section{padding:12px 0;border-bottom:1px solid var(--line);}
+  .manual-section:last-child{border-bottom:none;}
+  .manual-section-title{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--graphite);margin-bottom:5px;}
+  .manual-section-body{font-size:12.5px;color:var(--steel);line-height:1.6;}
 
   #settingsView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
@@ -234,19 +240,73 @@
   .popt-edit:hover{color:var(--amber-dark);}
   .popt-del:hover{color:var(--danger);}
   .popt-items-preview{font-size:11.5px;color:var(--steel-light);margin-top:5px;line-height:1.5;}
+
+  .btn-sm{padding:6px 11px;font-size:11.5px;}
+  .flux-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .flux-tab-btn{border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:8px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;}
+  .flux-tab-btn.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
+  .flux-partie-card{background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:14px;margin-bottom:14px;}
+  .flux-partie-head{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+  .flux-partie-head .flux-partie-title{font-family:var(--font-display);font-size:15px;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:7px 10px;background:var(--paper-2);color:var(--graphite);flex:1;}
+  .flux-partie-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:14px;flex-shrink:0;}
+  .flux-partie-del:hover{color:var(--danger);}
+  .flux-section-card{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:11px 12px;margin:0 0 10px 14px;}
+  .flux-section-head{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .flux-section-head .flux-section-title{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border:1px solid var(--line);border-radius:4px;padding:6px 9px;background:var(--paper);color:var(--steel);flex:1;}
+  .flux-section-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:14px;flex-shrink:0;}
+  .flux-section-del:hover{color:var(--danger);}
+  .flux-items-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .flux-item-row{display:flex;gap:8px;align-items:center;}
+  .flux-item-row .flux-item-text{flex:1;border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
+  .flux-item-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:13px;flex-shrink:0;}
+  .flux-item-del:hover{color:var(--danger);}
+  .flux-add-row{display:flex;gap:8px;}
+  .flux-add-row input{flex:1;border:1px dashed var(--steel-light);border-radius:4px;padding:7px 10px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
   .notes-textarea{width:100%;min-height:220px;border:1px solid var(--line);border-radius:5px;padding:12px 14px;font-size:13.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;line-height:1.6;}
   .notes-textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
   .seance-add-row{display:flex;gap:8px;margin-bottom:18px;}
   .seance-add-row input{flex:1;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13.5px;background:var(--paper-2);color:var(--graphite);}
   .seance-add-row input:focus{outline:2px solid var(--amber);outline-offset:-1px;}
   .seance-list{display:flex;flex-direction:column;gap:8px;}
-  .seance-item{display:flex;align-items:center;gap:10px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
+  .seance-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
+  .seance-item-top{display:flex;align-items:center;gap:10px;}
   .seance-item.done{opacity:.42;}
   .seance-item .seance-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .seance-item .seance-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
   .seance-item.done .seance-text{text-decoration:line-through;}
   .seance-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:16px;flex-shrink:0;}
   .seance-del:hover{color:var(--danger);}
+
+  /* ---------- SÉANCE OPE (staging + 2 columns, drag & drop) ---------- */
+  .ope-staging{
+    background:var(--amber-tint);border:1px dashed var(--amber);border-radius:8px;
+    padding:14px;margin-bottom:20px;min-height:64px;display:flex;flex-wrap:wrap;gap:10px;transition:background .15s ease;
+  }
+  .ope-staging.drag-over{background:var(--amber);}
+  .ope-staging-empty{font-size:12.5px;color:var(--amber-dark);padding:8px;}
+  .ope-board{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  .ope-column{background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:14px;min-height:180px;transition:background .15s ease,border-color .15s ease;}
+  .ope-column.drag-over{background:var(--amber-tint);border-color:var(--amber);}
+  .ope-column-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .ope-column-head h4{margin:0;font-family:var(--font-display);font-size:15px;color:var(--graphite);}
+  .ope-column-add{margin-bottom:10px;}
+  .ope-column-add input{width:100%;border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
+  .ope-column-add input:focus{outline:2px solid var(--amber);outline-offset:-1px;}
+  .ope-column-body{display:flex;flex-direction:column;gap:8px;min-height:50px;}
+  .ope-card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:9px 11px;cursor:grab;transition:opacity .15s ease;width:220px;}
+  .ope-column .ope-card{width:auto;}
+  .ope-card:active{cursor:grabbing;}
+  .ope-card.dragging{opacity:.35;}
+  .ope-card.done{opacity:.5;}
+  .ope-card-top{display:flex;align-items:flex-start;gap:8px;}
+  .ope-check{width:16px;height:16px;margin-top:2px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
+  .ope-text{flex:1;font-size:13px;color:var(--graphite);outline:none;line-height:1.35;}
+  .ope-card.done .ope-text{text-decoration:line-through;}
+  .ope-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:14px;flex-shrink:0;}
+  .ope-del:hover{color:var(--danger);}
+  .ope-note, .seance-note, .cc-note{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:3px;padding:5px 8px;font-size:11.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper-2);resize:vertical;min-height:26px;}
+  .ope-note:focus{outline:2px solid var(--amber);outline-offset:-1px;}
+  .ope-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .notes-saved-hint{font-size:11px;color:var(--steel-light);margin-top:6px;font-family:var(--font-mono);}
 
   .tabs{display:flex;gap:2px;margin-top:4px;}
@@ -299,6 +359,11 @@
   .item-main{flex:1;min-width:0;}
   .item-label{font-size:13.5px;color:var(--graphite);line-height:1.4;cursor:pointer;}
   .item-row.done .item-label{color:var(--ok);text-decoration:line-through;text-decoration-color:#b7d2bd;}
+  .note-toggle-btn, .photo-toggle-btn{
+    background:none;border:none;color:var(--steel-light);font-size:11.5px;cursor:pointer;
+    padding:5px 0 0;margin-top:2px;margin-right:12px;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-body);
+  }
+  .note-toggle-btn:hover, .photo-toggle-btn:hover{color:var(--amber-dark);}
   .item-note{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;min-height:32px;}
   .item-note::placeholder{color:var(--steel-light);}
   .item-note:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
@@ -385,16 +450,19 @@
 
   @media (max-width: 860px){
     #mobileMenuBtn{display:flex;}
+    body.sidebar-open #mobileMenuBtn{display:none;}
     #sidebar{
       position:fixed;left:0;top:0;bottom:0;z-index:40;width:82vw;max-width:320px;min-width:0;
       transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.4);
-      padding-top:env(safe-area-inset-top);
+      padding-top:calc(56px + env(safe-area-inset-top));
     }
     body.sidebar-open #sidebar{transform:translateX(0);}
     #main{width:100%;}
     #projectHeader{padding:64px 16px 0;}
     #dashboardView, #settingsView, #seanceView, #tabContent{padding:64px 16px 60px;}
     .ph-meta, .settings-grid, .fiche-fields{grid-template-columns:1fr !important;}
+    .ope-board{grid-template-columns:1fr;}
+    .ope-card{width:100% !important;}
     .project-card-grid{grid-template-columns:1fr;}
     .stat-strip{gap:12px;}
     .stat-box{flex:1;min-width:100px;}
@@ -477,7 +545,7 @@
 
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ'];
 
-const CHECKLIST_TEMPLATE = [
+const DEFAULT_PRJ_CHECKLIST_TEMPLATE = [
   { id:'p1', title:"PARTIE 1 — Édition de l'offre", sections:[
     { id:'p1-analyse', title:'Analyse du besoin', items:[
       "Besoin client défini","Relevé sur site effectué","Photos réalisées",
@@ -647,6 +715,56 @@ function showToast(msg){
   t._timer = setTimeout(()=>t.classList.remove('show'), 1900);
 }
 
+/* ============================= COLLAPSIBLE NOTE FIELD (used by every checklist-style item) =============================
+   A note only takes visible space once it actually contains something. Otherwise it's replaced
+   by a small "Ajouter une note" link that reveals an empty field to type into. */
+
+let expandedNoteIds = new Set();
+
+function noteBlockHtml(itemId, noteText, fieldClass, extraAttrs){
+  const hasNote = !!(noteText && String(noteText).trim());
+  const expanded = hasNote || expandedNoteIds.has(itemId);
+  if(!expanded){
+    return `<button type="button" class="note-toggle-btn" data-note-toggle="${itemId}">🗒 Ajouter une note</button>`;
+  }
+  return `<textarea class="${fieldClass} inline-note-input" data-note-id="${itemId}" ${extraAttrs||''} placeholder="Note…">${escapeHtml(noteText||'')}</textarea>`;
+}
+
+function wireNoteToggles(container, rerenderFn){
+  container.querySelectorAll('[data-note-toggle]').forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.noteToggle;
+    expandedNoteIds.add(id);
+    rerenderFn();
+    setTimeout(() => {
+      const ta = container.querySelector(`.inline-note-input[data-note-id="${CSS.escape(id)}"]`);
+      if(ta) ta.focus();
+    }, 0);
+  }));
+}
+
+/* ============================= COLLAPSIBLE PHOTO BLOCK (same idea, for item photos) ============================= */
+
+let expandedPhotoIds = new Set();
+
+function photoBlockHtml(itemId, photos, dataAttrName){
+  photos = photos || [];
+  const expanded = photos.length > 0 || expandedPhotoIds.has(itemId);
+  if(!expanded){
+    return `<button type="button" class="photo-toggle-btn" data-photo-toggle="${itemId}">📷 Ajouter une photo</button>`;
+  }
+  const thumbs = photos.map((ph,pi) => `
+    <div class="photo-thumb"><img src="${ph}" data-key="${itemId}" data-idx="${pi}"><button class="photo-del" data-key="${itemId}" data-idx="${pi}">×</button></div>
+  `).join('');
+  return `<div class="item-photos">${thumbs}<label class="photo-add-btn">📷<input type="file" accept="image/*" capture="environment" class="photo-input" ${dataAttrName}="${itemId}" hidden></label></div>`;
+}
+
+function wirePhotoToggles(container, rerenderFn){
+  container.querySelectorAll('[data-photo-toggle]').forEach(btn => btn.addEventListener('click', () => {
+    expandedPhotoIds.add(btn.dataset.photoToggle);
+    rerenderFn();
+  }));
+}
+
 /* ============================= CUSTOM CONFIRM ============================= */
 
 function customConfirm(message, opts){
@@ -802,37 +920,56 @@ function flushPendingSaveSilent(){
 async function flushAllPending(){
   flushPendingSaveSilent();
   flushSeanceSaveSilent('matin');
-  flushSeanceSaveSilent('ope');
+  flushSeanceOpeSilent();
 }
 
-/* ============================= PROGRESS CALC (base template + active project options) ============================= */
+/* ============================= PROGRESS CALC (per-flux template + active project options) ============================= */
 
-function totalItemCount(){
-  let n = 0;
-  CHECKLIST_TEMPLATE.forEach(p => p.sections.forEach(s => n += s.items.length));
-  return n;
+let checklistTemplates = {};
+
+function loadChecklistTemplates(){
+  const v = lsGet('checklistTemplates');
+  const parsed = v ? JSON.parse(v) : {};
+  return {
+    'PRJ': parsed['PRJ'] || JSON.parse(JSON.stringify(DEFAULT_PRJ_CHECKLIST_TEMPLATE)),
+    'MI-0': parsed['MI-0'] || [],
+    'MI-1': parsed['MI-1'] || [],
+    'MI-2': parsed['MI-2'] || []
+  };
 }
-const BASE_TOTAL_ITEMS = totalItemCount();
+function saveChecklistTemplates(){
+  flashSaveStatus(lsSet('checklistTemplates', JSON.stringify(checklistTemplates)));
+}
+let fluxTemplateSaveTimer = null;
+function scheduleSaveChecklistTemplates(){
+  clearTimeout(fluxTemplateSaveTimer);
+  fluxTemplateSaveTimer = setTimeout(() => saveChecklistTemplates(), 300);
+}
+function getFluxTemplate(flux){
+  return checklistTemplates[flux] || [];
+}
+function fluxHasChecklist(flux){
+  return getFluxTemplate(flux).some(p => p.sections.some(s => s.items.length > 0));
+}
 
 function getActiveOptionDefs(data){
   const active = (data && data.activeOptions) || {};
   return (appOptions.projectOptions || []).filter(o => active[o.id]);
 }
 
-// Returns the full checklist template for a given project's data: the fixed base
-// template plus one extra "partie" holding a section per active project option.
-// The base checklist only applies to projects with Flux = "PRJ" — other flux values
-// don't have a defined checklist yet.
+// Returns the full checklist template for a given project's data: the flux's editable
+// base template (see Réglages → Checklists par flux) plus one extra "partie" holding a
+// section per active project option.
 function projectTemplate(data, flux){
-  if(flux !== 'PRJ') return [];
+  const base = getFluxTemplate(flux);
   const opts = getActiveOptionDefs(data);
-  if(!opts.length) return CHECKLIST_TEMPLATE;
+  if(!opts.length) return base;
   const virtualPartie = {
     id: 'p_options',
     title: 'OPTIONS DU PROJET — Modules spécifiques',
     sections: opts.map(o => ({ id: 'opt_' + o.id, title: o.name, items: o.items || [] }))
   };
-  return CHECKLIST_TEMPLATE.concat([virtualPartie]);
+  return base.concat([virtualPartie]);
 }
 
 function projectTotalItems(data, flux){
@@ -988,16 +1125,28 @@ async function renderDashboardView(){
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
 
 let seanceMatin = [];
-let seanceOpe = [];
+// Séance OPE is a small board: unsorted "staging" items above two columns,
+// "derniere" (last session) and "jour" (today's session).
+let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
-function getSeanceState(id){ return id === 'matin' ? seanceMatin : seanceOpe; }
-function setSeanceState(id, arr){ if(id === 'matin') seanceMatin = arr; else seanceOpe = arr; }
+function getSeanceState(id){ return seanceMatin; } // only used for 'matin' now
 function seanceStorageKey(id){ return id === 'matin' ? 'seance_matin' : 'seance_ope'; }
 function seanceTitleFor(id){ return id === 'matin' ? 'Séance du matin' : 'Séance OPE'; }
 function seanceIconFor(id){ return id === 'matin' ? '🌅' : '🛠'; }
 
+function allOpeItems(){
+  return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour];
+}
+function opePct(){
+  const items = allOpeItems();
+  const total = items.length;
+  const checked = items.filter(it => it.checked).length;
+  return { total, checked, pct: total === 0 ? 100 : Math.round((checked/total)*100) };
+}
+
 function seancePct(id){
-  const items = getSeanceState(id);
+  if(id === 'ope') return opePct();
+  const items = seanceMatin;
   const total = items.length;
   const checked = items.filter(it => it.checked).length;
   const pct = total === 0 ? 100 : Math.round((checked / total) * 100);
@@ -1031,9 +1180,20 @@ function loadSeance(key){
   return v ? JSON.parse(v) : [];
 }
 function saveSeance(id){
-  const key = seanceStorageKey(id);
-  const arr = getSeanceState(id);
-  flashSaveStatus(lsSet(key, JSON.stringify(arr)));
+  flashSaveStatus(lsSet('seance_matin', JSON.stringify(seanceMatin)));
+}
+function loadSeanceOpeBoard(){
+  const v = lsGet('seance_ope');
+  if(!v) return { staging:[], derniere:[], jour:[] };
+  const parsed = JSON.parse(v);
+  if(Array.isArray(parsed)){
+    // migrate from the old flat-list format: keep existing points as today's session
+    return { staging:[], derniere:[], jour: parsed.map(it => ({ id: it.id, text: it.text, note:'', checked: !!it.checked })) };
+  }
+  return { staging: parsed.staging || [], derniere: parsed.derniere || [], jour: parsed.jour || [] };
+}
+function saveSeanceOpeBoard(){
+  flashSaveStatus(lsSet('seance_ope', JSON.stringify(seanceOpeBoard)));
 }
 
 let seanceSaveTimers = {};
@@ -1045,6 +1205,15 @@ function flushSeanceSaveSilent(id){
   if(seanceSaveTimers[id]){ clearTimeout(seanceSaveTimers[id]); seanceSaveTimers[id] = null; saveSeance(id); }
 }
 
+let opeSaveTimer = null;
+function scheduleSaveSeanceOpe(){
+  clearTimeout(opeSaveTimer);
+  opeSaveTimer = setTimeout(() => saveSeanceOpeBoard(), 300);
+}
+function flushSeanceOpeSilent(){
+  if(opeSaveTimer){ clearTimeout(opeSaveTimer); opeSaveTimer = null; saveSeanceOpeBoard(); }
+}
+
 async function renderSeanceView(id){
   await flushAllPending();
   currentView = 'seance_' + id;
@@ -1053,7 +1222,9 @@ async function renderSeanceView(id){
   container.style.display = 'block';
   await renderSidebar();
 
-  const items = getSeanceState(id);
+  if(id === 'ope'){ renderSeanceOpeView(); return; }
+
+  const items = seanceMatin;
   const ordered = items.filter(it => !it.checked).concat(items.filter(it => it.checked));
 
   container.innerHTML = `
@@ -1068,9 +1239,12 @@ async function renderSeanceView(id){
     <div class="seance-list">
       ${ordered.length ? ordered.map(it => `
         <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
-          <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
-          <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-          <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+          <div class="seance-item-top">
+            <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
+            <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+            <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+          </div>
+          ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
         </div>
       `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
@@ -1080,8 +1254,7 @@ async function renderSeanceView(id){
     const input = $('#seanceNewItem');
     const text = input.value.trim();
     if(!text) return;
-    const arr = getSeanceState(id);
-    arr.unshift({ id: uid(), text, checked:false });
+    seanceMatin.unshift({ id: uid(), text, checked:false, note:'' });
     input.value = '';
     scheduleSaveSeance(id);
     renderSeanceView(id);
@@ -1090,8 +1263,7 @@ async function renderSeanceView(id){
   $('#seanceNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
 
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
-    const arr = getSeanceState(id);
-    const it = arr.find(x => x.id === cb.dataset.id);
+    const it = seanceMatin.find(x => x.id === cb.dataset.id);
     if(it) it.checked = cb.checked;
     scheduleSaveSeance(id);
     renderSeanceView(id);
@@ -1099,17 +1271,168 @@ async function renderSeanceView(id){
   container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
     const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
-    const arr = getSeanceState(id).filter(x => x.id !== btn.dataset.id);
-    setSeanceState(id, arr);
+    seanceMatin = seanceMatin.filter(x => x.id !== btn.dataset.id);
     saveSeance(id);
     renderSeanceView(id);
   }));
   container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
-    const arr = getSeanceState(id);
-    const it = arr.find(x => x.id === span.dataset.id);
+    const it = seanceMatin.find(x => x.id === span.dataset.id);
     const newText = span.textContent.trim();
     if(it && newText && it.text !== newText){ it.text = newText; saveSeance(id); }
   }));
+  container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
+    const it = seanceMatin.find(x => x.id === ta.dataset.id);
+    if(it){ it.note = ta.value; scheduleSaveSeance(id); }
+  }));
+  wireNoteToggles(container, () => renderSeanceView(id));
+}
+
+/* ---- Séance OPE: two-column drag-and-drop board ---- */
+
+function opeItemCardHtml(it, listName){
+  return `
+    <div class="ope-card ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
+      <div class="ope-card-top">
+        <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
+        <span class="ope-text" data-id="${it.id}" data-list="${listName}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+        <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
+      </div>
+      ${noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`)}
+    </div>
+  `;
+}
+
+function renderSeanceOpeView(){
+  const container = $('#seanceView');
+  const b = seanceOpeBoard;
+
+  container.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Séance OPE</h2>
+      <p>Ajoute un point, puis glisse-le dans la colonne voulue — ou écris directement dans la colonne visée.</p>
+    </div>
+    <div class="seance-add-row">
+      <input type="text" id="opeNewItem" placeholder="Ajouter un point…">
+      <button class="btn btn-primary" id="opeAddBtn">+ Ajouter</button>
+    </div>
+    <div class="ope-staging" id="opeStagingZone" data-list="staging">
+      ${b.staging.length ? b.staging.map(it => opeItemCardHtml(it,'staging')).join('') : '<div class="ope-staging-empty">Les nouveaux points non triés apparaissent ici — glisse-les dans une colonne.</div>'}
+    </div>
+    <div class="ope-board">
+      <div class="ope-column" data-list="derniere">
+        <div class="ope-column-head"><h4>Dernière séance</h4><span class="opt-count">${b.derniere.length} pt(s)</span></div>
+        <div class="ope-column-add"><input type="text" class="ope-col-add-input" data-list="derniere" placeholder="Ajouter directement ici…"></div>
+        <div class="ope-column-body">${b.derniere.length ? b.derniere.map(it => opeItemCardHtml(it,'derniere')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
+      </div>
+      <div class="ope-column" data-list="jour">
+        <div class="ope-column-head"><h4>Séance du jour</h4><span class="opt-count">${b.jour.length} pt(s)</span></div>
+        <div class="ope-column-add"><input type="text" class="ope-col-add-input" data-list="jour" placeholder="Ajouter directement ici…"></div>
+        <div class="ope-column-body">${b.jour.length ? b.jour.map(it => opeItemCardHtml(it,'jour')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
+      </div>
+    </div>
+    <div class="ope-actions">
+      <button class="btn btn-ghost" id="opeArchiveBtn">🔁 Basculer « Séance du jour » vers « Dernière séance »</button>
+      <button class="btn btn-ghost" id="opeClearCheckedBtn">🗑 Supprimer les points cochés</button>
+    </div>
+  `;
+
+  function addToStaging(){
+    const input = $('#opeNewItem');
+    const text = input.value.trim();
+    if(!text) return;
+    b.staging.unshift({ id: uid(), text, note:'', checked:false });
+    input.value = '';
+    scheduleSaveSeanceOpe();
+    renderSeanceOpeView();
+  }
+  $('#opeAddBtn').addEventListener('click', addToStaging);
+  $('#opeNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addToStaging(); });
+
+  container.querySelectorAll('.ope-col-add-input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if(e.key !== 'Enter') return;
+      const text = inp.value.trim();
+      if(!text) return;
+      b[inp.dataset.list].unshift({ id: uid(), text, note:'', checked:false });
+      scheduleSaveSeanceOpe();
+      renderSeanceOpeView();
+    });
+  });
+
+  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', () => {
+    const it = b[cb.dataset.list].find(x => x.id === cb.dataset.id);
+    if(it) it.checked = cb.checked;
+    scheduleSaveSeanceOpe();
+    renderSeanceOpeView();
+  }));
+
+  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    b[btn.dataset.list] = b[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
+    scheduleSaveSeanceOpe();
+    renderSeanceOpeView();
+  }));
+
+  container.querySelectorAll('.ope-text').forEach(span => span.addEventListener('blur', () => {
+    const it = b[span.dataset.list].find(x => x.id === span.dataset.id);
+    const newText = span.textContent.trim();
+    if(it && newText && it.text !== newText){ it.text = newText; scheduleSaveSeanceOpe(); }
+  }));
+  container.querySelectorAll('.ope-note').forEach(ta => ta.addEventListener('input', () => {
+    const it = b[ta.dataset.list].find(x => x.id === ta.dataset.id);
+    if(it){ it.note = ta.value; scheduleSaveSeanceOpe(); }
+  }));
+
+  container.querySelectorAll('.ope-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', JSON.stringify({ id: card.dataset.id, from: card.dataset.from }));
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  });
+
+  const dropZones = [$('#opeStagingZone'), ...container.querySelectorAll('.ope-column')];
+  dropZones.forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      let data;
+      try{ data = JSON.parse(e.dataTransfer.getData('text/plain')); }catch(err){ return; }
+      const toList = zone.dataset.list;
+      if(!data || data.from === toList) return;
+      const idx = b[data.from].findIndex(x => x.id === data.id);
+      if(idx < 0) return;
+      const [item] = b[data.from].splice(idx, 1);
+      b[toList].unshift(item);
+      scheduleSaveSeanceOpe();
+      renderSeanceOpeView();
+    });
+  });
+
+  $('#opeArchiveBtn').addEventListener('click', async () => {
+    if(b.jour.length === 0){ showToast('Aucun point dans « Séance du jour »'); return; }
+    const ok = await customConfirm("Basculer tous les points de « Séance du jour » vers « Dernière séance » ? Le contenu actuel de « Dernière séance » sera remplacé.", { okText:'Basculer', danger:false });
+    if(!ok) return;
+    b.derniere = b.jour;
+    b.jour = [];
+    scheduleSaveSeanceOpe();
+    renderSeanceOpeView();
+    showToast('Séance basculée');
+  });
+
+  $('#opeClearCheckedBtn').addEventListener('click', async () => {
+    const totalChecked = allOpeItems().filter(it => it.checked).length;
+    if(totalChecked === 0){ showToast('Aucun point coché'); return; }
+    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coché(s) ?`, { okText:'Supprimer' });
+    if(!ok) return;
+    ['staging','derniere','jour'].forEach(l => { b[l] = b[l].filter(it => !it.checked); });
+    scheduleSaveSeanceOpe();
+    renderSeanceOpeView();
+  });
+  wireNoteToggles(container, renderSeanceOpeView);
 }
 
 $('#seanceMatinNavBtn').addEventListener('click', () => renderSeanceView('matin'));
@@ -1162,6 +1485,143 @@ function buildOptionListHtml(key, title, placeholder){
   `;
 }
 
+/* ============================= FLUX CHECKLIST EDITOR (Réglages) ============================= */
+
+let editingFlux = null;
+
+function renderFluxTemplateEditor(){
+  const host = $('#fluxTemplateEditor');
+  if(!host) return;
+
+  const fluxes = ['PRJ', 'MI-0', 'MI-1', 'MI-2'];
+  const tabsHtml = `<div class="flux-tabs">${fluxes.map(f => `<button class="flux-tab-btn ${editingFlux===f?'active':''}" data-flux="${f}">${f}</button>`).join('')}</div>`;
+
+  let bodyHtml;
+  if(!editingFlux){
+    bodyHtml = `<div class="settings-empty">Choisis un flux ci-dessus pour afficher sa checklist.</div>`;
+  } else {
+    const template = getFluxTemplate(editingFlux);
+    const partiesHtml = template.map((partie, pIdx) => `
+      <div class="flux-partie-card">
+        <div class="flux-partie-head">
+          <input type="text" class="flux-partie-title" data-p="${pIdx}" value="${escapeHtml(partie.title)}" placeholder="Nom de la partie">
+          <button class="flux-partie-del" data-p="${pIdx}" title="Supprimer cette partie">🗑</button>
+        </div>
+        ${partie.sections.map((sec, sIdx) => `
+          <div class="flux-section-card">
+            <div class="flux-section-head">
+              <input type="text" class="flux-section-title" data-p="${pIdx}" data-s="${sIdx}" value="${escapeHtml(sec.title)}" placeholder="Nom de la sous-partie">
+              <button class="flux-section-del" data-p="${pIdx}" data-s="${sIdx}" title="Supprimer cette sous-partie">×</button>
+            </div>
+            <div class="flux-items-list">
+              ${sec.items.map((item, iIdx) => `
+                <div class="flux-item-row">
+                  <input type="text" class="flux-item-text" data-p="${pIdx}" data-s="${sIdx}" data-i="${iIdx}" value="${escapeHtml(item)}">
+                  <button class="flux-item-del" data-p="${pIdx}" data-s="${sIdx}" data-i="${iIdx}" title="Supprimer ce point">×</button>
+                </div>
+              `).join('') || '<div class="settings-empty">Aucun point.</div>'}
+            </div>
+            <div class="flux-add-row">
+              <input type="text" class="flux-item-add-input" data-p="${pIdx}" data-s="${sIdx}" placeholder="Nouveau point…">
+              <button class="btn btn-ghost btn-sm flux-item-add-btn" data-p="${pIdx}" data-s="${sIdx}">+ Point</button>
+            </div>
+          </div>
+        `).join('')}
+        <div class="flux-add-row">
+          <input type="text" class="flux-section-add-input" data-p="${pIdx}" placeholder="Nouvelle sous-partie…">
+          <button class="btn btn-ghost btn-sm flux-section-add-btn" data-p="${pIdx}">+ Sous-partie</button>
+        </div>
+      </div>
+    `).join('');
+
+    bodyHtml = `
+      ${template.length ? partiesHtml : '<div class="settings-empty">Aucune partie pour l\u2019instant — ajoute-en une ci-dessous.</div>'}
+      <div class="flux-add-row" style="margin-top:6px;">
+        <input type="text" id="fluxPartieAddInput" placeholder="Nouvelle partie…">
+        <button class="btn btn-primary" id="fluxPartieAddBtn">+ Ajouter une partie</button>
+      </div>
+    `;
+  }
+
+  host.innerHTML = tabsHtml + bodyHtml;
+
+  host.querySelectorAll('.flux-tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    editingFlux = btn.dataset.flux;
+    renderFluxTemplateEditor();
+  }));
+
+  if(!editingFlux) return;
+  const t = getFluxTemplate(editingFlux);
+
+  host.querySelectorAll('.flux-partie-title').forEach(inp => inp.addEventListener('input', () => {
+    t[+inp.dataset.p].title = inp.value;
+    scheduleSaveChecklistTemplates();
+  }));
+  host.querySelectorAll('.flux-section-title').forEach(inp => inp.addEventListener('input', () => {
+    t[+inp.dataset.p].sections[+inp.dataset.s].title = inp.value;
+    scheduleSaveChecklistTemplates();
+  }));
+  host.querySelectorAll('.flux-item-text').forEach(inp => inp.addEventListener('input', () => {
+    t[+inp.dataset.p].sections[+inp.dataset.s].items[+inp.dataset.i] = inp.value;
+    scheduleSaveChecklistTemplates();
+  }));
+
+  host.querySelectorAll('.flux-partie-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer cette partie et tout son contenu ?', { okText:'Supprimer' });
+    if(!ok) return;
+    t.splice(+btn.dataset.p, 1);
+    saveChecklistTemplates();
+    renderFluxTemplateEditor();
+  }));
+  host.querySelectorAll('.flux-section-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer cette sous-partie et ses points ?', { okText:'Supprimer' });
+    if(!ok) return;
+    t[+btn.dataset.p].sections.splice(+btn.dataset.s, 1);
+    saveChecklistTemplates();
+    renderFluxTemplateEditor();
+  }));
+  host.querySelectorAll('.flux-item-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    t[+btn.dataset.p].sections[+btn.dataset.s].items.splice(+btn.dataset.i, 1);
+    saveChecklistTemplates();
+    renderFluxTemplateEditor();
+  }));
+
+  host.querySelectorAll('.flux-item-add-btn').forEach(btn => btn.addEventListener('click', () => {
+    const input = host.querySelector(`.flux-item-add-input[data-p="${btn.dataset.p}"][data-s="${btn.dataset.s}"]`);
+    const val = input.value.trim();
+    if(!val) return;
+    t[+btn.dataset.p].sections[+btn.dataset.s].items.push(val);
+    saveChecklistTemplates();
+    renderFluxTemplateEditor();
+  }));
+  host.querySelectorAll('.flux-item-add-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter') host.querySelector(`.flux-item-add-btn[data-p="${inp.dataset.p}"][data-s="${inp.dataset.s}"]`).click(); }));
+
+  host.querySelectorAll('.flux-section-add-btn').forEach(btn => btn.addEventListener('click', () => {
+    const input = host.querySelector(`.flux-section-add-input[data-p="${btn.dataset.p}"]`);
+    const val = input.value.trim();
+    if(!val) return;
+    t[+btn.dataset.p].sections.push({ id: uid(), title: val, items: [] });
+    saveChecklistTemplates();
+    renderFluxTemplateEditor();
+  }));
+  host.querySelectorAll('.flux-section-add-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter') host.querySelector(`.flux-section-add-btn[data-p="${inp.dataset.p}"]`).click(); }));
+
+  const partieAddBtn = $('#fluxPartieAddBtn');
+  if(partieAddBtn){
+    partieAddBtn.addEventListener('click', () => {
+      const input = $('#fluxPartieAddInput');
+      const val = input.value.trim();
+      if(!val) return;
+      t.push({ id: uid(), title: val, sections: [] });
+      saveChecklistTemplates();
+      renderFluxTemplateEditor();
+    });
+    $('#fluxPartieAddInput').addEventListener('keydown', e => { if(e.key === 'Enter') partieAddBtn.click(); });
+  }
+}
+
 async function renderSettingsView(){
   await flushAllPending();
   currentView = 'settings';
@@ -1180,6 +1640,7 @@ async function renderSettingsView(){
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Toutes les données de cette appli sont enregistrées localement, dans ce navigateur, sur cet appareil uniquement — elles ne sont pas partagées avec d'autres personnes ni d'autres appareils. Utilise « Exporter » / « Importer » pour transférer ou sauvegarder tes projets ailleurs.</p>
         <button id="themeToggleBtn" class="btn btn-ghost" style="align-self:flex-start;">${appSettings.theme === 'dark' ? '☀️ Passer en mode clair' : '🌙 Passer en mode sombre'}</button>
+        <button id="openManualBtn" class="btn btn-ghost" style="align-self:flex-start;">📖 Manuel d'utilisation</button>
         <div class="footer-row" style="max-width:360px;">
           <button id="exportBtn" class="btn btn-ghost" style="flex:1;">⬇ Exporter mes données</button>
           <button id="importBtn" class="btn btn-ghost" style="flex:1;">⬆ Importer une sauvegarde</button>
@@ -1189,6 +1650,13 @@ async function renderSettingsView(){
     </div>
     <div class="settings-grid" style="margin-top:20px;">
       ${buildOptionListHtml('coordinateurs', 'Coordinateurs', 'ex. Jean Dupont')}
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>📋 Checklists par flux</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Choisis un flux pour voir, modifier, ajouter ou supprimer les points de sa checklist de planification. Ce sont ces points qui seront proposés dans tout projet ayant ce flux.</p>
+        <div id="fluxTemplateEditor"></div>
+      </div>
     </div>
     <div class="fiche-section" style="margin-top:20px;">
       <div class="fiche-section-head"><h4>🧩 Options de projet</h4></div>
@@ -1248,6 +1716,8 @@ async function renderSettingsView(){
   });
   $('#exportBtn').addEventListener('click', exportAllData);
   $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
+  $('#openManualBtn').addEventListener('click', openManualModal);
+  renderFluxTemplateEditor();
   $('#importFileInput').addEventListener('change', e => {
     const f = e.target.files[0];
     if(f) importAllData(f);
@@ -1263,6 +1733,48 @@ async function renderSettingsView(){
     saveAppOptions();
     renderSettingsView();
   }));
+}
+
+/* ============================= MANUEL D'UTILISATION ============================= */
+
+const MANUAL_SECTIONS = [
+  { icon:'🏠', title:'Tableau de bord', body:"C'est l'écran d'accueil. En haut, un résumé de la Séance du matin et de la Séance OPE (avec leur avancement). En dessous, les alertes (projets en retard ou inactifs depuis 14 jours) puis la liste de tous tes projets, avec leur progression." },
+  { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom du projet, coordinateur, flux, date, échéance (en semaines ou en date fixe) et options de projet. Une fois le projet créé, clique sur l'icône ✎ en haut du projet pour rouvrir ce même formulaire et tout modifier." },
+  { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (voir Réglages → Checklists par flux). Utilise la barre de recherche et les filtres « À faire / Fait » pour naviguer. Chaque point peut recevoir une note et des photos : ces zones restent discrètes (un simple lien) tant qu'elles sont vides." },
+  { icon:'🧾', title:'Fiche de visite de chantier', body:"Le formulaire classique de visite de site, plus une galerie « Photos du site » en haut avec légendes." },
+  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux. Une zone de texte libre, et une mini-checklist « Points complémentaires » où tu ajoutes toi-même des points à la volée." },
+  { icon:'🌅', title:'Séance du matin', body:"Une liste simple : ajoute des points, coche-les. Un point coché descend en bas de liste, en transparence — rien n'est supprimé sauf avec le ×." },
+  { icon:'🛠', title:'Séance OPE', body:"Un tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut (zone non triée), puis glisse-le dans la colonne voulue — ou écris directement dans le petit champ en haut d'une colonne. Le bouton « Basculer » envoie tout le contenu du jour vers « Dernière séance »." },
+  { icon:'⚙', title:'Réglages', body:"Coordinateurs (liste pour le menu déroulant), Checklists par flux (choisis un flux pour voir/modifier/ajouter/supprimer ses parties, sous-parties et points), Options de projet (modules d'étapes optionnels activables par projet), Bloc-notes (pense-bête libre), Export/Import (sauvegarde de toutes tes données), et le mode clair/sombre." },
+  { icon:'💾', title:'Où sont mes données ?', body:"Tout est enregistré localement, dans ce navigateur, sur cet appareil. Rien n'est partagé avec d'autres personnes ni d'autres appareils. Pense à exporter régulièrement une sauvegarde depuis Réglages." }
+];
+
+function buildManualHtml(){
+  return MANUAL_SECTIONS.map(s => `
+    <div class="manual-section">
+      <div class="manual-section-title">${s.icon} ${escapeHtml(s.title)}</div>
+      <div class="manual-section-body">${escapeHtml(s.body)}</div>
+    </div>
+  `).join('');
+}
+
+function openManualModal(){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal manual-modal">
+      <h3>📖 Manuel d'utilisation</h3>
+      <div class="modal-scroll manual-scroll">${buildManualHtml()}</div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="manualCloseBtn">Fermer</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  backdrop.querySelector('#manualCloseBtn').addEventListener('click', close);
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
 }
 
 function openProjectOptionModal(editIdx){
@@ -1394,7 +1906,7 @@ function renderProjectHeader(){
   titleEl.title = p.name || 'Sans nom';
   fitTitleText();
 
-  const checklistApplicable = p.numFlux === 'PRJ';
+  const checklistApplicable = fluxHasChecklist(p.numFlux);
   $('#tabBtnChecklist').style.display = checklistApplicable ? 'flex' : 'none';
   if(!checklistApplicable && currentTab === 'checklist'){
     currentTab = 'fiche';
@@ -1607,12 +2119,12 @@ function renderChecklistTab(){
   const container = $('#tabContent');
   const flux = getCurrentProjectFlux();
 
-  if(flux !== 'PRJ'){
+  if(!fluxHasChecklist(flux)){
     container.innerHTML = `
       <div class="no-results" style="padding:60px 20px;">
         <div style="font-size:34px;margin-bottom:10px;">🚧</div>
         <p style="margin:0 0 4px;font-weight:600;color:var(--graphite);">Aucune checklist disponible pour le flux « ${escapeHtml(flux || '—')} » pour l'instant.</p>
-        <p style="margin:0;">La checklist de planification n'existe actuellement que pour le flux « PRJ ». Les checklists pour les autres flux arriveront bientôt.</p>
+        <p style="margin:0;">Ajoute des points pour ce flux dans Réglages → Checklists par flux.</p>
       </div>`;
     return;
   }
@@ -1633,20 +2145,13 @@ function renderChecklistTab(){
         if(st.checked){ secChecked++; partieChecked++; }
         partieTotal++;
         if(itemMatchesSearch(label, st.note) && itemMatchesStatus(st.checked)){
-          const photos = st.photos || [];
-          const photosHtml = photos.map((ph,pi) => `
-            <div class="photo-thumb"><img src="${ph}" data-key="${k}" data-idx="${pi}"><button class="photo-del" data-key="${k}" data-idx="${pi}">×</button></div>
-          `).join('');
           visibleItems.push(`
             <div class="item-row ${st.checked?'done':''}" data-key="${k}">
               <input type="checkbox" class="item-check" ${st.checked?'checked':''} data-key="${k}">
               <div class="item-main">
                 <div class="item-label" data-key="${k}">${escapeHtml(label)}</div>
-                <textarea class="item-note" placeholder="Ajouter une note…" data-key="${k}">${escapeHtml(st.note||'')}</textarea>
-                <div class="item-photos">
-                  ${photosHtml}
-                  <label class="photo-add-btn">📷<input type="file" accept="image/*" capture="environment" class="photo-input" data-key="${k}" hidden></label>
-                </div>
+                ${noteBlockHtml(k, st.note, 'item-note', `data-key="${k}"`)}
+                ${photoBlockHtml(k, st.photos, 'data-key')}
               </div>
             </div>
           `);
@@ -1769,6 +2274,8 @@ function renderChecklistTab(){
     renderChecklistTab();
   }));
   $$('.photo-thumb img').forEach(img => img.addEventListener('click', e => { e.stopPropagation(); showLightbox(img.src); }));
+  wireNoteToggles(container, renderChecklistTab);
+  wirePhotoToggles(container, renderChecklistTab);
 }
 
 /* ============================= FICHE TAB ============================= */
@@ -1885,9 +2392,12 @@ function renderNotesTab(){
         <div class="seance-list">
           ${ordered.length ? ordered.map(it => `
             <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
-              <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
-              <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-              <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+              <div class="seance-item-top">
+                <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
+                <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+                <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+              </div>
+              ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
             </div>
           `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
         </div>
@@ -1905,7 +2415,7 @@ function renderNotesTab(){
     const text = input.value.trim();
     if(!text) return;
     if(!currentData.customChecklist) currentData.customChecklist = [];
-    currentData.customChecklist.unshift({ id: uid(), text, checked:false });
+    currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'' });
     input.value = '';
     scheduleSaveProjectData();
     renderNotesTab();
@@ -1931,6 +2441,11 @@ function renderNotesTab(){
     const newText = span.textContent.trim();
     if(it && newText && it.text !== newText){ it.text = newText; scheduleSaveProjectData(); }
   }));
+  container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
+    const it = (currentData.customChecklist || []).find(x => x.id === ta.dataset.id);
+    if(it){ it.note = ta.value; scheduleSaveProjectData(); }
+  }));
+  wireNoteToggles(container, renderNotesTab);
 }
 
 function buildReportHtmlFragment(){
@@ -1980,7 +2495,7 @@ function buildReportHtmlFragment(){
     ${ccItems.length ? `<h4 class="rp-h4">Points complémentaires</h4>${ccItems.map(it => `
       <div class="rp-item ${it.checked?'done':'pending'}">
         <div class="mark">${it.checked?'✓':'○'}</div>
-        <div>${escapeHtml(it.text)}</div>
+        <div><div>${escapeHtml(it.text)}</div>${it.note?`<div class="note">${escapeHtml(it.note)}</div>`:''}</div>
       </div>`).join('')}` : ''}` : '';
 
   return `
@@ -2101,17 +2616,23 @@ async function init(){
   appSettings = loadSettings();
   applyTheme();
   appOptions = loadAppOptions();
+  checklistTemplates = loadChecklistTemplates();
   notesText = loadNotes();
   seanceMatin = loadSeance('seance_matin');
-  seanceOpe = loadSeance('seance_ope');
+  seanceOpeBoard = loadSeanceOpeBoard();
   loadProjects();
   await renderDashboardView();
+  if(!lsGet('hasSeenManual')){
+    lsSet('hasSeenManual', '1');
+    openManualModal();
+  }
 }
 init();
 
 window.addEventListener('beforeunload', () => {
   if(saveTimer) saveProjectDataNow();
   Object.keys(seanceSaveTimers).forEach(id => { if(seanceSaveTimers[id]) saveSeance(id); });
+  if(opeSaveTimer){ clearTimeout(opeSaveTimer); saveSeanceOpeBoard(); }
   if(notesSaveTimer){ clearTimeout(notesSaveTimer); lsSet('projectNotes', notesText); }
 });
 </script>
