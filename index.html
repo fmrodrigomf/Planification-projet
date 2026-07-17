@@ -125,6 +125,9 @@
   .pbar{height:5px;background:#1d2327;border-radius:3px;overflow:hidden;}
   body.theme-dark .pbar{background:#10141a;}
   .pbar-fill{height:100%;background:linear-gradient(90deg,var(--amber),#f0a94f);border-radius:3px;transition:width .25s ease;}
+  .pbar-fill.cc{background:linear-gradient(90deg,#4f8ecb,#7fb2e0);}
+  .pbar-cat{font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--steel-light);margin-top:8px;margin-bottom:2px;}
+  .pbar-cat:first-of-type{margin-top:10px;}
   .pbar-label{font-family:var(--font-mono);font-size:10px;color:#7f8993;margin-top:5px;}
   .empty-side{padding:16px 14px;font-size:12px;color:#7f8993;line-height:1.6;}
 
@@ -253,6 +256,7 @@
   .settings-add-row{display:flex;gap:8px;}
   .settings-add-input{flex:1;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--graphite);}
   .settings-hint{font-size:12.5px;color:var(--steel);line-height:1.5;margin:0 0 12px;}
+  .cc-progress{font-family:var(--font-mono);font-size:11.5px;color:var(--steel);}
   .popt-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
   .popt-item{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:10px 12px;}
   .popt-item-head{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--graphite);}
@@ -1225,17 +1229,25 @@ function countChecked(data, flux){
 
 let projectStatsCache = {};
 
+function ccStats(data){
+  const items = (data && data.customChecklist) || [];
+  const checked = items.filter(it => it.checked).length;
+  return { checked, total: items.length };
+}
+
 async function getProjectStats(id, forceRefresh){
   const proj = projects.find(x => x.id === id);
   const flux = proj ? proj.numFlux : null;
   if(id === currentProjectId && currentData){
-    const s = { checked: countChecked(currentData, flux), total: projectTotalItems(currentData, flux), lastModified: currentData.lastModified || null };
+    const cc = ccStats(currentData);
+    const s = { checked: countChecked(currentData, flux), total: projectTotalItems(currentData, flux), lastModified: currentData.lastModified || null, ccChecked: cc.checked, ccTotal: cc.total };
     projectStatsCache[id] = s;
     return s;
   }
   if(!forceRefresh && projectStatsCache[id]) return projectStatsCache[id];
   const d = await loadProjectData(id);
-  const s = { checked: countChecked(d, flux), total: projectTotalItems(d, flux), lastModified: d.lastModified || null };
+  const cc = ccStats(d);
+  const s = { checked: countChecked(d, flux), total: projectTotalItems(d, flux), lastModified: d.lastModified || null, ccChecked: cc.checked, ccTotal: cc.total };
   projectStatsCache[id] = s;
   return s;
 }
@@ -1335,7 +1347,8 @@ async function renderDashboardView(){
     const refTime = s.lastModified || p.createdAt || Date.now();
     const daysSince = Math.floor((Date.now() - refTime) / 86400000);
     const isStalled = !p.finished && daysSince > 14 && s.checked < s.total;
-    allRows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince, lastMod: refTime });
+    const ccPct = s.ccTotal ? Math.round((s.ccChecked / s.ccTotal) * 100) : 0;
+    allRows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince, lastMod: refTime, ccChecked: s.ccChecked, ccTotal: s.ccTotal, ccPct });
   }
 
   const totalChecked = allRows.reduce((a,r) => a + r.checked, 0);
@@ -1375,9 +1388,13 @@ async function renderDashboardView(){
       <div class="pc-name">${escapeHtml(r.p.client || 'Client non défini')}</div>
       <div class="pc-client">${escapeHtml(r.p.name)}</div>
       ${r.total ? `
+      <div class="pbar-cat">Planification</div>
       <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
       <div class="pbar-label">${r.checked}/${r.total} POINTS · ${r.pct}%</div>
       ` : `<div class="pbar-label">Flux ${escapeHtml(r.p.numFlux || '—')} · pas de checklist</div>`}
+      <div class="pbar-cat">Points à traiter</div>
+      <div class="pbar"><div class="pbar-fill cc" style="width:${r.ccPct}%"></div></div>
+      <div class="pbar-label">${r.ccChecked}/${r.ccTotal} POINTS · ${r.ccPct}%</div>
       <div class="pc-modified">Modifié ${formatRelativeTime(r.lastMod)}</div>
       <div class="badge-row">
         ${r.p.finished?'<span class="badge done">✓ Terminé</span>':''}
@@ -3047,6 +3064,9 @@ function renderNotesTab(){
   const notes = currentData.generalNotes || '';
   const items = currentData.customChecklist || [];
   const ordered = items.filter(it => !it.checked).concat(items.filter(it => it.checked));
+  const ccChecked = items.filter(it => it.checked).length;
+  const ccTotal = items.length;
+  const ccPct = ccTotal === 0 ? 0 : Math.round((ccChecked / ccTotal) * 100);
 
   container.innerHTML = `
     <div class="fiche-section">
@@ -3056,7 +3076,10 @@ function renderNotesTab(){
       </div>
     </div>
     <div class="fiche-section">
-      <div class="fiche-section-head"><h4>☑ Points complémentaires</h4></div>
+      <div class="fiche-section-head" style="display:flex;justify-content:space-between;align-items:center;">
+        <h4>☑ Points complémentaires</h4>
+        <span class="cc-progress">${ccChecked}/${ccTotal} points · ${ccPct}%</span>
+      </div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Ajoute ici tout point spécifique à ce projet qui ne fait pas partie de la checklist standard. Coche-le une fois fait : il descend en bas de liste, en transparence, sans être supprimé.</p>
         <div class="seance-add-row">
@@ -3064,16 +3087,21 @@ function renderNotesTab(){
           <button class="btn btn-primary" id="customChecklistAddBtn">+ Ajouter</button>
         </div>
         <div class="seance-list">
-          ${ordered.length ? ordered.map(it => `
+          ${ordered.length ? ordered.map(it => {
+            const hasNote = !!(it.note && it.note.trim());
+            const expanded = expandedItemIds.has(it.id);
+            return `
             <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
               <div class="seance-item-top">
                 <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
                 <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+                ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+                <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
                 <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
               </div>
-              ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
+              ${expanded ? noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`) : ''}
             </div>
-          `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
+          `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
         </div>
       </div>
     </div>
@@ -3097,6 +3125,11 @@ function renderNotesTab(){
   $('#customChecklistAddBtn').addEventListener('click', addItem);
   $('#customChecklistNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
 
+  container.querySelectorAll('.seance-expand').forEach(btn => btn.addEventListener('click', () => {
+    const itemId = btn.dataset.id;
+    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
+    renderNotesTab();
+  }));
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
     if(it) it.checked = cb.checked;
