@@ -202,6 +202,10 @@
   .badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.03em;}
   .badge.overdue{background:#fbeceb;color:var(--danger);}
   .badge.stalled{background:var(--amber-tint);color:var(--amber-dark);}
+  .badge.pending-zero{background:#e4edf5;color:#3a6690;}
+  body.theme-dark .badge.pending-zero{background:#1c2c3a;color:#7fb2e0;}
+  .badge.pending-low{background:var(--amber-tint);color:var(--amber-dark);}
+  .badge.pending-high{background:#fbeceb;color:var(--danger);}
   .badge.done{background:var(--ok-tint);color:var(--ok);}
 
   #projectView{flex-direction:column;height:100%;}
@@ -1348,7 +1352,7 @@ async function renderDashboardView(){
     const daysSince = Math.floor((Date.now() - refTime) / 86400000);
     const isStalled = !p.finished && daysSince > 14 && s.checked < s.total;
     const ccPct = s.ccTotal ? Math.round((s.ccChecked / s.ccTotal) * 100) : 0;
-    allRows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince, lastMod: refTime, ccChecked: s.ccChecked, ccTotal: s.ccTotal, ccPct });
+    allRows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince, lastMod: refTime, ccChecked: s.ccChecked, ccTotal: s.ccTotal, ccPct, ccPending: s.ccTotal - s.ccChecked });
   }
 
   const totalChecked = allRows.reduce((a,r) => a + r.checked, 0);
@@ -1397,6 +1401,7 @@ async function renderDashboardView(){
       <div class="pbar-label">${r.ccChecked}/${r.ccTotal} POINTS · ${r.ccPct}%</div>
       <div class="pc-modified">Modifié ${formatRelativeTime(r.lastMod)}</div>
       <div class="badge-row">
+        ${!r.p.finished?`<span class="badge ${r.ccPending>=5?'pending-high':(r.ccPending>=1?'pending-low':'pending-zero')}">● ${r.ccPending} points restants</span>`:''}
         ${r.p.finished?'<span class="badge done">✓ Terminé</span>':''}
         ${r.p.archived?'<span class="badge stalled">📦 Archivé</span>':''}
         ${r.isOverdue?'<span class="badge overdue">En retard</span>':''}
