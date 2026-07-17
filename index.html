@@ -193,6 +193,16 @@
   .ech-client{font-family:var(--font-display);font-size:14.5px;color:var(--graphite);font-weight:600;}
   .ech-name{font-size:12px;color:var(--steel);margin-top:2px;}
   .ech-progress{font-family:var(--font-mono);font-size:12px;color:var(--steel);flex-shrink:0;}
+  .ech-gantt{margin-top:8px;max-width:320px;}
+  .ech-gantt-track{position:relative;height:8px;background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:visible;}
+  .ech-gantt-fill{position:absolute;top:0;left:0;bottom:0;border-radius:4px 0 0 4px;transition:width .3s ease;}
+  .ech-gantt-fill.ontrack{background:var(--ok);}
+  .ech-gantt-fill.late{background:var(--danger);}
+  .ech-gantt-marker{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--graphite);}
+  body.theme-dark .ech-gantt-marker{background:#fff;}
+  .ech-gantt-label{font-size:10.5px;color:var(--steel);margin-top:4px;}
+  .ech-gantt-label.ok{color:var(--ok);}
+  .ech-gantt-label.late{color:var(--danger);}
   .project-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
   .project-card{background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:16px 18px;cursor:pointer;transition:border-color .12s,transform .12s;}
   .project-card:hover{border-color:var(--amber);transform:translateY(-2px);}
@@ -247,6 +257,17 @@
   .manual-section:last-child{border-bottom:none;}
   .manual-section-title{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--graphite);margin-bottom:5px;}
   .manual-section-body{font-size:12.5px;color:var(--steel);line-height:1.6;}
+  .routine-list{display:flex;flex-direction:column;gap:8px;}
+  .routine-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;
+    border:1px solid var(--line);border-radius:6px;background:var(--paper);
+    cursor:pointer;transition:opacity .2s ease,border-color .15s ease;
+  }
+  .routine-item:hover{border-color:var(--amber);}
+  .routine-item.done{opacity:.5;}
+  .routine-item .routine-check{width:18px;height:18px;flex-shrink:0;accent-color:var(--amber-dark);cursor:pointer;margin:0;}
+  .routine-item .routine-text{flex:1;font-size:13.5px;color:var(--graphite);line-height:1.4;}
+  .routine-item.done .routine-text{text-decoration:line-through;color:var(--steel);}
 
   #settingsView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   #seanceView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
@@ -274,6 +295,13 @@
   .flux-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
   .flux-tab-btn{border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:8px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;}
   .flux-tab-btn.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
+  .flux-tab-wrap{position:relative;display:inline-flex;}
+  .flux-tab-del{
+    position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;
+    width:16px;height:16px;border-radius:50%;font-size:10px;line-height:1;cursor:pointer;padding:0;
+  }
+  .flux-tab-add{border-style:dashed;color:var(--steel);}
+  .flux-tab-add:hover{color:var(--amber-dark);border-color:var(--amber);}
   .flux-partie-card{background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:14px;margin-bottom:14px;}
   .flux-partie-head{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
   .flux-partie-head .flux-partie-title{font-family:var(--font-display);font-size:15px;font-weight:600;border:1px solid var(--line);border-radius:4px;padding:7px 10px;background:var(--paper-2);color:var(--graphite);flex:1;}
@@ -391,6 +419,7 @@
   .item-label-row{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 0;}
   .item-label-row .item-label{flex:1;cursor:pointer;}
   .item-badge{font-size:11px;opacity:.85;}
+  .item-badge.origin-badge{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 8px;font-size:10.5px;color:var(--steel);opacity:1;}
   .item-expand-chev{font-size:10px;color:var(--steel-light);flex-shrink:0;}
   .seance-expand, .ope-expand{background:none;border:none;color:var(--steel-light);font-size:11px;cursor:pointer;flex-shrink:0;padding:2px 3px;}
   .seance-expand:hover, .ope-expand:hover{color:var(--amber-dark);}
@@ -444,6 +473,25 @@
   .door-card-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
   .door-field-group label{display:block;font-size:11px;color:var(--steel);font-weight:600;margin-bottom:4px;}
   .door-dim, .door-note{width:100%;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
+
+  .pl-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;}
+  .pl-table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px;}
+  .pl-table thead th{background:var(--graphite-2);color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;white-space:nowrap;}
+  .pl-th-sub{font-size:9px;font-weight:400;color:#aab3ba;text-transform:uppercase;}
+  .pl-table tbody tr{border-bottom:1px solid var(--line);}
+  .pl-table tbody tr:nth-child(even){background:var(--paper);}
+  .pl-table td{padding:5px 6px;}
+  .pl-table input.pl-label{width:100%;min-width:220px;border:1px solid transparent;border-radius:3px;padding:6px 8px;font-size:12px;background:transparent;color:var(--graphite);}
+  .pl-table input.pl-label:focus{border-color:var(--line);background:var(--paper-2);}
+  .pl-table input.pl-num{width:60px;border:1px solid var(--line);border-radius:3px;padding:6px 4px;font-size:12px;text-align:center;background:var(--paper-2);color:var(--graphite);}
+  .pl-table input.pl-real{background:var(--amber-tint);}
+  .pl-computed{font-family:var(--font-mono);font-size:11px;color:var(--steel);white-space:nowrap;text-align:center;}
+  .pl-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:14px;}
+  .pl-del:hover{color:var(--danger);}
+  .pl-drag-handle{cursor:grab;color:var(--steel-light);text-align:center;width:24px;user-select:none;}
+  .pl-drag-handle:active{cursor:grabbing;}
+  .pl-row.dragging{opacity:.4;}
+  .pl-row.drag-over{box-shadow:inset 0 2px 0 var(--amber), inset 0 -2px 0 var(--amber);}
 
   .fg-grid{display:flex;flex-wrap:wrap;gap:14px;}
   .fg-item{width:120px;position:relative;}
@@ -598,6 +646,7 @@
         <div class="tabs">
           <button class="tab-btn active" data-tab="checklist" id="tabBtnChecklist">Checklist planification <span class="count" id="tabCountChecklist">0/0</span></button>
           <button class="tab-btn" data-tab="fiche">Fiche de visite de chantier</button>
+          <button class="tab-btn" data-tab="planning">Planning intentionnel</button>
           <button class="tab-btn" data-tab="notes">Notes générales</button>
           <button class="tab-btn" data-tab="rapport">Rapport</button>
         </div>
@@ -612,7 +661,10 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ'];
+const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
+function getAllFluxOptions(){
+  return FLUX_OPTIONS.concat(appOptions.customFlux || []);
+}
 
 const DEFAULT_PRJ_CHECKLIST_TEMPLATE = [
   { id:'p1', title:"PARTIE 1 — Édition de l'offre", sections:[
@@ -851,6 +903,78 @@ const DEFAULT_MI2_CHECKLIST_TEMPLATE = [
   ]}
 ];
 
+const DEFAULT_PLANNING_TASKS = [
+  "Commandes fournisseur.",
+  "Ouverture d'un dossier projet : formulaire 4F-103-00",
+  "Réalisation du dossier d'exécution : formulaire 4F-103-01",
+  "Planification et coordination.",
+  "Préparation, FAT et intégration GMAO.",
+  "Livraisons.",
+  "Démarrage de l'exécution VAC.",
+  "Mise en service, protocole de qualification et SAT.",
+  "Dossier de révision.",
+  "Finalisation de l'intégration GMAO et édition des contrats de maintenance.",
+  "Clôture du projet : formulaire 4F-103-04"
+];
+
+function defaultPlanningData(){
+  return {
+    startDate: new Date().toISOString().slice(0,10),
+    echeanceOverride: null,
+    tasks: DEFAULT_PLANNING_TASKS.map(label => ({ id: uid(), label, debut:null, duree:null, debutReel:null, dureeReel:null }))
+  };
+}
+
+function addWeeksToDate(dateStr, weeks){
+  if(!dateStr || weeks === null || weeks === undefined || weeks === '' || isNaN(weeks)) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + Math.round(parseFloat(weeks) * 7));
+  return d;
+}
+function computePlannedEcheance(planning){
+  if(!planning || !planning.startDate) return '';
+  if(planning.echeanceOverride) return planning.echeanceOverride;
+  let maxDate = null;
+  (planning.tasks || []).forEach(t => {
+    if(t.debut !== null && t.debut !== '' && t.duree !== null && t.duree !== '' && !isNaN(t.debut) && !isNaN(t.duree)){
+      const end = addWeeksToDate(planning.startDate, parseFloat(t.debut) + parseFloat(t.duree));
+      if(end && (!maxDate || end > maxDate)) maxDate = end;
+    }
+  });
+  return maxDate ? maxDate.toISOString().slice(0,10) : '';
+}
+function computePlanningSpanWeeks(planning){
+  let max = 0;
+  (planning.tasks || []).forEach(t => {
+    if(t.debut !== null && t.debut !== '' && t.duree !== null && t.duree !== '' && !isNaN(t.debut) && !isNaN(t.duree)){
+      max = Math.max(max, parseFloat(t.debut) + parseFloat(t.duree));
+    }
+  });
+  return max;
+}
+function computeRealSpanWeeks(planning){
+  let max = 0, has = false;
+  (planning.tasks || []).forEach(t => {
+    if(t.debutReel !== null && t.debutReel !== '' && t.dureeReel !== null && t.dureeReel !== '' && !isNaN(t.debutReel) && !isNaN(t.dureeReel)){
+      has = true;
+      max = Math.max(max, parseFloat(t.debutReel) + parseFloat(t.dureeReel));
+    }
+  });
+  return has ? max : null;
+}
+function syncEcheanceFromPlanning(p, data){
+  if(!data.planning) return;
+  p.echeance = computePlannedEcheance(data.planning);
+}
+function getProjectPlanning(id){
+  if(id === currentProjectId && currentData) return currentData.planning || null;
+  try{
+    const raw = lsGet('project:' + id);
+    if(!raw) return null;
+    return JSON.parse(raw).planning || null;
+  }catch(e){ return null; }
+}
+
 const FICHE_TEMPLATE = [
   { id:'info-gen', title:'Informations générales', fields:[
     {id:'client', label:'Nom client', type:'text'},
@@ -1032,6 +1156,33 @@ function customConfirm(message, opts){
   });
 }
 
+function customPrompt(title, placeholder){
+  return new Promise(resolve => {
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h3>${escapeHtml(title)}</h3>
+        <input type="text" id="cpInput" placeholder="${escapeHtml(placeholder||'')}">
+        <div class="modal-actions">
+          <button class="btn-text" id="cpCancel">Annuler</button>
+          <button class="btn btn-primary" id="cpOk">Ajouter</button>
+        </div>
+      </div>`;
+    document.body.appendChild(backdrop);
+    const input = backdrop.querySelector('#cpInput');
+    input.focus();
+    function close(v){ document.body.removeChild(backdrop); resolve(v); }
+    backdrop.querySelector('#cpCancel').addEventListener('click', () => close(null));
+    backdrop.querySelector('#cpOk').addEventListener('click', () => close(input.value.trim() || null));
+    backdrop.addEventListener('click', e => { if(e.target === backdrop) close(null); });
+    backdrop.addEventListener('keydown', e => {
+      if(e.key === 'Enter') close(input.value.trim() || null);
+      if(e.key === 'Escape') close(null);
+    });
+  });
+}
+
 function showLightbox(src){
   const bd = document.createElement('div');
   bd.className = 'modal-backdrop lightbox-backdrop';
@@ -1171,13 +1322,18 @@ let checklistTemplates = {};
 function loadChecklistTemplates(){
   const v = lsGet('checklistTemplates');
   const parsed = v ? JSON.parse(v) : {};
-  const useOrDefault = (existing, def) => (existing && existing.length) ? existing : JSON.parse(JSON.stringify(def));
-  return {
-    'PRJ': useOrDefault(parsed['PRJ'], DEFAULT_PRJ_CHECKLIST_TEMPLATE),
-    'MI-0': useOrDefault(parsed['MI-0'], DEFAULT_MI0_CHECKLIST_TEMPLATE),
-    'MI-1': useOrDefault(parsed['MI-1'], DEFAULT_MI1_CHECKLIST_TEMPLATE),
-    'MI-2': useOrDefault(parsed['MI-2'], DEFAULT_MI2_CHECKLIST_TEMPLATE)
+  const useOrDefault = (existing, def) => (existing && existing.length) ? existing : JSON.parse(JSON.stringify(def || []));
+  const seeds = {
+    'PRJ': DEFAULT_PRJ_CHECKLIST_TEMPLATE,
+    'MI-0': DEFAULT_MI0_CHECKLIST_TEMPLATE,
+    'MI-1': DEFAULT_MI1_CHECKLIST_TEMPLATE,
+    'MI-2': DEFAULT_MI2_CHECKLIST_TEMPLATE
   };
+  const result = {};
+  getAllFluxOptions().forEach(flux => {
+    result[flux] = useOrDefault(parsed[flux], seeds[flux]);
+  });
+  return result;
 }
 function saveChecklistTemplates(){
   flashSaveStatus(lsSet('checklistTemplates', JSON.stringify(checklistTemplates)));
@@ -1369,7 +1525,7 @@ async function renderDashboardView(){
       ${stalled.map(r => `<div class="alert-row stalled" data-id="${r.p.id}"><span><b>${escapeHtml(r.p.name)}</b> — aucune activité depuis ${r.daysSince} jours</span><span class="a-info">${r.checked}/${r.total}</span></div>`).join('')}
     </div>` : '';
 
-  const fluxOptions = ['PRJ','MI-0','MI-1','MI-2'];
+  const fluxOptions = getAllFluxOptions();
   const coordList = appOptions.coordinateurs || [];
 
   const filterBarHtml = `
@@ -1463,6 +1619,29 @@ async function renderEcheancesView(){
     const days = Math.ceil((new Date(p.echeance) - new Date(todayStr)) / 86400000);
     const daysLabel = isOverdue ? `en retard de ${Math.abs(days)}j` : (days === 0 ? "aujourd'hui" : `dans ${days}j`);
     const pct = s.total ? Math.round((s.checked/s.total)*100) : 0;
+
+    const planning = getProjectPlanning(p.id);
+    let ganttHtml = '';
+    if(planning && planning.startDate){
+      const spanWeeks = computePlanningSpanWeeks(planning);
+      if(spanWeeks > 0){
+        const elapsedWeeks = (Date.now() - new Date(planning.startDate + 'T00:00:00').getTime()) / (7*86400000);
+        const plannedPct = Math.max(0, Math.min(100, (elapsedWeeks/spanWeeks)*100));
+        const realSpanWeeks = computeRealSpanWeeks(planning);
+        const realPct = realSpanWeeks !== null ? (realSpanWeeks/spanWeeks)*100 : null;
+        const onTrack = realPct !== null && realPct >= plannedPct - 5;
+        ganttHtml = `
+          <div class="ech-gantt">
+            <div class="ech-gantt-track">
+              ${realPct!==null ? `<div class="ech-gantt-fill ${onTrack?'ontrack':'late'}" style="width:${Math.min(100,realPct)}%"></div>` : ''}
+              <div class="ech-gantt-marker" style="left:${plannedPct}%" title="Où on devrait en être aujourd'hui"></div>
+            </div>
+            <div class="ech-gantt-label ${realPct!==null ? (onTrack?'ok':'late') : ''}">${realPct!==null ? (onTrack ? '✓ Dans les temps' : '⚠ En retard sur le planning réel') : 'Pas de données réelles'}</div>
+          </div>
+        `;
+      }
+    }
+
     return `
       <div class="ech-row ${isOverdue?'overdue':''}" data-id="${p.id}">
         <div class="ech-date">
@@ -1472,6 +1651,7 @@ async function renderEcheancesView(){
         <div class="ech-body">
           <div class="ech-client">${escapeHtml(p.client || 'Client non défini')}</div>
           <div class="ech-name">${escapeHtml(p.name)} · Flux ${escapeHtml(p.numFlux || '—')}${p.coordinateur ? ' · ' + escapeHtml(p.coordinateur) : ''}</div>
+          ${ganttHtml}
         </div>
         <div class="ech-progress">${s.total ? `${s.checked}/${s.total} · ${pct}%` : 'Pas de checklist'}</div>
       </div>
@@ -1491,6 +1671,7 @@ async function renderEcheancesView(){
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
 
 let seanceMatin = [];
+let todoOriginFilter = 'all';
 let todoList = [];
 // Séance OPE is a small board: unsorted "staging" items above two columns,
 // "derniere" (last session) and "jour" (today's session).
@@ -1503,14 +1684,45 @@ function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id
 
 // When "link" is enabled, an item created in Séance du matin/OPE gets a shared linkId
 // and a mirrored copy in the To do list. Checking either copy syncs the other(s).
+function syncLinkedProjectItem(projectId, linkId, patch){
+  if(!linkId || !projectId) return;
+  if(projectId === currentProjectId && currentData){
+    const it = (currentData.customChecklist || []).find(x => x.linkId === linkId);
+    if(it){ Object.assign(it, patch); scheduleSaveProjectData(); }
+    return;
+  }
+  const raw = lsGet('project:' + projectId);
+  if(!raw) return;
+  const data = JSON.parse(raw);
+  const it = (data.customChecklist || []).find(x => x.linkId === linkId);
+  if(it){ Object.assign(it, patch); lsSet('project:' + projectId, JSON.stringify(data)); }
+}
+function deleteLinkedProjectItem(projectId, linkId){
+  if(!linkId || !projectId) return;
+  if(projectId === currentProjectId && currentData){
+    currentData.customChecklist = (currentData.customChecklist || []).filter(x => x.linkId !== linkId);
+    scheduleSaveProjectData();
+    return;
+  }
+  const raw = lsGet('project:' + projectId);
+  if(!raw) return;
+  const data = JSON.parse(raw);
+  data.customChecklist = (data.customChecklist || []).filter(x => x.linkId !== linkId);
+  lsSet('project:' + projectId, JSON.stringify(data));
+}
+
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
   [seanceMatin, todoList, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
+  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
+  if(todoItem && todoItem.originProjectId) syncLinkedProjectItem(todoItem.originProjectId, linkId, patch);
 }
 function deleteLinkedItems(linkId){
   if(!linkId) return;
+  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
+  if(todoItem && todoItem.originProjectId) deleteLinkedProjectItem(todoItem.originProjectId, linkId);
   seanceMatin = seanceMatin.filter(it => it.linkId !== linkId);
   todoList = todoList.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
@@ -1615,7 +1827,17 @@ async function renderSeanceView(id){
   if(id === 'ope'){ renderSeanceOpeView(); return; }
 
   const items = getSimpleList(id);
-  const ordered = items.filter(it => !it.checked).concat(items.filter(it => it.checked));
+  const filtered = (id === 'todo' && todoOriginFilter !== 'all')
+    ? items.filter(it => (it.origin || 'todo') === todoOriginFilter)
+    : items;
+  const ordered = filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
+
+  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', project:'📁 Projet' };
+  const filterBarHtml = (id === 'todo') ? `
+    <div class="filter-pills" style="margin-bottom:16px;">
+      ${['all','todo','matin','ope','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
+    </div>
+  ` : '';
 
   container.innerHTML = `
     <div class="dashboard-header">
@@ -1626,10 +1848,13 @@ async function renderSeanceView(id){
       <input type="text" id="seanceNewItem" placeholder="Ajouter un point…">
       <button class="btn btn-primary" id="seanceAddBtn">+ Ajouter</button>
     </div>
+    ${filterBarHtml}
     <div class="seance-list">
       ${ordered.length ? ordered.map(it => {
         const hasNote = !!(it.note && it.note.trim());
         const expanded = expandedItemIds.has(it.id);
+        const originTag = (id === 'todo' && it.origin && it.origin !== 'todo')
+          ? `<span class="item-badge origin-badge" title="Origine">${it.origin==='project' ? '📁 ' + escapeHtml(it.originProjectName||'Projet') : originLabels[it.origin]}</span>` : '';
         return `
         <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
           <div class="seance-item-top">
@@ -1637,6 +1862,7 @@ async function renderSeanceView(id){
             <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
             ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
             ${it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':''}
+            ${originTag}
             <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
           </div>
@@ -1645,6 +1871,12 @@ async function renderSeanceView(id){
       `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
   `;
+  if(id === 'todo'){
+    container.querySelectorAll('[data-origin-filter]').forEach(btn => btn.addEventListener('click', () => {
+      todoOriginFilter = btn.dataset.originFilter;
+      renderSeanceView('todo');
+    }));
+  }
 
   function addItem(){
     const input = $('#seanceNewItem');
@@ -1653,8 +1885,11 @@ async function renderSeanceView(id){
     if(id === 'matin' && appSettings.linkSeanceTodo){
       const linkId = uid();
       getSimpleList('matin').unshift({ id: uid(), text, checked:false, note:'', linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'matin' });
       scheduleSaveSeance('matin');
+      scheduleSaveSeance('todo');
+    } else if(id === 'todo'){
+      getSimpleList('todo').unshift({ id: uid(), text, checked:false, note:'', origin:'todo' });
       scheduleSaveSeance('todo');
     } else {
       getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
@@ -1774,7 +2009,7 @@ function renderSeanceOpeView(){
   function makeOpeItem(text){
     if(appSettings.linkSeanceTodo){
       const linkId = uid();
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'ope' });
       scheduleSaveSeance('todo');
       return { id: uid(), text, note:'', checked:false, linkId };
     }
@@ -1918,7 +2153,100 @@ $('#todoNavBtn').addEventListener('click', () => renderSeanceView('todo'));
 
 /* ============================= SETTINGS (dropdown options) ============================= */
 
-let appOptions = { coordinateurs:[], flux:[], projectOptions:[] };
+let appOptions = { coordinateurs:[], flux:[], projectOptions:[], customFlux:[] };
+
+let morningRoutineItems = [];
+let morningRoutineState = { date:'', checked:{} };
+
+const DEFAULT_MORNING_ROUTINE = [
+  'Bexio : traitement des nouvelles entrées',
+  'Bexio : traitements des nouvelles factures',
+  'PV : Traiter les points au PV',
+  'Glate : Traitements des points tagués',
+  'E-Mail : Traitements des mails'
+];
+
+function loadMorningRoutineItems(){
+  const v = lsGet('morningRoutineItems');
+  if(v) return JSON.parse(v);
+  return DEFAULT_MORNING_ROUTINE.map(text => ({ id: uid(), text }));
+}
+function saveMorningRoutineItems(){
+  flashSaveStatus(lsSet('morningRoutineItems', JSON.stringify(morningRoutineItems)));
+}
+function loadMorningRoutineState(){
+  const v = lsGet('morningRoutineState');
+  return v ? JSON.parse(v) : { date:'', checked:{} };
+}
+function saveMorningRoutineState(){
+  lsSet('morningRoutineState', JSON.stringify(morningRoutineState));
+}
+
+function allRoutineChecked(){
+  return morningRoutineItems.length > 0 && morningRoutineItems.every(it => morningRoutineState.checked[it.id]);
+}
+
+function openMorningRoutineModal(){
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+
+  function close(){
+    if(backdrop.parentNode) document.body.removeChild(backdrop);
+  }
+
+  function render(){
+    backdrop.innerHTML = `
+      <div class="modal manual-modal">
+        <h3>🌄 Routine du matin</h3>
+        <p class="confirm-msg" style="margin-bottom:14px;">Coche les points au fur et à mesure. Cette liste se réinitialise chaque jour — modifiable dans Réglages.</p>
+        <div class="modal-scroll manual-scroll">
+          <div class="routine-list">
+            ${morningRoutineItems.length ? morningRoutineItems.map(it => `
+              <label class="routine-item ${morningRoutineState.checked[it.id]?'done':''}">
+                <input type="checkbox" class="routine-check" data-id="${it.id}" ${morningRoutineState.checked[it.id]?'checked':''}>
+                <span class="routine-text">${escapeHtml(it.text)}</span>
+              </label>
+            `).join('') : '<div class="settings-empty">Aucun point défini — ajoute-en dans Réglages.</div>'}
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn-text" id="routineLaterBtn">⏰ Plus tard</button>
+          <button class="btn btn-primary" id="routineDoneBtn">✓ Terminer</button>
+        </div>
+      </div>
+    `;
+    backdrop.querySelectorAll('.routine-check').forEach(cb => cb.addEventListener('change', () => {
+      morningRoutineState.checked[cb.dataset.id] = cb.checked;
+      saveMorningRoutineState();
+      if(allRoutineChecked()){
+        morningRoutineState.snoozeUntil = null;
+        saveMorningRoutineState();
+        showToast('Routine du matin terminée 👍');
+        close();
+        return;
+      }
+      render();
+    }));
+    backdrop.querySelector('#routineLaterBtn').addEventListener('click', () => {
+      morningRoutineState.snoozeUntil = Date.now() + 3600000;
+      saveMorningRoutineState();
+      close();
+      setTimeout(() => {
+        if(!allRoutineChecked()) openMorningRoutineModal();
+      }, 3600000);
+      showToast('Ça revient dans 1h');
+    });
+    backdrop.querySelector('#routineDoneBtn').addEventListener('click', async () => {
+      const ok = await customConfirm('As-tu bien terminé tous les points de la routine du matin ?', { okText:'Oui, terminé', cancelText:'Pas encore', danger:false });
+      if(!ok) return;
+      morningRoutineState.snoozeUntil = null;
+      saveMorningRoutineState();
+      close();
+    });
+  }
+  render();
+  document.body.appendChild(backdrop);
+}
 
 let notesText = '';
 let notesSaveTimer = null;
@@ -1938,7 +2266,7 @@ function scheduleSaveNotes(){
 function loadAppOptions(){
   const v = lsGet('appOptions');
   const parsed = v ? JSON.parse(v) : {};
-  return { coordinateurs: parsed.coordinateurs || [], flux: parsed.flux || [], projectOptions: parsed.projectOptions || [] };
+  return { coordinateurs: parsed.coordinateurs || [], flux: parsed.flux || [], projectOptions: parsed.projectOptions || [], customFlux: parsed.customFlux || [] };
 }
 function saveAppOptions(){
   flashSaveStatus(lsSet('appOptions', JSON.stringify(appOptions)));
@@ -1971,8 +2299,16 @@ function renderFluxTemplateEditor(){
   const host = $('#fluxTemplateEditor');
   if(!host) return;
 
-  const fluxes = ['PRJ', 'MI-0', 'MI-1', 'MI-2'];
-  const tabsHtml = `<div class="flux-tabs">${fluxes.map(f => `<button class="flux-tab-btn ${editingFlux===f?'active':''}" data-flux="${f}">${f}</button>`).join('')}</div>`;
+  const fluxes = getAllFluxOptions();
+  const tabsHtml = `<div class="flux-tabs">
+    ${fluxes.map(f => `
+      <span class="flux-tab-wrap">
+        <button class="flux-tab-btn ${editingFlux===f?'active':''}" data-flux="${escapeHtml(f)}">${escapeHtml(f)}</button>
+        ${appOptions.customFlux.includes(f) ? `<button class="flux-tab-del" data-flux="${escapeHtml(f)}" title="Supprimer ce flux">×</button>` : ''}
+      </span>
+    `).join('')}
+    <button class="flux-tab-btn flux-tab-add" id="fluxAddBtn" title="Ajouter un flux personnalisé">+ Flux</button>
+  </div>`;
 
   let bodyHtml;
   if(!editingFlux){
@@ -2024,8 +2360,32 @@ function renderFluxTemplateEditor(){
 
   host.innerHTML = tabsHtml + bodyHtml;
 
-  host.querySelectorAll('.flux-tab-btn').forEach(btn => btn.addEventListener('click', () => {
+  host.querySelectorAll('.flux-tab-btn:not(.flux-tab-add)').forEach(btn => btn.addEventListener('click', () => {
     editingFlux = (editingFlux === btn.dataset.flux) ? null : btn.dataset.flux;
+    renderFluxTemplateEditor();
+  }));
+  const addFluxBtn = $('#fluxAddBtn');
+  if(addFluxBtn) addFluxBtn.addEventListener('click', async () => {
+    const name = await customPrompt('Nouveau flux', 'ex. MI-3, SAV, etc.');
+    if(!name) return;
+    if(getAllFluxOptions().includes(name)){ showToast('Ce flux existe déjà'); return; }
+    appOptions.customFlux.push(name);
+    saveAppOptions();
+    checklistTemplates[name] = [];
+    saveChecklistTemplates();
+    editingFlux = name;
+    renderFluxTemplateEditor();
+  });
+  host.querySelectorAll('.flux-tab-del').forEach(btn => btn.addEventListener('click', async e => {
+    e.stopPropagation();
+    const flux = btn.dataset.flux;
+    const ok = await customConfirm(`Supprimer le flux « ${flux} » et sa checklist ? Les projets ayant déjà ce flux le garderont, mais sans checklist associée.`, { okText:'Supprimer' });
+    if(!ok) return;
+    appOptions.customFlux = appOptions.customFlux.filter(f => f !== flux);
+    saveAppOptions();
+    delete checklistTemplates[flux];
+    saveChecklistTemplates();
+    if(editingFlux === flux) editingFlux = null;
     renderFluxTemplateEditor();
   }));
 
@@ -2133,11 +2493,25 @@ async function renderSettingsView(){
     <div class="fiche-section" style="margin-top:20px;">
       <div class="fiche-section-head"><h4>🔗 Séances &amp; To do list</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
-        <p class="settings-hint">Si activé, chaque nouveau point ajouté en Séance du matin ou en Séance OPE est automatiquement recopié dans la To do list. Les deux copies restent liées : cocher l'une comme faite coche l'autre aussi.</p>
+        <p class="settings-hint">Si activé, chaque nouveau point ajouté en Séance du matin, en Séance OPE, ou dans les « Points complémentaires » d'un projet est automatiquement recopié dans la To do list. Les copies restent liées : cocher, modifier le texte/la note ou supprimer l'une agit sur toutes les autres.</p>
         <label class="choice-chip" style="align-self:flex-start;">
           <input type="checkbox" id="linkSeanceTodoToggle" ${appSettings.linkSeanceTodo?'checked':''}>
           Lier les nouveaux points à la To do list
         </label>
+      </div>
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🌄 Routine du matin</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Cette liste s'affiche automatiquement en popup à la première ouverture de l'appli chaque jour. Les cases se recochent à zéro le lendemain.</p>
+        <div class="settings-list" data-key="morningRoutine">
+          ${morningRoutineItems.length ? morningRoutineItems.map((it,i) => `<div class="settings-item"><span>${escapeHtml(it.text)}</span><button class="settings-del" data-key="morningRoutine" data-idx="${i}">×</button></div>`).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
+        </div>
+        <div class="settings-add-row">
+          <input type="text" class="settings-add-input" data-key="morningRoutine" placeholder="ex. Bexio : traitement des nouvelles entrées">
+          <button class="btn btn-primary settings-add-btn" data-key="morningRoutine">+ Ajouter</button>
+        </div>
+        <button class="btn btn-ghost" id="previewRoutineBtn" style="align-self:flex-start;margin-top:10px;">👁 Aperçu de la popup</button>
       </div>
     </div>
     <div class="settings-grid" style="margin-top:20px;">
@@ -2191,14 +2565,33 @@ async function renderSettingsView(){
     renderSettingsView();
   }
 
-  sv.querySelectorAll('.settings-add-btn').forEach(btn => btn.addEventListener('click', () => addValue(btn.dataset.key)));
-  sv.querySelectorAll('.settings-add-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter') addValue(inp.dataset.key); }));
+  function addValueGeneric(key){
+    if(key === 'morningRoutine'){
+      const input = sv.querySelector(`.settings-add-input[data-key="morningRoutine"]`);
+      const val = input.value.trim();
+      if(!val) return;
+      morningRoutineItems.push({ id: uid(), text: val });
+      saveMorningRoutineItems();
+      renderSettingsView();
+      return;
+    }
+    addValue(key);
+  }
+  sv.querySelectorAll('.settings-add-btn').forEach(btn => btn.addEventListener('click', () => addValueGeneric(btn.dataset.key)));
+  sv.querySelectorAll('.settings-add-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter') addValueGeneric(inp.dataset.key); }));
   sv.querySelectorAll('.settings-del').forEach(btn => btn.addEventListener('click', () => {
     const key = btn.dataset.key, idx = +btn.dataset.idx;
+    if(key === 'morningRoutine'){
+      morningRoutineItems.splice(idx, 1);
+      saveMorningRoutineItems();
+      renderSettingsView();
+      return;
+    }
     appOptions[key].splice(idx, 1);
     saveAppOptions();
     renderSettingsView();
   }));
+  $('#previewRoutineBtn').addEventListener('click', openMorningRoutineModal);
 
   $('#poptAddBtn').addEventListener('click', () => openProjectOptionModal(null));
   $('#notesTextarea').addEventListener('input', e => { notesText = e.target.value; scheduleSaveNotes(); });
@@ -2322,12 +2715,12 @@ async function createProject(formVals, activeOptions){
   const p = Object.assign({
     id: uid(), name: 'Nouveau projet', client: '', numCommande: '', numFlux: '', coordinateur: '',
     date: new Date().toISOString().slice(0,10),
-    echeanceType: 'weeks', echeanceWeeks: null, echeance: '',
+    echeance: '',
     createdAt: Date.now()
   }, formVals || {});
   projects.unshift(p);
   await saveProjects();
-  lsSet('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, generalNotes:'', customChecklist:[], lastModified:Date.now() }));
+  lsSet('project:' + p.id, JSON.stringify({ checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions: activeOptions || {}, generalNotes:'', customChecklist:[], planning: defaultPlanningData(), lastModified:Date.now() }));
   await openProject(p.id);
   showToast('Projet créé');
 }
@@ -2341,7 +2734,7 @@ async function duplicateProject(){
     id: uid(), name: (p.name || 'Projet') + ' (copie)', client: p.client || '', numCommande: '',
     coordinateur: p.coordinateur || '', numFlux: p.numFlux || '',
     date: new Date().toISOString().slice(0,10),
-    echeanceType: 'weeks', echeanceWeeks: null, echeance: '',
+    echeance: '',
     createdAt: Date.now(), finished:false, archived:false
   };
   projects.unshift(newP);
@@ -2349,7 +2742,7 @@ async function duplicateProject(){
   const newData = {
     checklist:{}, fiche:{}, fichePhotos:[], collapsed:{},
     activeOptions: JSON.parse(JSON.stringify((currentData && currentData.activeOptions) || {})),
-    generalNotes:'', customChecklist:[], lastModified: Date.now()
+    generalNotes:'', customChecklist:[], planning: defaultPlanningData(), lastModified: Date.now()
   };
   lsSet('project:' + newP.id, JSON.stringify(newData));
   await openProject(newP.id);
@@ -2364,11 +2757,13 @@ async function openProject(id){
   if(!currentData.activeOptions) currentData.activeOptions = {};
   if(!currentData.customChecklist) currentData.customChecklist = [];
   if(currentData.generalNotes === undefined) currentData.generalNotes = '';
+  if(!currentData.planning) currentData.planning = defaultPlanningData();
   {
     const p = projects.find(x => x.id === id);
     if(p){
       if(!currentData.fiche.client && p.client) currentData.fiche.client = p.client;
       if(!currentData.fiche['num-au'] && p.numCommande) currentData.fiche['num-au'] = p.numCommande;
+      syncEcheanceFromPlanning(p, currentData);
     }
   }
   currentView = 'project';
@@ -2424,8 +2819,7 @@ window.addEventListener('resize', () => { if(currentView === 'project') fitTitle
 
 function formatEcheanceLabel(p){
   if(!p.echeance) return '—';
-  const d = new Date(p.echeance).toLocaleDateString('fr-FR');
-  return p.echeanceType === 'weeks' && p.echeanceWeeks ? `${d} (${p.echeanceWeeks} sem.)` : d;
+  return new Date(p.echeance).toLocaleDateString('fr-FR');
 }
 
 function formatRelativeTime(ts){
@@ -2463,7 +2857,7 @@ function renderProjectHeader(){
 
   const parts = [
     ['Client', p.client], ['N° commande', p.numCommande], ['Coordinateur', p.coordinateur],
-    ['Flux', p.numFlux], ['Date', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
+    ['Flux', p.numFlux], ['Créé le', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
     ['Échéance', p.echeance ? formatEcheanceLabel(p) : ''],
     ['Dernière modif.', currentData && currentData.lastModified ? formatRelativeTime(currentData.lastModified) : '']
   ];
@@ -2492,7 +2886,6 @@ function updateChecklistTabCount(){
 
 function buildProjectFormFieldsHtml(p, activeOptionsMap){
   p = p || {};
-  const mode = p.echeanceType || 'weeks';
   const opts = appOptions.projectOptions || [];
   return `
     <label>Nom du client</label>
@@ -2505,15 +2898,6 @@ function buildProjectFormFieldsHtml(p, activeOptionsMap){
     <select id="pfCoord"></select>
     <label>Flux</label>
     <select id="pfFlux"></select>
-    <label>Date</label>
-    <input type="date" id="pfDate" value="${p.date||''}">
-    <label>Échéance</label>
-    <div class="echeance-toggle">
-      <button type="button" class="etg-btn" data-mode="weeks">Semaines</button>
-      <button type="button" class="etg-btn" data-mode="date">Date fixe</button>
-    </div>
-    <div id="pfEcheanceWeeksWrap"><input type="number" id="pfEcheanceWeeks" min="1" step="1" placeholder="ex. 6" value="${p.echeanceWeeks||''}"><span class="echeance-hint" id="pfEcheanceHint"></span></div>
-    <div id="pfEcheanceDateWrap" style="display:none;"><input type="date" id="pfEcheanceDate" value="${mode==='date' ? (p.echeance||'') : ''}"></div>
     ${opts.length ? `
     <label>Options de projet</label>
     <div class="options-panel" style="margin-top:0;">
@@ -2527,57 +2911,16 @@ function buildProjectFormFieldsHtml(p, activeOptionsMap){
 function wireProjectFormFields(backdrop, p){
   p = p || {};
   populateOptionSelect(backdrop.querySelector('#pfCoord'), appOptions.coordinateurs || [], p.coordinateur || '');
-  populateOptionSelect(backdrop.querySelector('#pfFlux'), FLUX_OPTIONS, p.numFlux || '');
-
-  const mode0 = p.echeanceType || 'weeks';
-  const weeksWrap = backdrop.querySelector('#pfEcheanceWeeksWrap');
-  const dateWrap = backdrop.querySelector('#pfEcheanceDateWrap');
-  const hint = backdrop.querySelector('#pfEcheanceHint');
-  const etgBtns = backdrop.querySelectorAll('.etg-btn');
-  let currentMode = mode0;
-
-  function updateHint(){
-    const w = parseFloat(backdrop.querySelector('#pfEcheanceWeeks').value);
-    if(currentMode === 'weeks' && w){
-      const base = p.createdAt || Date.now();
-      const d = new Date(base + w * 7 * 86400000);
-      hint.textContent = '= ' + d.toLocaleDateString('fr-FR');
-    } else {
-      hint.textContent = '';
-    }
-  }
-  function setMode(mode){
-    currentMode = mode;
-    etgBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-    weeksWrap.style.display = mode === 'weeks' ? 'flex' : 'none';
-    dateWrap.style.display = mode === 'date' ? 'block' : 'none';
-    updateHint();
-  }
-  etgBtns.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
-  backdrop.querySelector('#pfEcheanceWeeks').addEventListener('input', updateHint);
-  setMode(mode0);
-
-  return {
-    getEcheanceMode: () => currentMode
-  };
+  populateOptionSelect(backdrop.querySelector('#pfFlux'), getAllFluxOptions(), p.numFlux || '');
 }
 
-function readProjectFormValues(backdrop, base, echeanceMode){
+function readProjectFormValues(backdrop, base){
   const p = Object.assign({}, base);
   p.client = backdrop.querySelector('#pfClient').value.trim();
   p.numCommande = backdrop.querySelector('#pfNumCommande').value.trim();
   p.name = backdrop.querySelector('#pfName').value.trim() || 'Nouveau projet';
   p.coordinateur = backdrop.querySelector('#pfCoord').value;
   p.numFlux = backdrop.querySelector('#pfFlux').value;
-  p.date = backdrop.querySelector('#pfDate').value || '';
-  p.echeanceType = echeanceMode;
-  if(echeanceMode === 'weeks'){
-    const w = parseFloat(backdrop.querySelector('#pfEcheanceWeeks').value);
-    p.echeanceWeeks = isNaN(w) ? null : w;
-    p.echeance = p.echeanceWeeks ? new Date((p.createdAt || Date.now()) + p.echeanceWeeks * 7 * 86400000).toISOString().slice(0,10) : '';
-  } else {
-    p.echeance = backdrop.querySelector('#pfEcheanceDate').value || '';
-  }
   const activeOptions = {};
   backdrop.querySelectorAll('.pf-opt-check').forEach(cb => { activeOptions[cb.dataset.opt] = cb.checked; });
   return { p, activeOptions };
@@ -2586,7 +2929,7 @@ function readProjectFormValues(backdrop, base, echeanceMode){
 function openProjectFormModal(existingProject){
   const isEdit = !!existingProject;
   const activeOptionsMap = isEdit ? (currentData && currentData.activeOptions) || {} : {};
-  const base = isEdit ? existingProject : { date: new Date().toISOString().slice(0,10), createdAt: Date.now(), echeanceType:'weeks' };
+  const base = isEdit ? existingProject : { date: new Date().toISOString().slice(0,10), createdAt: Date.now() };
 
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
@@ -2601,7 +2944,7 @@ function openProjectFormModal(existingProject){
     </div>
   `;
   document.body.appendChild(backdrop);
-  const ctl = wireProjectFormFields(backdrop, base);
+  wireProjectFormFields(backdrop, base);
   backdrop.querySelector('#pfClient').focus();
 
   function close(){ document.body.removeChild(backdrop); }
@@ -2610,7 +2953,7 @@ function openProjectFormModal(existingProject){
   backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
 
   backdrop.querySelector('#pfSave').addEventListener('click', async () => {
-    const { p: formVals, activeOptions } = readProjectFormValues(backdrop, base, ctl.getEcheanceMode());
+    const { p: formVals, activeOptions } = readProjectFormValues(backdrop, base);
     close();
     if(isEdit){
       Object.assign(existingProject, formVals);
@@ -2670,6 +3013,7 @@ function renderTabs(){
   $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
   if(currentTab === 'checklist') renderChecklistTab();
   else if(currentTab === 'fiche') renderFicheTab();
+  else if(currentTab === 'planning') renderPlanningTab();
   else if(currentTab === 'notes') renderNotesTab();
   else renderRapportTab();
 }
@@ -3060,6 +3404,177 @@ function renderFicheTab(){
   });
 }
 
+/* ============================= PLANNING INTENTIONNEL TAB ============================= */
+
+function renderPlanningTab(){
+  const container = $('#tabContent');
+  const planning = currentData.planning || (currentData.planning = defaultPlanningData());
+  const plannedEcheance = computePlannedEcheance(planning);
+  const spanWeeks = computePlanningSpanWeeks(planning);
+  const realSpanWeeks = computeRealSpanWeeks(planning);
+
+  const rowsHtml = planning.tasks.map((t, idx) => {
+    const plannedEnd = addWeeksToDate(planning.startDate, (t.debut!==null&&t.debut!==''&&t.duree!==null&&t.duree!=='') ? (parseFloat(t.debut)+parseFloat(t.duree)) : null);
+    const realEnd = addWeeksToDate(planning.startDate, (t.debutReel!==null&&t.debutReel!==''&&t.dureeReel!==null&&t.dureeReel!=='') ? (parseFloat(t.debutReel)+parseFloat(t.dureeReel)) : null);
+    return `
+      <tr data-idx="${idx}" draggable="true" class="pl-row">
+        <td class="pl-drag-handle" title="Glisser pour réordonner">⠿</td>
+        <td><input type="text" class="pl-label" data-idx="${idx}" value="${escapeHtml(t.label)}"></td>
+        <td><input type="number" class="pl-num" data-idx="${idx}" data-field="debut" step="0.5" value="${t.debut===null?'':t.debut}"></td>
+        <td><input type="number" class="pl-num" data-idx="${idx}" data-field="duree" step="0.5" value="${t.duree===null?'':t.duree}"></td>
+        <td class="pl-computed">${plannedEnd ? plannedEnd.toLocaleDateString('fr-FR') : '—'}</td>
+        <td><input type="number" class="pl-num pl-real" data-idx="${idx}" data-field="debutReel" step="0.5" value="${t.debutReel===null?'':t.debutReel}"></td>
+        <td><input type="number" class="pl-num pl-real" data-idx="${idx}" data-field="dureeReel" step="0.5" value="${t.dureeReel===null?'':t.dureeReel}"></td>
+        <td class="pl-computed">${realEnd ? realEnd.toLocaleDateString('fr-FR') : '—'}</td>
+        <td><button class="pl-del" data-idx="${idx}" title="Supprimer">×</button></td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>📐 Paramètres du planning</h4></div>
+      <div class="fiche-fields">
+        <div class="fiche-field">
+          <label>Date de début du projet</label>
+          <input type="date" id="plStartDate" value="${planning.startDate || ''}">
+        </div>
+        <div class="fiche-field">
+          <label>Échéance calculée</label>
+          <input type="text" value="${plannedEcheance ? new Date(plannedEcheance).toLocaleDateString('fr-FR') : '— (renseigne Début/Durée)'}" disabled>
+        </div>
+        <div class="fiche-field wide">
+          <label class="choice-chip" style="align-self:flex-start;">
+            <input type="checkbox" id="plOverrideToggle" ${planning.echeanceOverride?'checked':''}>
+            Forcer une date d'échéance manuelle
+          </label>
+        </div>
+        ${planning.echeanceOverride!==null ? `
+        <div class="fiche-field">
+          <label>Échéance forcée</label>
+          <input type="date" id="plOverrideDate" value="${planning.echeanceOverride || ''}">
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>🗓 Tâches du planning (en semaines depuis le début)</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <div class="pl-table-wrap">
+          <table class="pl-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Description des tâches</th>
+                <th>Début<br><span class="pl-th-sub">planifié</span></th>
+                <th>Durée<br><span class="pl-th-sub">planifiée</span></th>
+                <th>Fin<br><span class="pl-th-sub">planifiée</span></th>
+                <th>Début<br><span class="pl-th-sub">réel</span></th>
+                <th>Durée<br><span class="pl-th-sub">réelle</span></th>
+                <th>Fin<br><span class="pl-th-sub">réelle</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div class="flux-add-row" style="margin-top:12px;">
+          <input type="text" id="plTaskAddInput" placeholder="Nouvelle tâche…">
+          <button class="btn btn-primary" id="plTaskAddBtn">+ Ajouter une tâche</button>
+        </div>
+        <p class="settings-hint" style="margin-top:10px;">Portée planifiée : ${spanWeeks ? spanWeeks + ' semaines' : '—'} · Portée réelle : ${realSpanWeeks!==null ? realSpanWeeks + ' semaines' : 'pas encore de données réelles'}</p>
+      </div>
+    </div>
+  `;
+
+  function recomputeAndSave(){
+    const p = projects.find(x => x.id === currentProjectId);
+    if(p) syncEcheanceFromPlanning(p, currentData);
+    saveProjects();
+    scheduleSaveProjectData();
+  }
+
+  $('#plStartDate').addEventListener('input', e => {
+    planning.startDate = e.target.value;
+    recomputeAndSave();
+    renderPlanningTab();
+  });
+  $('#plOverrideToggle').addEventListener('change', e => {
+    planning.echeanceOverride = e.target.checked ? (plannedEcheance || new Date().toISOString().slice(0,10)) : null;
+    recomputeAndSave();
+    renderPlanningTab();
+  });
+  const overrideInput = $('#plOverrideDate');
+  if(overrideInput){
+    overrideInput.addEventListener('input', e => {
+      planning.echeanceOverride = e.target.value;
+      recomputeAndSave();
+      renderPlanningTab();
+    });
+  }
+
+  container.querySelectorAll('.pl-label').forEach(inp => inp.addEventListener('input', () => {
+    planning.tasks[+inp.dataset.idx].label = inp.value;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.pl-num').forEach(inp => inp.addEventListener('input', () => {
+    const idx = +inp.dataset.idx, field = inp.dataset.field;
+    const v = inp.value === '' ? null : parseFloat(inp.value);
+    planning.tasks[idx][field] = (v === null || isNaN(v)) ? null : v;
+    recomputeAndSave();
+    // only refresh the computed date columns without a full re-render, to keep focus while typing
+    const row = container.querySelector(`tr[data-idx="${idx}"]`);
+    if(row){
+      const t = planning.tasks[idx];
+      const plannedEnd = addWeeksToDate(planning.startDate, (t.debut!==null&&t.duree!==null) ? (t.debut+t.duree) : null);
+      const realEnd = addWeeksToDate(planning.startDate, (t.debutReel!==null&&t.dureeReel!==null) ? (t.debutReel+t.dureeReel) : null);
+      const computedCells = row.querySelectorAll('.pl-computed');
+      if(computedCells[0]) computedCells[0].textContent = plannedEnd ? plannedEnd.toLocaleDateString('fr-FR') : '—';
+      if(computedCells[1]) computedCells[1].textContent = realEnd ? realEnd.toLocaleDateString('fr-FR') : '—';
+    }
+  }));
+  container.querySelectorAll('.pl-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer cette tâche du planning ?', { okText:'Supprimer' });
+    if(!ok) return;
+    planning.tasks.splice(+btn.dataset.idx, 1);
+    recomputeAndSave();
+    renderPlanningTab();
+  }));
+
+  let dragSrcIdx = null;
+  container.querySelectorAll('.pl-row').forEach(row => {
+    row.addEventListener('dragstart', () => {
+      dragSrcIdx = +row.dataset.idx;
+      row.classList.add('dragging');
+    });
+    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+    row.addEventListener('dragover', e => { e.preventDefault(); row.classList.add('drag-over'); });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      const targetIdx = +row.dataset.idx;
+      if(dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+      const [moved] = planning.tasks.splice(dragSrcIdx, 1);
+      planning.tasks.splice(targetIdx, 0, moved);
+      dragSrcIdx = null;
+      recomputeAndSave();
+      renderPlanningTab();
+    });
+  });
+
+  function addTask(){
+    const input = $('#plTaskAddInput');
+    const text = input.value.trim();
+    if(!text) return;
+    planning.tasks.push({ id: uid(), label: text, debut:null, duree:null, debutReel:null, dureeReel:null });
+    input.value = '';
+    recomputeAndSave();
+    renderPlanningTab();
+  }
+  $('#plTaskAddBtn').addEventListener('click', addTask);
+  $('#plTaskAddInput').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+}
+
 /* ============================= RAPPORT TAB ============================= */
 
 /* ============================= NOTES GÉNÉRALES TAB ============================= */
@@ -3122,7 +3637,15 @@ function renderNotesTab(){
     const text = input.value.trim();
     if(!text) return;
     if(!currentData.customChecklist) currentData.customChecklist = [];
-    currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'' });
+    const p = projects.find(x => x.id === currentProjectId);
+    if(appSettings.linkSeanceTodo){
+      const linkId = uid();
+      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? p.name : '' });
+      scheduleSaveSeance('todo');
+    } else {
+      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'' });
+    }
     input.value = '';
     scheduleSaveProjectData();
     renderNotesTab();
@@ -3137,13 +3660,21 @@ function renderNotesTab(){
   }));
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
-    if(it) it.checked = cb.checked;
+    if(it){
+      it.checked = cb.checked;
+      if(it.linkId){ syncLinkedItems(it.linkId, { checked: it.checked }); saveAllLinkedLists(); }
+    }
     scheduleSaveProjectData();
     renderNotesTab();
   }));
   container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
-    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    const it = (currentData.customChecklist || []).find(x => x.id === btn.dataset.id);
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Sa copie dans la To do list sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
+    if(it && it.linkId){
+      deleteLinkedItems(it.linkId);
+      saveAllLinkedLists();
+    }
     currentData.customChecklist = (currentData.customChecklist || []).filter(x => x.id !== btn.dataset.id);
     scheduleSaveProjectData();
     renderNotesTab();
@@ -3151,11 +3682,19 @@ function renderNotesTab(){
   container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === span.dataset.id);
     const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){ it.text = newText; scheduleSaveProjectData(); }
+    if(it && newText && it.text !== newText){
+      it.text = newText;
+      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
+      scheduleSaveProjectData();
+    }
   }));
   container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === ta.dataset.id);
-    if(it){ it.note = ta.value; scheduleSaveProjectData(); }
+    if(it){
+      it.note = ta.value;
+      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
+      scheduleSaveProjectData();
+    }
   }));
   wireNoteToggles(container, renderNotesTab);
 }
@@ -3369,7 +3908,9 @@ async function exportAllData(){
     appOptions,
     checklistTemplates,
     notesText,
-    appSettings
+    appSettings,
+    morningRoutineItems,
+    morningRoutineState
   };
   for(const p of projects){
     payload.projectData[p.id] = (p.id === currentProjectId && currentData) ? currentData : await loadProjectData(p.id);
@@ -3415,6 +3956,8 @@ async function importAllData(file){
     }
     if(typeof payload.notesText === 'string'){ notesText = payload.notesText; lsSet('projectNotes', notesText); }
     if(payload.appSettings){ appSettings = payload.appSettings; applyTheme(); saveSettings(); }
+    if(payload.morningRoutineItems){ morningRoutineItems = payload.morningRoutineItems; saveMorningRoutineItems(); }
+    if(payload.morningRoutineState){ morningRoutineState = payload.morningRoutineState; saveMorningRoutineState(); }
 
     currentProjectId = null;
     currentData = null;
@@ -3436,11 +3979,34 @@ async function init(){
   seanceMatin = loadSeance('seance_matin');
   todoList = loadSeance('todo_list');
   seanceOpeBoard = loadSeanceOpeBoard();
+  morningRoutineItems = loadMorningRoutineItems();
+  if(!lsGet('morningRoutineV2Seeded')){
+    const existingTexts = morningRoutineItems.map(it => it.text);
+    DEFAULT_MORNING_ROUTINE.forEach(text => { if(!existingTexts.includes(text)) morningRoutineItems.push({ id: uid(), text }); });
+    saveMorningRoutineItems();
+    lsSet('morningRoutineV2Seeded', '1');
+  }
+  morningRoutineState = loadMorningRoutineState();
   loadProjects();
   await renderDashboardView();
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  let showRoutineToday = false;
+  if(morningRoutineState.date !== todayStr){
+    morningRoutineState = { date: todayStr, checked:{}, snoozeUntil: null };
+    saveMorningRoutineState();
+    showRoutineToday = true;
+  } else if(morningRoutineState.snoozeUntil && Date.now() >= morningRoutineState.snoozeUntil && !allRoutineChecked()){
+    morningRoutineState.snoozeUntil = null;
+    saveMorningRoutineState();
+    showRoutineToday = true;
+  }
+
   if(!lsGet('hasSeenManual')){
     lsSet('hasSeenManual', '1');
     openManualModal();
+  } else if(showRoutineToday && morningRoutineItems.length && !allRoutineChecked()){
+    openMorningRoutineModal();
   }
 }
 init();
