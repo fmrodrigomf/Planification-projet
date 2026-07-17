@@ -512,7 +512,7 @@
     body.sidebar-open #sidebar{transform:translateX(0);}
     #main{width:100%;}
     #projectHeader{padding:calc(64px + env(safe-area-inset-top)) 16px 0;}
-    #dashboardView, #settingsView, #seanceView, #tabContent{padding:calc(64px + env(safe-area-inset-top)) 16px 60px;}
+    #dashboardView, #settingsView, #seanceView, #echeancesView, #tabContent{padding:calc(64px + env(safe-area-inset-top)) 16px 60px;}
     .ph-meta, .settings-grid, .fiche-fields{grid-template-columns:1fr !important;}
     .ope-board{grid-template-columns:1fr;}
     .door-card-fields{grid-template-columns:1fr;}
@@ -1478,6 +1478,28 @@ function getSimpleList(id){ return id === 'matin' ? seanceMatin : todoList; }
 function setSimpleList(id, arr){ if(id === 'matin') seanceMatin = arr; else todoList = arr; }
 function seanceStorageKey(id){ if(id === 'matin') return 'seance_matin'; if(id === 'todo') return 'todo_list'; return 'seance_ope'; }
 function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; return 'Séance OPE'; }
+
+// When "link" is enabled, an item created in Séance du matin/OPE gets a shared linkId
+// and a mirrored copy in the To do list. Checking either copy syncs the other(s).
+function syncLinkedItems(linkId, patch){
+  if(!linkId) return;
+  [seanceMatin, todoList, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
+    arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
+  });
+}
+function deleteLinkedItems(linkId){
+  if(!linkId) return;
+  seanceMatin = seanceMatin.filter(it => it.linkId !== linkId);
+  todoList = todoList.filter(it => it.linkId !== linkId);
+  seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
+  seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
+  seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
+}
+function saveAllLinkedLists(){
+  saveSeance('matin');
+  saveSeance('todo');
+  saveSeanceOpeBoard();
+}
 function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; return '🛠'; }
 
 function allOpeItems(){
@@ -1592,6 +1614,7 @@ async function renderSeanceView(id){
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
             <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
             ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+            ${it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':''}
             <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
           </div>
@@ -1605,9 +1628,17 @@ async function renderSeanceView(id){
     const input = $('#seanceNewItem');
     const text = input.value.trim();
     if(!text) return;
-    getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
+    if(id === 'matin' && appSettings.linkSeanceTodo){
+      const linkId = uid();
+      getSimpleList('matin').unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      scheduleSaveSeance('matin');
+      scheduleSaveSeance('todo');
+    } else {
+      getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
+      scheduleSaveSeance(id);
+    }
     input.value = '';
-    scheduleSaveSeance(id);
     renderSeanceView(id);
   }
   $('#seanceAddBtn').addEventListener('click', addItem);
@@ -1615,25 +1646,46 @@ async function renderSeanceView(id){
 
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
     const it = getSimpleList(id).find(x => x.id === cb.dataset.id);
-    if(it) it.checked = cb.checked;
-    scheduleSaveSeance(id);
+    if(it){
+      it.checked = cb.checked;
+      if(it.linkId){
+        syncLinkedItems(it.linkId, { checked: it.checked });
+        saveAllLinkedLists();
+      } else {
+        scheduleSaveSeance(id);
+      }
+    }
     renderSeanceView(id);
   }));
   container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
-    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    const it = getSimpleList(id).find(x => x.id === btn.dataset.id);
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
-    setSimpleList(id, getSimpleList(id).filter(x => x.id !== btn.dataset.id));
-    saveSeance(id);
+    if(it && it.linkId){
+      deleteLinkedItems(it.linkId);
+      saveAllLinkedLists();
+    } else {
+      setSimpleList(id, getSimpleList(id).filter(x => x.id !== btn.dataset.id));
+      saveSeance(id);
+    }
     renderSeanceView(id);
   }));
   container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
     const it = getSimpleList(id).find(x => x.id === span.dataset.id);
     const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){ it.text = newText; saveSeance(id); }
+    if(it && newText && it.text !== newText){
+      it.text = newText;
+      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
+      else { saveSeance(id); }
+    }
   }));
   container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
     const it = getSimpleList(id).find(x => x.id === ta.dataset.id);
-    if(it){ it.note = ta.value; scheduleSaveSeance(id); }
+    if(it){
+      it.note = ta.value;
+      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
+      else { scheduleSaveSeance(id); }
+    }
   }));
   container.querySelectorAll('.seance-expand').forEach(btn => btn.addEventListener('click', () => {
     const itemId = btn.dataset.id;
@@ -1654,6 +1706,7 @@ function opeItemCardHtml(it, listName){
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
         <span class="ope-text" data-id="${it.id}" data-list="${listName}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
         ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+        ${it.linkId?'<span class="item-badge" title="Lié à la To do list">🔗</span>':''}
         <button class="ope-expand" data-id="${it.id}" data-list="${listName}" title="Note">${expanded?'▾':'▸'}</button>
         <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
       </div>
@@ -1696,11 +1749,21 @@ function renderSeanceOpeView(){
     </div>
   `;
 
+  function makeOpeItem(text){
+    if(appSettings.linkSeanceTodo){
+      const linkId = uid();
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      scheduleSaveSeance('todo');
+      return { id: uid(), text, note:'', checked:false, linkId };
+    }
+    return { id: uid(), text, note:'', checked:false };
+  }
+
   function addToStaging(){
     const input = $('#opeNewItem');
     const text = input.value.trim();
     if(!text) return;
-    b.staging.unshift({ id: uid(), text, note:'', checked:false });
+    b.staging.unshift(makeOpeItem(text));
     input.value = '';
     scheduleSaveSeanceOpe();
     renderSeanceOpeView();
@@ -1713,7 +1776,7 @@ function renderSeanceOpeView(){
       if(e.key !== 'Enter') return;
       const text = inp.value.trim();
       if(!text) return;
-      b[inp.dataset.list].unshift({ id: uid(), text, note:'', checked:false });
+      b[inp.dataset.list].unshift(makeOpeItem(text));
       scheduleSaveSeanceOpe();
       renderSeanceOpeView();
     });
@@ -1721,27 +1784,48 @@ function renderSeanceOpeView(){
 
   container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', () => {
     const it = b[cb.dataset.list].find(x => x.id === cb.dataset.id);
-    if(it) it.checked = cb.checked;
-    scheduleSaveSeanceOpe();
+    if(it){
+      it.checked = cb.checked;
+      if(it.linkId){
+        syncLinkedItems(it.linkId, { checked: it.checked });
+        saveAllLinkedLists();
+      } else {
+        scheduleSaveSeanceOpe();
+      }
+    }
     renderSeanceOpeView();
   }));
 
   container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async () => {
-    const ok = await customConfirm('Supprimer ce point ?', { okText:'Supprimer' });
+    const it = b[btn.dataset.list].find(x => x.id === btn.dataset.id);
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
-    b[btn.dataset.list] = b[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
-    scheduleSaveSeanceOpe();
+    if(it && it.linkId){
+      deleteLinkedItems(it.linkId);
+      saveAllLinkedLists();
+    } else {
+      b[btn.dataset.list] = b[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
+      scheduleSaveSeanceOpe();
+    }
     renderSeanceOpeView();
   }));
 
   container.querySelectorAll('.ope-text').forEach(span => span.addEventListener('blur', () => {
     const it = b[span.dataset.list].find(x => x.id === span.dataset.id);
     const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){ it.text = newText; scheduleSaveSeanceOpe(); }
+    if(it && newText && it.text !== newText){
+      it.text = newText;
+      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
+      else { scheduleSaveSeanceOpe(); }
+    }
   }));
   container.querySelectorAll('.ope-note').forEach(ta => ta.addEventListener('input', () => {
     const it = b[ta.dataset.list].find(x => x.id === ta.dataset.id);
-    if(it){ it.note = ta.value; scheduleSaveSeanceOpe(); }
+    if(it){
+      it.note = ta.value;
+      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
+      else { scheduleSaveSeanceOpe(); }
+    }
   }));
 
   container.querySelectorAll('.ope-card').forEach(card => {
@@ -1786,10 +1870,15 @@ function renderSeanceOpeView(){
   $('#opeClearCheckedBtn').addEventListener('click', async () => {
     const totalChecked = allOpeItems().filter(it => it.checked).length;
     if(totalChecked === 0){ showToast('Aucun point coché'); return; }
-    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coché(s) ?`, { okText:'Supprimer' });
+    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coché(s) ? Les points liés seront aussi supprimés de leurs autres listes.`, { okText:'Supprimer' });
     if(!ok) return;
+    const linkIdsToDelete = new Set();
+    ['staging','derniere','jour'].forEach(l => {
+      b[l].filter(it => it.checked && it.linkId).forEach(it => linkIdsToDelete.add(it.linkId));
+    });
+    linkIdsToDelete.forEach(lid => deleteLinkedItems(lid));
     ['staging','derniere','jour'].forEach(l => { b[l] = b[l].filter(it => !it.checked); });
-    scheduleSaveSeanceOpe();
+    saveAllLinkedLists();
     renderSeanceOpeView();
   });
   container.querySelectorAll('.ope-expand').forEach(btn => btn.addEventListener('click', e => {
@@ -2019,6 +2108,16 @@ async function renderSettingsView(){
         <input type="file" id="importFileInput" accept="application/json" hidden>
       </div>
     </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🔗 Séances &amp; To do list</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Si activé, chaque nouveau point ajouté en Séance du matin ou en Séance OPE est automatiquement recopié dans la To do list. Les deux copies restent liées : cocher l'une comme faite coche l'autre aussi.</p>
+        <label class="choice-chip" style="align-self:flex-start;">
+          <input type="checkbox" id="linkSeanceTodoToggle" ${appSettings.linkSeanceTodo?'checked':''}>
+          Lier les nouveaux points à la To do list
+        </label>
+      </div>
+    </div>
     <div class="settings-grid" style="margin-top:20px;">
       ${buildOptionListHtml('coordinateurs', 'Coordinateurs', 'ex. Jean Dupont')}
     </div>
@@ -2088,6 +2187,11 @@ async function renderSettingsView(){
   $('#exportBtn').addEventListener('click', exportAllData);
   $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
   $('#openManualBtn').addEventListener('click', openManualModal);
+  $('#linkSeanceTodoToggle').addEventListener('change', e => {
+    appSettings.linkSeanceTodo = e.target.checked;
+    saveSettings();
+    showToast(appSettings.linkSeanceTodo ? 'Liaison activée' : 'Liaison désactivée');
+  });
   renderFluxTemplateEditor();
   $('#importFileInput').addEventListener('change', e => {
     const f = e.target.files[0];
