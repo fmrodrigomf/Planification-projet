@@ -173,6 +173,23 @@
   .alert-row.stalled{border-left-color:var(--amber-dark);}
   .alert-row b{color:var(--graphite);}
   .alert-row .a-info{color:var(--steel);font-size:12px;font-family:var(--font-mono);}
+  .dash-filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;}
+  .dash-filter-bar input[type=text]{flex:1;min-width:200px;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13px;background:var(--paper-2);color:var(--graphite);}
+  .dash-filter-bar select{border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .dash-filter-bar input:focus, .dash-filter-bar select:focus{outline:2px solid var(--amber);outline-offset:-1px;}
+  .pc-modified{font-size:10.5px;color:var(--steel-light);font-family:var(--font-mono);margin-top:6px;}
+  .ech-list{display:flex;flex-direction:column;gap:8px;}
+  .ech-row{display:flex;align-items:center;gap:16px;background:var(--paper-2);border:1px solid var(--line);border-left:3px solid var(--steel-light);border-radius:6px;padding:12px 16px;cursor:pointer;transition:border-color .12s;}
+  .ech-row:hover{border-color:var(--amber);}
+  .ech-row.overdue{border-left-color:var(--danger);}
+  .ech-date{width:110px;flex-shrink:0;text-align:center;}
+  .ech-date-day{font-family:var(--font-mono);font-size:13px;color:var(--graphite);font-weight:700;}
+  .ech-date-rel{font-size:10.5px;color:var(--steel);margin-top:2px;}
+  .ech-row.overdue .ech-date-rel{color:var(--danger);font-weight:600;}
+  .ech-body{flex:1;min-width:0;}
+  .ech-client{font-family:var(--font-display);font-size:14.5px;color:var(--graphite);font-weight:600;}
+  .ech-name{font-size:12px;color:var(--steel);margin-top:2px;}
+  .ech-progress{font-family:var(--font-mono);font-size:12px;color:var(--steel);flex-shrink:0;}
   .project-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
   .project-card{background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:16px 18px;cursor:pointer;transition:border-color .12s,transform .12s;}
   .project-card:hover{border-color:var(--amber);transform:translateY(-2px);}
@@ -226,6 +243,7 @@
 
   #settingsView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   #seanceView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+  #echeancesView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
   .settings-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
   .settings-item{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--graphite);}
@@ -366,6 +384,8 @@
   .item-label-row .item-label{flex:1;cursor:pointer;}
   .item-badge{font-size:11px;opacity:.85;}
   .item-expand-chev{font-size:10px;color:var(--steel-light);flex-shrink:0;}
+  .seance-expand, .ope-expand{background:none;border:none;color:var(--steel-light);font-size:11px;cursor:pointer;flex-shrink:0;padding:2px 3px;}
+  .seance-expand:hover, .ope-expand:hover{color:var(--amber-dark);}
   .note-toggle-btn, .photo-toggle-btn{
     background:none;border:none;color:var(--steel-light);font-size:11.5px;cursor:pointer;
     padding:5px 0 0;margin-top:2px;margin-right:12px;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-body);
@@ -426,6 +446,8 @@
   .fg-add:hover{border-color:var(--amber);color:var(--amber-dark);}
 
   /* ---------- RAPPORT ---------- */
+  .report-sections-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .report-sections-label{font-size:12.5px;color:var(--steel);font-weight:600;}
   #reportActions{display:flex;gap:10px;margin-bottom:20px;}
   .btn{border:none;padding:10px 16px;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;}
   .btn-primary{background:var(--amber);color:#1c1305;}
@@ -479,6 +501,7 @@
   #toast.show{opacity:1;transform:translateY(0);}
 
   @media (max-width: 860px){
+    input, textarea, select, [contenteditable]{font-size:16px !important;}
     #mobileMenuBtn{display:flex;}
     body.sidebar-open #mobileMenuBtn{display:none;}
     #sidebar{
@@ -511,8 +534,9 @@
 
   @media print{
     body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
-    #sidebar, #projectHeader, #reportActions, #toast{display:none !important;}
-    #tabContent{padding:0;overflow:visible;}
+    html, body, #app, #main, #projectView{height:auto !important;overflow:visible !important;}
+    #sidebar, #projectHeader, #reportActions, #toast, .report-sections-row{display:none !important;}
+    #tabContent{padding:0;overflow:visible !important;height:auto !important;}
     #reportPreview{border:none;padding:0;max-width:100%;}
     .partie, .fiche-section, .checklist-toolbar, .options-panel{display:none !important;}
   }
@@ -530,6 +554,7 @@
     </div>
     <button id="newProjectBtn">+ Nouveau projet</button>
     <button id="dashboardNavBtn" class="nav-btn">🏠 Tableau de bord</button>
+    <button id="echeancesNavBtn" class="nav-btn">📅 Échéances</button>
     <button id="seanceMatinNavBtn" class="nav-btn">🌅 Séance du matin</button>
     <button id="seanceOpeNavBtn" class="nav-btn">🛠 Séance OPE</button>
     <button id="todoNavBtn" class="nav-btn">✅ To do list</button>
@@ -545,6 +570,7 @@
     <div id="dashboardView"></div>
     <div id="settingsView" style="display:none;"></div>
     <div id="seanceView" style="display:none;"></div>
+    <div id="echeancesView" style="display:none;"></div>
 
     <div id="projectView" style="display:none;">
       <div id="projectHeader">
@@ -554,6 +580,8 @@
           </div>
           <div class="ph-actions">
             <button class="icon-btn" id="toggleFinishedBtn" title="Marquer comme terminé">✓</button>
+            <button class="icon-btn" id="duplicateProjectBtn" title="Dupliquer comme modèle">⧉</button>
+            <button class="icon-btn" id="toggleArchivedBtn" title="Archiver le projet">📦</button>
             <button class="icon-btn" id="editProjectInfoBtn" title="Modifier les informations">✎</button>
             <button class="icon-btn danger" id="deleteProjectBtn" title="Supprimer le projet">✕</button>
           </div>
@@ -902,8 +930,9 @@ const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 function uid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
-function sortedProjectsForDisplay(){
-  return [...projects.filter(p => !p.finished), ...projects.filter(p => p.finished)];
+function sortedProjectsForDisplay(includeArchived){
+  const pool = includeArchived ? projects : projects.filter(p => !p.archived);
+  return [...pool.filter(p => !p.finished), ...pool.filter(p => p.finished)];
 }
 function itemKey(sectionId, idx){ return sectionId + '__' + idx; }
 function normalize(str){ return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
@@ -1217,6 +1246,7 @@ function hideAllViews(){
   $('#dashboardView').style.display = 'none';
   $('#settingsView').style.display = 'none';
   $('#seanceView').style.display = 'none';
+  $('#echeancesView').style.display = 'none';
   $('#projectView').style.display = 'none';
   document.body.classList.remove('sidebar-open');
 }
@@ -1227,6 +1257,7 @@ async function renderSidebar(){
   $('#seanceMatinNavBtn').classList.toggle('active', currentView === 'seance_matin');
   $('#seanceOpeNavBtn').classList.toggle('active', currentView === 'seance_ope');
   $('#todoNavBtn').classList.toggle('active', currentView === 'seance_todo');
+  $('#echeancesNavBtn').classList.toggle('active', currentView === 'echeances');
   const list = $('#projectList');
   if(projects.length === 0){
     list.innerHTML = '<div class="empty-side">Aucun projet pour l\u2019instant. Cliquez sur « + Nouveau projet » pour commencer une checklist.</div>';
@@ -1253,6 +1284,23 @@ async function renderSidebar(){
 
 /* ============================= DASHBOARD ============================= */
 
+let dashSearchQuery = '';
+let dashFilterFlux = 'all';
+let dashFilterCoord = 'all';
+let dashFilterOverdueOnly = false;
+let dashShowArchived = false;
+
+function dashboardProjectMatches(p){
+  if(dashSearchQuery){
+    const nq = normalize(dashSearchQuery);
+    const hay = normalize([p.client, p.name, p.numCommande].filter(Boolean).join(' '));
+    if(!hay.includes(nq)) return false;
+  }
+  if(dashFilterFlux !== 'all' && p.numFlux !== dashFilterFlux) return false;
+  if(dashFilterCoord !== 'all' && p.coordinateur !== dashFilterCoord) return false;
+  return true;
+}
+
 async function renderDashboardView(){
   await flushAllPending();
   currentView = 'dashboard';
@@ -1274,23 +1322,28 @@ async function renderDashboardView(){
     return;
   }
 
+  const hadFocus = document.activeElement && document.activeElement.id === 'dashSearchInput';
+  const caret = hadFocus ? document.activeElement.selectionStart : null;
+
+  const archivedCount = projects.filter(p => p.archived).length;
   const todayStr = new Date().toISOString().slice(0,10);
-  const rows = [];
-  let totalChecked = 0, totalPossible = 0;
-  for(const p of sortedProjectsForDisplay()){
+  const allRows = [];
+  for(const p of sortedProjectsForDisplay(dashShowArchived)){
     const s = await getProjectStats(p.id, true);
-    totalChecked += s.checked;
-    totalPossible += s.total;
     const pct = s.total ? Math.round((s.checked / s.total) * 100) : 0;
     const isOverdue = !p.finished && !!(p.echeance && p.echeance < todayStr && s.checked < s.total);
     const refTime = s.lastModified || p.createdAt || Date.now();
     const daysSince = Math.floor((Date.now() - refTime) / 86400000);
     const isStalled = !p.finished && daysSince > 14 && s.checked < s.total;
-    rows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince });
+    allRows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince, lastMod: refTime });
   }
 
-  const overdue = rows.filter(r => r.isOverdue);
-  const stalled = rows.filter(r => r.isStalled && !r.isOverdue);
+  const totalChecked = allRows.reduce((a,r) => a + r.checked, 0);
+  const totalPossible = allRows.reduce((a,r) => a + r.total, 0);
+  const overdue = allRows.filter(r => r.isOverdue);
+  const stalled = allRows.filter(r => r.isStalled && !r.isOverdue);
+
+  const rows = allRows.filter(r => dashboardProjectMatches(r.p) && (!dashFilterOverdueOnly || r.isOverdue));
 
   const alertsHtml = (overdue.length || stalled.length) ? `
     <div class="alert-section">
@@ -1298,6 +1351,24 @@ async function renderDashboardView(){
       ${overdue.map(r => `<div class="alert-row" data-id="${r.p.id}"><span><b>${escapeHtml(r.p.name)}</b> — échéance dépassée (${new Date(r.p.echeance).toLocaleDateString('fr-FR')})</span><span class="a-info">${r.checked}/${r.total}</span></div>`).join('')}
       ${stalled.map(r => `<div class="alert-row stalled" data-id="${r.p.id}"><span><b>${escapeHtml(r.p.name)}</b> — aucune activité depuis ${r.daysSince} jours</span><span class="a-info">${r.checked}/${r.total}</span></div>`).join('')}
     </div>` : '';
+
+  const fluxOptions = ['PRJ','MI-0','MI-1','MI-2'];
+  const coordList = appOptions.coordinateurs || [];
+
+  const filterBarHtml = `
+    <div class="dash-filter-bar">
+      <input type="text" id="dashSearchInput" placeholder="Rechercher un client, un projet, un N° commande…" value="${escapeHtml(dashSearchQuery)}">
+      <select id="dashFilterFlux">
+        <option value="all">Tous les flux</option>
+        ${fluxOptions.map(f => `<option value="${f}" ${dashFilterFlux===f?'selected':''}>${f}</option>`).join('')}
+      </select>
+      <select id="dashFilterCoord">
+        <option value="all">Tous les coordinateurs</option>
+        ${coordList.map(c => `<option value="${escapeHtml(c)}" ${dashFilterCoord===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+      </select>
+      <label class="choice-chip"><input type="checkbox" id="dashFilterOverdue" ${dashFilterOverdueOnly?'checked':''}> En retard uniquement</label>
+    </div>
+  `;
 
   const cardsHtml = rows.map(r => `
     <div class="project-card ${r.p.finished?'finished':''}" data-id="${r.p.id}">
@@ -1307,13 +1378,17 @@ async function renderDashboardView(){
       <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
       <div class="pbar-label">${r.checked}/${r.total} POINTS · ${r.pct}%</div>
       ` : `<div class="pbar-label">Flux ${escapeHtml(r.p.numFlux || '—')} · pas de checklist</div>`}
+      <div class="pc-modified">Modifié ${formatRelativeTime(r.lastMod)}</div>
       <div class="badge-row">
         ${r.p.finished?'<span class="badge done">✓ Terminé</span>':''}
+        ${r.p.archived?'<span class="badge stalled">📦 Archivé</span>':''}
         ${r.isOverdue?'<span class="badge overdue">En retard</span>':''}
         ${r.isStalled?'<span class="badge stalled">Inactif '+r.daysSince+'j</span>':''}
       </div>
     </div>
   `).join('');
+
+  const noMatchHtml = (rows.length === 0) ? '<div class="settings-empty">Aucun projet ne correspond à la recherche/aux filtres.</div>' : '';
 
   dv.innerHTML = `
     ${seanceSummaryHtml}
@@ -1322,10 +1397,73 @@ async function renderDashboardView(){
       <p>${projects.length} projet(s) · ${totalChecked}/${totalPossible} points cochés au total</p>
     </div>
     ${alertsHtml}
+    ${filterBarHtml}
     <div class="project-card-grid">${cardsHtml}</div>
+    ${noMatchHtml}
+    ${archivedCount ? `<button class="btn btn-ghost" id="dashToggleArchivedBtn" style="margin-top:18px;">${dashShowArchived ? '🙈 Masquer les projets archivés' : `📦 Afficher les projets archivés (${archivedCount})`}</button>` : ''}
   `;
   wireSeanceSummaryClicks(dv);
   dv.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+
+  if(hadFocus){
+    const si = $('#dashSearchInput');
+    si.focus();
+    if(caret !== null) si.setSelectionRange(caret, caret);
+  }
+  $('#dashSearchInput').addEventListener('input', e => { dashSearchQuery = e.target.value; renderDashboardView(); });
+  $('#dashFilterFlux').addEventListener('change', e => { dashFilterFlux = e.target.value; renderDashboardView(); });
+  $('#dashFilterCoord').addEventListener('change', e => { dashFilterCoord = e.target.value; renderDashboardView(); });
+  $('#dashFilterOverdue').addEventListener('change', e => { dashFilterOverdueOnly = e.target.checked; renderDashboardView(); });
+  const archBtn = $('#dashToggleArchivedBtn');
+  if(archBtn) archBtn.addEventListener('click', () => { dashShowArchived = !dashShowArchived; renderDashboardView(); });
+}
+
+/* ============================= ÉCHÉANCES (all projects, sorted by due date) ============================= */
+
+async function renderEcheancesView(){
+  await flushAllPending();
+  currentView = 'echeances';
+  hideAllViews();
+  const ev = $('#echeancesView');
+  ev.style.display = 'block';
+  await renderSidebar();
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const withEcheance = [];
+  for(const p of projects){
+    if(p.archived || p.finished || !p.echeance) continue;
+    const s = await getProjectStats(p.id, true);
+    withEcheance.push({ p, s, isOverdue: p.echeance < todayStr });
+  }
+  withEcheance.sort((a,b) => a.p.echeance < b.p.echeance ? -1 : 1);
+
+  const rowsHtml = withEcheance.length ? withEcheance.map(({p, s, isOverdue}) => {
+    const days = Math.ceil((new Date(p.echeance) - new Date(todayStr)) / 86400000);
+    const daysLabel = isOverdue ? `en retard de ${Math.abs(days)}j` : (days === 0 ? "aujourd'hui" : `dans ${days}j`);
+    const pct = s.total ? Math.round((s.checked/s.total)*100) : 0;
+    return `
+      <div class="ech-row ${isOverdue?'overdue':''}" data-id="${p.id}">
+        <div class="ech-date">
+          <div class="ech-date-day">${new Date(p.echeance).toLocaleDateString('fr-FR')}</div>
+          <div class="ech-date-rel">${daysLabel}</div>
+        </div>
+        <div class="ech-body">
+          <div class="ech-client">${escapeHtml(p.client || 'Client non défini')}</div>
+          <div class="ech-name">${escapeHtml(p.name)} · Flux ${escapeHtml(p.numFlux || '—')}${p.coordinateur ? ' · ' + escapeHtml(p.coordinateur) : ''}</div>
+        </div>
+        <div class="ech-progress">${s.total ? `${s.checked}/${s.total} · ${pct}%` : 'Pas de checklist'}</div>
+      </div>
+    `;
+  }).join('') : '<div class="settings-empty">Aucun projet actif avec une échéance définie.</div>';
+
+  ev.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Échéances</h2>
+      <p>Tous les projets actifs (non terminés, non archivés) avec une échéance, triés du plus urgent au plus lointain.</p>
+    </div>
+    <div class="ech-list">${rowsHtml}</div>
+  `;
+  ev.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
 }
 
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
@@ -1445,16 +1583,21 @@ async function renderSeanceView(id){
       <button class="btn btn-primary" id="seanceAddBtn">+ Ajouter</button>
     </div>
     <div class="seance-list">
-      ${ordered.length ? ordered.map(it => `
+      ${ordered.length ? ordered.map(it => {
+        const hasNote = !!(it.note && it.note.trim());
+        const expanded = expandedItemIds.has(it.id);
+        return `
         <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
             <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+            ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+            <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
           </div>
-          ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
+          ${expanded ? noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`) : ''}
         </div>
-      `).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
+      `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
   `;
 
@@ -1492,20 +1635,29 @@ async function renderSeanceView(id){
     const it = getSimpleList(id).find(x => x.id === ta.dataset.id);
     if(it){ it.note = ta.value; scheduleSaveSeance(id); }
   }));
+  container.querySelectorAll('.seance-expand').forEach(btn => btn.addEventListener('click', () => {
+    const itemId = btn.dataset.id;
+    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
+    renderSeanceView(id);
+  }));
   wireNoteToggles(container, () => renderSeanceView(id));
 }
 
 /* ---- Séance OPE: two-column drag-and-drop board ---- */
 
 function opeItemCardHtml(it, listName){
+  const hasNote = !!(it.note && it.note.trim());
+  const expanded = expandedItemIds.has(it.id);
   return `
     <div class="ope-card ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
       <div class="ope-card-top">
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
         <span class="ope-text" data-id="${it.id}" data-list="${listName}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+        ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+        <button class="ope-expand" data-id="${it.id}" data-list="${listName}" title="Note">${expanded?'▾':'▸'}</button>
         <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
       </div>
-      ${noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`)}
+      ${expanded ? noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`) : ''}
     </div>
   `;
 }
@@ -1640,6 +1792,12 @@ function renderSeanceOpeView(){
     scheduleSaveSeanceOpe();
     renderSeanceOpeView();
   });
+  container.querySelectorAll('.ope-expand').forEach(btn => btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const itemId = btn.dataset.id;
+    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
+    renderSeanceOpeView();
+  }));
   wireNoteToggles(container, renderSeanceOpeView);
 }
 
@@ -1744,6 +1902,7 @@ function renderFluxTemplateEditor(){
     `).join('');
 
     bodyHtml = `
+      ${template.length ? `<button class="btn btn-ghost btn-sm" id="fluxBlankChecklistBtn" style="margin-bottom:14px;">🖶 Télécharger une checklist vierge (${editingFlux})</button>` : ''}
       ${template.length ? partiesHtml : '<div class="settings-empty">Aucune partie pour l\u2019instant — ajoute-en une ci-dessous.</div>'}
       <div class="flux-add-row" style="margin-top:6px;">
         <input type="text" id="fluxPartieAddInput" placeholder="Nouvelle partie…">
@@ -1755,12 +1914,15 @@ function renderFluxTemplateEditor(){
   host.innerHTML = tabsHtml + bodyHtml;
 
   host.querySelectorAll('.flux-tab-btn').forEach(btn => btn.addEventListener('click', () => {
-    editingFlux = btn.dataset.flux;
+    editingFlux = (editingFlux === btn.dataset.flux) ? null : btn.dataset.flux;
     renderFluxTemplateEditor();
   }));
 
   if(!editingFlux) return;
   const t = getFluxTemplate(editingFlux);
+
+  const blankBtn = $('#fluxBlankChecklistBtn');
+  if(blankBtn) blankBtn.addEventListener('click', () => downloadBlankChecklist(editingFlux));
 
   host.querySelectorAll('.flux-partie-title').forEach(inp => inp.addEventListener('input', () => {
     t[+inp.dataset.p].title = inp.value;
@@ -1947,15 +2109,17 @@ async function renderSettingsView(){
 /* ============================= MANUEL D'UTILISATION ============================= */
 
 const MANUAL_SECTIONS = [
-  { icon:'🏠', title:'Tableau de bord', body:"C'est l'écran d'accueil. En haut, un résumé de la Séance du matin et de la Séance OPE (avec leur avancement). En dessous, les alertes (projets en retard ou inactifs depuis 14 jours) puis la liste de tous tes projets, avec leur progression." },
-  { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom du projet, coordinateur, flux, date, échéance (en semaines ou en date fixe) et options de projet. Une fois le projet créé, clique sur l'icône ✎ en haut du projet pour rouvrir ce même formulaire et tout modifier." },
-  { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (voir Réglages → Checklists par flux). Utilise la barre de recherche et les filtres « À faire / Fait » pour naviguer. Chaque point peut recevoir une note et des photos : ces zones restent discrètes (un simple lien) tant qu'elles sont vides." },
-  { icon:'🧾', title:'Fiche de visite de chantier', body:"Le formulaire classique de visite de site, plus une galerie « Photos du site » en haut avec légendes." },
-  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux. Une zone de texte libre, et une mini-checklist « Points complémentaires » où tu ajoutes toi-même des points à la volée." },
-  { icon:'🌅', title:'Séance du matin', body:"Une liste simple : ajoute des points, coche-les. Un point coché descend en bas de liste, en transparence — rien n'est supprimé sauf avec le ×." },
-  { icon:'🛠', title:'Séance OPE', body:"Un tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut (zone non triée), puis glisse-le dans la colonne voulue — ou écris directement dans le petit champ en haut d'une colonne. Le bouton « Basculer » envoie tout le contenu du jour vers « Dernière séance »." },
-  { icon:'⚙', title:'Réglages', body:"Coordinateurs (liste pour le menu déroulant), Checklists par flux (choisis un flux pour voir/modifier/ajouter/supprimer ses parties, sous-parties et points), Options de projet (modules d'étapes optionnels activables par projet), Bloc-notes (pense-bête libre), Export/Import (sauvegarde de toutes tes données), et le mode clair/sombre." },
-  { icon:'💾', title:'Où sont mes données ?', body:"Tout est enregistré localement, dans ce navigateur, sur cet appareil. Rien n'est partagé avec d'autres personnes ni d'autres appareils. Pense à exporter régulièrement une sauvegarde depuis Réglages." }
+  { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de la Séance du matin, de la Séance OPE et de la To do list. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (nom du client en gras, projets terminés en bas et estompés)." },
+  { icon:'📅', title:'Échéances', body:"Liste de tous les projets actifs (non terminés, non archivés) qui ont une échéance, triés du plus urgent au plus lointain — pratique pour voir d'un coup d'œil ce qui approche, tous flux confondus." },
+  { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom, coordinateur, flux, date, échéance (en semaines ou date fixe) et options de projet à cocher. L'icône ✎ rouvre ce même formulaire pour tout modifier. Dans l'en-tête d'un projet : ✓ le marque comme terminé, ⧉ le duplique comme modèle (flux/coordinateur/options repris, reste vierge), 📦 l'archive (le sort des listes sans le supprimer)." },
+  { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (Réglages → Checklists par flux). Les parties sont repliées par défaut : clique sur leur nom pour les ouvrir. Chaque point n'affiche que la case et le titre ; clique dessus pour faire apparaître la note et l'ajout de photo (un badge 🗒/📷 discret indique s'il y en a déjà). Recherche et filtres À faire/Fait en haut." },
+  { icon:'🧾', title:'Fiche de visite de chantier', body:"Nom du client et N° AU sont pré-remplis depuis les infos du projet. Certains champs (emplacement, type de sol/mur, accès, stationnement, environnement, matériels, levage) sont des cases à cocher prédéfinies + « Autre » avec note ; le champ portes génère automatiquement une carte Dimensions/Note par porte selon le nombre indiqué. Galerie photos en haut avec légendes." },
+  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux : une zone de texte libre, et une mini-checklist « Points complémentaires » où tu ajoutes tes propres points à la volée." },
+  { icon:'🌅', title:'Séance du matin / ✅ To do list', body:"Deux listes simples et indépendantes, au même fonctionnement : ajoute un point, coche-le pour le faire descendre en bas de liste en transparence (rien n'est supprimé sauf avec le ×). Clique sur un point pour dérouler sa note." },
+  { icon:'🛠', title:'Séance OPE', body:"Un tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut (zone non triée), glisse-le dans la colonne voulue ou écris directement dans le champ en haut d'une colonne. « Basculer » envoie tout le contenu du jour vers « Dernière séance ». Clique un point pour sa note." },
+  { icon:'🖶', title:'Rapport', body:"Coche ce que tu veux inclure — Checklist, Fiche de visite, Notes générales — puis télécharge en HTML ou imprime/exporte en PDF." },
+  { icon:'⚙', title:'Réglages', body:"Coordinateurs (liste du menu déroulant) · Checklists par flux (modifie/ajoute/supprime parties, sous-parties et points par flux ; télécharge une version vierge à imprimer) · Options de projet (modules d'étapes optionnels cochables à la création d'un projet) · Bloc-notes libre · Apparence & données (mode sombre, export/import complet, ce manuel)." },
+  { icon:'💾', title:'Où sont mes données ?', body:"Tout est enregistré localement, dans ce navigateur, sur cet appareil — rien n'est partagé avec d'autres personnes ou appareils. Pense à exporter régulièrement une sauvegarde depuis Réglages." }
 ];
 
 function buildManualHtml(){
@@ -2042,6 +2206,30 @@ async function createProject(formVals, activeOptions){
   showToast('Projet créé');
 }
 
+async function duplicateProject(){
+  const p = projects.find(x => x.id === currentProjectId);
+  if(!p) return;
+  const ok = await customConfirm(`Créer un nouveau projet à partir de « ${escapeHtml(p.name)} » ? Le flux, le coordinateur et les options de projet seront repris ; la checklist, la fiche et les notes repartiront à zéro.`, { okText:'Dupliquer', danger:false });
+  if(!ok) return;
+  const newP = {
+    id: uid(), name: (p.name || 'Projet') + ' (copie)', client: p.client || '', numCommande: '',
+    coordinateur: p.coordinateur || '', numFlux: p.numFlux || '',
+    date: new Date().toISOString().slice(0,10),
+    echeanceType: 'weeks', echeanceWeeks: null, echeance: '',
+    createdAt: Date.now(), finished:false, archived:false
+  };
+  projects.unshift(newP);
+  saveProjects();
+  const newData = {
+    checklist:{}, fiche:{}, fichePhotos:[], collapsed:{},
+    activeOptions: JSON.parse(JSON.stringify((currentData && currentData.activeOptions) || {})),
+    generalNotes:'', customChecklist:[], lastModified: Date.now()
+  };
+  lsSet('project:' + newP.id, JSON.stringify(newData));
+  await openProject(newP.id);
+  showToast('Projet dupliqué comme modèle');
+}
+
 async function openProject(id){
   await flushAllPending();
   currentProjectId = id;
@@ -2114,6 +2302,15 @@ function formatEcheanceLabel(p){
   return p.echeanceType === 'weeks' && p.echeanceWeeks ? `${d} (${p.echeanceWeeks} sem.)` : d;
 }
 
+function formatRelativeTime(ts){
+  if(!ts) return '—';
+  const days = Math.floor((Date.now() - ts) / 86400000);
+  if(days <= 0) return "aujourd'hui";
+  if(days === 1) return 'hier';
+  if(days < 30) return `il y a ${days}j`;
+  return new Date(ts).toLocaleDateString('fr-FR');
+}
+
 function renderProjectHeader(){
   const p = projects.find(x => x.id === currentProjectId);
   if(!p) return;
@@ -2127,6 +2324,11 @@ function renderProjectHeader(){
   finBtn.title = p.finished ? 'Rouvrir le projet' : 'Marquer comme terminé';
   finBtn.classList.toggle('active-finished', !!p.finished);
 
+  const archBtn = $('#toggleArchivedBtn');
+  archBtn.textContent = p.archived ? '↩' : '📦';
+  archBtn.title = p.archived ? 'Désarchiver le projet' : 'Archiver le projet';
+  archBtn.classList.toggle('active-finished', !!p.archived);
+
   const checklistApplicable = fluxHasChecklist(p.numFlux);
   $('#tabBtnChecklist').style.display = checklistApplicable ? 'flex' : 'none';
   if(!checklistApplicable && currentTab === 'checklist'){
@@ -2136,9 +2338,12 @@ function renderProjectHeader(){
   const parts = [
     ['Client', p.client], ['N° commande', p.numCommande], ['Coordinateur', p.coordinateur],
     ['Flux', p.numFlux], ['Date', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
-    ['Échéance', p.echeance ? formatEcheanceLabel(p) : '']
+    ['Échéance', p.echeance ? formatEcheanceLabel(p) : ''],
+    ['Dernière modif.', currentData && currentData.lastModified ? formatRelativeTime(currentData.lastModified) : '']
   ];
-  $('#phSummary').innerHTML = (p.finished ? '<span class="badge done" style="margin-right:8px;">✓ Terminé</span>' : '') + parts.map(([label, val], i) =>
+  const badges = (p.finished ? '<span class="badge done" style="margin-right:6px;">✓ Terminé</span>' : '') +
+                 (p.archived ? '<span class="badge stalled" style="margin-right:8px;">📦 Archivé</span>' : '');
+  $('#phSummary').innerHTML = badges + parts.map(([label, val], i) =>
     `<span class="phs-item"><b>${label} :</b> ${escapeHtml(val || '—')}</span>${i < parts.length-1 ? '<span class="phs-sep">·</span>' : ''}`
   ).join('');
 
@@ -2308,11 +2513,22 @@ $('#toggleFinishedBtn').addEventListener('click', async () => {
   await renderSidebar();
   showToast(p.finished ? 'Projet marqué comme terminé' : 'Projet réouvert');
 });
+$('#duplicateProjectBtn').addEventListener('click', duplicateProject);
+$('#toggleArchivedBtn').addEventListener('click', async () => {
+  const p = projects.find(x => x.id === currentProjectId);
+  if(!p) return;
+  p.archived = !p.archived;
+  saveProjects();
+  renderProjectHeader();
+  await renderSidebar();
+  showToast(p.archived ? 'Projet archivé' : 'Projet désarchivé');
+});
 $('#editProjectInfoBtn').addEventListener('click', () => {
   const p = projects.find(x => x.id === currentProjectId);
   if(p) openProjectFormModal(p);
 });
 $('#dashboardNavBtn').addEventListener('click', renderDashboardView);
+$('#echeancesNavBtn').addEventListener('click', renderEcheancesView);
 $('#settingsNavBtn').addEventListener('click', renderSettingsView);
 $('#newProjectBtn').addEventListener('click', () => openProjectFormModal(null));
 $('#mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
@@ -2802,6 +3018,8 @@ function renderNotesTab(){
   wireNoteToggles(container, renderNotesTab);
 }
 
+let reportSections = { checklist:true, fiche:true, notes:true };
+
 function buildReportHtmlFragment(){
   const p = projects.find(x => x.id === currentProjectId);
   const flux = p ? p.numFlux : null;
@@ -2871,7 +3089,7 @@ function buildReportHtmlFragment(){
 
   return `
     <h2 class="rp-title">${escapeHtml(p.name || 'Projet')}</h2>
-    <div class="rp-sub">Rapport complet de projet — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    <div class="rp-sub">Rapport de projet — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
     <div class="rp-meta-grid">
       <div><b>Client :</b> ${escapeHtml(p.client || '—')}</div>
       <div><b>N° de commande :</b> ${escapeHtml(p.numCommande || '—')}</div>
@@ -2879,14 +3097,18 @@ function buildReportHtmlFragment(){
       <div><b>Coordinateur :</b> ${escapeHtml(p.coordinateur || '—')}</div>
       <div><b>Date :</b> ${p.date ? new Date(p.date).toLocaleDateString('fr-FR') : '—'}</div>
       <div><b>Échéance :</b> ${p.echeance ? new Date(p.echeance).toLocaleDateString('fr-FR') : '—'}</div>
-      <div><b>Avancement checklist :</b> ${total ? `${checked}/${total} (${pct}%)` : 'Non applicable pour ce flux'}</div>
+      ${reportSections.checklist ? `<div><b>Avancement checklist :</b> ${total ? `${checked}/${total} (${pct}%)` : 'Non applicable pour ce flux'}</div>` : ''}
     </div>
-    <h3 class="rp-h3" style="background:var(--amber-dark)">CHECKLIST DE PLANIFICATION</h3>
-    ${checklistHtml}
-    <h3 class="rp-h3" style="background:var(--amber-dark)">FICHE DE VISITE DE CHANTIER</h3>
-    ${ficheHtml}
-    ${galleryHtml}
-    ${notesHtml}
+    ${reportSections.checklist ? `
+      <h3 class="rp-h3" style="background:var(--amber-dark)">CHECKLIST DE PLANIFICATION</h3>
+      ${checklistHtml}
+    ` : ''}
+    ${reportSections.fiche ? `
+      <h3 class="rp-h3" style="background:var(--amber-dark)">FICHE DE VISITE DE CHANTIER</h3>
+      ${ficheHtml}
+      ${galleryHtml}
+    ` : ''}
+    ${reportSections.notes ? notesHtml : ''}
   `;
 }
 
@@ -2912,6 +3134,12 @@ function renderRapportTab(){
   }));
 
   container.innerHTML = `
+    <div class="report-sections-row">
+      <span class="report-sections-label">Inclure dans le rapport :</span>
+      <label class="choice-chip"><input type="checkbox" id="repSecChecklist" ${reportSections.checklist?'checked':''}> Checklist</label>
+      <label class="choice-chip"><input type="checkbox" id="repSecFiche" ${reportSections.fiche?'checked':''}> Fiche de visite</label>
+      <label class="choice-chip"><input type="checkbox" id="repSecNotes" ${reportSections.notes?'checked':''}> Notes générales</label>
+    </div>
     <div id="reportActions">
       <button class="btn btn-primary" id="downloadReportBtn">⬇ Télécharger le rapport (HTML)</button>
       <button class="btn btn-ghost" id="printReportBtn">🖶 Imprimer / Enregistrer en PDF</button>
@@ -2923,6 +3151,9 @@ function renderRapportTab(){
     </div>
     <div id="reportPreview">${buildReportHtmlFragment()}</div>
   `;
+  $('#repSecChecklist').addEventListener('change', e => { reportSections.checklist = e.target.checked; $('#reportPreview').innerHTML = buildReportHtmlFragment(); });
+  $('#repSecFiche').addEventListener('change', e => { reportSections.fiche = e.target.checked; $('#reportPreview').innerHTML = buildReportHtmlFragment(); });
+  $('#repSecNotes').addEventListener('change', e => { reportSections.notes = e.target.checked; $('#reportPreview').innerHTML = buildReportHtmlFragment(); });
   $('#downloadReportBtn').addEventListener('click', downloadReport);
   $('#printReportBtn').addEventListener('click', () => window.print());
 }
@@ -2947,6 +3178,38 @@ function downloadReport(){
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('Rapport téléchargé');
+}
+
+function downloadBlankChecklist(flux){
+  const template = getFluxTemplate(flux);
+  if(!template.length){ showToast('Aucun point pour ce flux'); return; }
+  const body = template.map(partie => {
+    const secs = partie.sections.map(sec => {
+      const items = sec.items.map(label => `<div class="rp-item pending"><div class="mark">☐</div><div>${escapeHtml(label)}</div></div>`).join('');
+      return `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}`;
+    }).join('');
+    return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
+  }).join('');
+  const styles = document.querySelector('style').innerHTML;
+  const full = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Checklist vierge — ${escapeHtml(flux)}</title>
+  <style>${styles}
+  body{padding:40px;background:#fff;}
+  #reportPreview{border:none;padding:0;max-width:820px;margin:0 auto;}
+  </style></head><body><div id="reportPreview">
+    <h2 class="rp-title">Checklist — Flux ${escapeHtml(flux)}</h2>
+    <div class="rp-sub">Document vierge — à imprimer et cocher sur papier</div>
+    ${body}
+  </div></body></html>`;
+  const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `checklist_vierge_${flux.replace(/[^a-z0-9]+/gi,'_')}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Checklist vierge téléchargée');
 }
 
 /* ============================= EXPORT / IMPORT ALL DATA ============================= */
