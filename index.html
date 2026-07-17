@@ -199,6 +199,8 @@
   }
   .icon-btn:hover{border-color:var(--steel);color:var(--graphite);background:var(--paper);}
   .icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);background:#fbeceb;}
+  .icon-btn.active-finished{border-color:var(--ok);color:var(--ok);background:var(--ok-tint);}
+  .project-item.finished, .project-card.finished{opacity:.6;}
 
   .ph-summary{display:flex;flex-wrap:wrap;gap:5px 4px;font-size:12.5px;color:var(--steel);margin:8px 0 16px;align-items:center;}
   .phs-item{display:inline-flex;gap:4px;}
@@ -360,6 +362,10 @@
   .item-main{flex:1;min-width:0;}
   .item-label{font-size:13.5px;color:var(--graphite);line-height:1.4;cursor:pointer;}
   .item-row.done .item-label{color:var(--ok);text-decoration:line-through;text-decoration-color:#b7d2bd;}
+  .item-label-row{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 0;}
+  .item-label-row .item-label{flex:1;cursor:pointer;}
+  .item-badge{font-size:11px;opacity:.85;}
+  .item-expand-chev{font-size:10px;color:var(--steel-light);flex-shrink:0;}
   .note-toggle-btn, .photo-toggle-btn{
     background:none;border:none;color:var(--steel-light);font-size:11.5px;cursor:pointer;
     padding:5px 0 0;margin-top:2px;margin-right:12px;display:inline-flex;align-items:center;gap:4px;font-family:var(--font-body);
@@ -383,10 +389,33 @@
   .fiche-fields{padding:16px 18px 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;}
   .fiche-field{margin-bottom:6px;}
   .fiche-field.wide{grid-column:1 / -1;}
+  .fiche-field.fiche-field-boxed{
+    border:1px solid var(--line);border-radius:7px;background:var(--paper);
+    padding:12px 14px 14px;margin-bottom:4px;
+  }
+  .fiche-field.fiche-field-boxed label{margin-bottom:9px;}
   .fiche-field label{display:block;font-size:12px;color:var(--steel);margin-bottom:5px;font-weight:600;line-height:1.35;}
   .fiche-field input[type=text], .fiche-field select, .fiche-field textarea{width:100%;border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-size:13px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);}
   .fiche-field textarea{min-height:64px;resize:vertical;}
   .fiche-field input:focus, .fiche-field select:focus, .fiche-field textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+
+  .choices-field{width:100%;}
+  .choices-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .choice-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--paper);border-radius:20px;padding:7px 14px;font-size:12.5px;color:var(--graphite);cursor:pointer;user-select:none;}
+  .choice-chip input{width:14px;height:14px;accent-color:var(--amber-dark);cursor:pointer;}
+  .choice-chip:has(input:checked){background:var(--amber-tint);border-color:var(--amber);}
+  .choice-autre-note{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;padding:7px 9px;font-size:12.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;min-height:44px;}
+
+  .doors-field{width:100%;}
+  .doors-count-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .doors-count-row label{font-size:12px;color:var(--steel);font-weight:600;margin:0;}
+  .doors-count-input{width:70px;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:13px;background:var(--paper);color:var(--graphite);}
+  .doors-list{display:flex;flex-direction:column;gap:10px;}
+  .door-card{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--paper-2);}
+  .door-card-title{font-size:12px;font-weight:700;color:var(--amber-dark);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;}
+  .door-card-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .door-field-group label{display:block;font-size:11px;color:var(--steel);font-weight:600;margin-bottom:4px;}
+  .door-dim, .door-note{width:100%;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
 
   .fg-grid{display:flex;flex-wrap:wrap;gap:14px;}
   .fg-item{width:120px;position:relative;}
@@ -463,6 +492,7 @@
     #dashboardView, #settingsView, #seanceView, #tabContent{padding:calc(64px + env(safe-area-inset-top)) 16px 60px;}
     .ph-meta, .settings-grid, .fiche-fields{grid-template-columns:1fr !important;}
     .ope-board{grid-template-columns:1fr;}
+    .door-card-fields{grid-template-columns:1fr;}
     .ope-card{width:100% !important;}
     .project-card-grid{grid-template-columns:1fr;}
     .stat-strip{gap:12px;}
@@ -522,6 +552,7 @@
             <h2 id="projTitleDisplay" class="proj-title-display"></h2>
           </div>
           <div class="ph-actions">
+            <button class="icon-btn" id="toggleFinishedBtn" title="Marquer comme terminé">✓</button>
             <button class="icon-btn" id="editProjectInfoBtn" title="Modifier les informations">✎</button>
             <button class="icon-btn danger" id="deleteProjectBtn" title="Supprimer le projet">✕</button>
           </div>
@@ -617,6 +648,172 @@ const DEFAULT_PRJ_CHECKLIST_TEMPLATE = [
   ]}
 ];
 
+const DEFAULT_MI0_CHECKLIST_TEMPLATE = [
+  { id:'mi0', title:'MI-0 — Livraison / Expédition', sections:[
+    { id:'mi0-etude', title:'Étude de la commande', items:[
+      "Étudier la commande (quoi, qui (contact), incoterm (ex works, livraison ou expédition))",
+      "Prendre connaissance des pièces jointes et du tableau (offre et commande)",
+      "Reprendre les références de commande du client si renseignées (onglet « texte »)",
+      "Imprimer le bon de commande du client s'il en a envoyé un",
+      "Identifier les contraintes particulières (montage de pièces)",
+      "Contrôler la disponibilité du matériel",
+      "Voir Glate s'il faut grouper (dans le cadre d'envoi de pièces de maintenance liées à une machine enregistrée dans notre GMAO)"
+    ]},
+    { id:'mi0-confirmation', title:'Confirmation de commande', items:[
+      "Si la marchandise est en stock, envoyer une confirmation d'expédition ou de disponibilité de la commande au client (mail ou téléphone), en copie commercial@volkart-sa.ch, operations@volkart-sa.ch, magasin@volkart-sa.ch",
+      "Si le délai de livraison est connu, fournir l'information au client par email, en copie commercial@volkart-sa.ch, operations@volkart-sa.ch, magasin@volkart-sa.ch",
+      "Si le délai de livraison n'est pas connu, confirmer la commande au client sans délai puis refaire une communication dès que le délai est connu, en copie commercial@volkart-sa.ch, operations@volkart-sa.ch, magasin@volkart-sa.ch"
+    ]},
+    { id:'mi0-glate', title:'Glate', items:[
+      "Ajouter la ou les pièces en « livraison » ou « expédition » sur la machine concernée (position collective dans la commande Bexio AU-...)",
+      "Imprimer 2 fiches d'intervention (client + nous) si seule(s) la ou les pièces concernées par l'expédition apparaissent — sinon ne pas joindre le BL Glate à l'expédition"
+    ]},
+    { id:'mi0-preparation', title:'Préparation de commande', items:[
+      "Effectuer le picking à l'aide du bon de commande (AU-...)",
+      "Imprimer 2 bons de livraison, un pour le client, l'autre pour nous (LS-...)",
+      "Changer le statut du BL et l'indiquer comme « livré »",
+      "Effectuer le packaging de la marchandise (carton, palette, etc.)",
+      "Envoyer une confirmation d'expédition ou de disponibilité de la commande au client (mail ou téléphone), en copie commercial@volkart-sa.ch, operations@volkart-sa.ch, magasin@volkart-sa.ch",
+      "Pour une expédition, déposer le colis à La Poste"
+    ]},
+    { id:'mi0-suivi', title:'Suivi de livraison', items:[
+      "Dans le cadre d'une expédition, effectuer le suivi du colis via le n° de tracking de La Poste",
+      "Enregistrer le suivi d'expédition en guise de preuve de livraison",
+      "Changer le statut du bulletin de livraison (LS-...) dans Bexio",
+      "Effectuer directement ce dernier point dans le cadre d'une commande « ex works »"
+    ]},
+    { id:'mi0-facturation', title:'Facturation', items:[
+      "Remettre l'ensemble des documents dans le bac « Bexio à facturer » (secrétariat)",
+      "Pour une commande concernant une machine, remettre l'ensemble des documents (fiche d'intervention Glate + bulletin de livraison Bexio) dans le bac « Glate à enregistrer » (bureau des opérations)"
+    ]}
+  ]}
+];
+
+const DEFAULT_MI1_CHECKLIST_TEMPLATE = [
+  { id:'mi1', title:'MI-1 — Planification intervention', sections:[
+    { id:'mi1-etude', title:'Étude de la commande', items:[
+      "Étudier la commande (quoi, combien de personnes, combien de temps, etc.)",
+      "Prendre connaissance des pièces jointes et du tableau (offre et commande)",
+      "Identifier les contraintes particulières (coupure, accès, etc.)",
+      "Contrôler la disponibilité du matériel",
+      "Voir Glate s'il faut grouper"
+    ]},
+    { id:'mi1-creneau', title:'Recherche de créneau', items:[
+      "Chercher des plages disponibles et suffisantes dans l'agenda"
+    ]},
+    { id:'mi1-appel', title:'Appel au client', items:[
+      "Appeler le client pour proposer une date d'intervention",
+      "Rappeler les contraintes (coupures, accès, etc.)"
+    ]},
+    { id:'mi1-bexio', title:'Bexio', items:[
+      "Ajouter un commentaire sous la commande : « planifié le ... pour ... »",
+      "Imprimer 2 bons de livraison",
+      "Imprimer 1 bon de préparation"
+    ]},
+    { id:'mi1-glate', title:'Glate', items:[
+      "Ajouter toutes les pièces en position collective sur les machines concernées",
+      "Imprimer 2 fiches d'intervention par machine",
+      "Ouvrir un ticket Glate pour toutes les machines concernées",
+      "Si la machine n'était pas connue auparavant : imprimer une étiquette d'identification",
+      "Si maintenance préventive : imprimer une étiquette de suivi de maintenance",
+      "Si machine pas référencée dans Glate : voir remontée et si utile de la créer"
+    ]},
+    { id:'mi1-agenda', title:'Agenda', items:[
+      "Noter l'adresse du client (vérifier le site)",
+      "Compléter l'agenda en utilisant l'« Agenda témoin »",
+      "Pièce jointe à ajouter : les BL Bexio",
+      "Pièce jointe à ajouter : les photos et/ou croquis nécessaires (dossier client)",
+      "Pièce jointe à ajouter : les manuels utilisateur, vues éclatées nécessaires",
+      "Pièce jointe à ajouter : les formulaires",
+      "Réserver le matériel (camion, outils spéciaux, etc.)",
+      "Planifier le kick-off"
+    ]},
+    { id:'mi1-dossier-tech', title:'Dossier technicien', items:[
+      "2x BL Bexio",
+      "2x BL Glate",
+      "Les formulaires (selon guide de planification)",
+      "Indiquer sur un post-it la date d'intervention et l'intervenant",
+      "Si maintenance préventive : ajouter l'étiquette de suivi de maintenance",
+      "Déposer le dossier dans le bac du technicien en charge"
+    ]},
+    { id:'mi1-dossier-magasin', title:'Dossier magasin', items:[
+      "1x BL de préparation",
+      "Rédiger la « Commande magasin » 4F-742 pour détailler si nécessaire",
+      "Indiquer sur un post-it la date d'intervention et l'intervenant",
+      "Déposer le dossier au magasin"
+    ]},
+    { id:'mi1-mail', title:'Mail de confirmation', items:[
+      "Envoyer le mail de confirmation avec date, nom de l'intervenant et contraintes, en copie à operations@volkart-sa.ch"
+    ]}
+  ]}
+];
+
+const DEFAULT_MI2_CHECKLIST_TEMPLATE = [
+  { id:'mi2', title:'MI-2 — Planification intervention & préparation', sections:[
+    { id:'mi2-etude', title:'Étude de la commande', items:[
+      "Étudier la commande (quoi, combien de personnes, combien de temps, etc.)",
+      "Prendre connaissance des pièces jointes et du tableau (offre et commande)",
+      "Identifier les contraintes particulières (coupure, accès, etc.)",
+      "Contrôler la disponibilité du matériel",
+      "Voir Glate s'il faut grouper"
+    ]},
+    { id:'mi2-creneau', title:'Recherche de créneau', items:[
+      "Chercher une plage pour la préparation des appareils",
+      "Chercher des plages pour l'installation"
+    ]},
+    { id:'mi2-appel', title:'Appel au client', items:[
+      "Appeler le client pour proposer une date d'intervention",
+      "Rappeler les contraintes (coupures, accès, etc.)"
+    ]},
+    { id:'mi2-bexio', title:'Bexio', items:[
+      "Imprimer 2 bons de livraison",
+      "Imprimer 2 bons de préparation",
+      "Ajouter un commentaire sous la commande : « planifié le ... pour ... »"
+    ]},
+    { id:'mi2-glate', title:'Glate (si groupage)', items:[
+      "Ajouter toutes les pièces en position collective sur les machines concernées",
+      "Imprimer 2 fiches d'intervention par machine",
+      "Ouvrir un ticket Glate pour toutes les machines concernées",
+      "Si la machine n'était pas connue auparavant : imprimer une étiquette d'identification",
+      "Si maintenance préventive : imprimer une étiquette de suivi de maintenance",
+      "Si machine pas référencée dans Glate : voir remontée et si utile de la créer"
+    ]},
+    { id:'mi2-agenda', title:'Agenda', items:[
+      "Compléter l'agenda en utilisant l'« Agenda témoin »",
+      "Planifier la préparation en utilisant le même agenda (pos. 0 = préparation), en précisant le formulaire FAT à utiliser et les options à monter",
+      "Pièce jointe à ajouter : les BL Bexio",
+      "Pièce jointe à ajouter : les photos et/ou croquis nécessaires (dossier client)",
+      "Pièce jointe à ajouter : les manuels utilisateur, vues éclatées nécessaires",
+      "Pièce jointe à ajouter : les formulaires",
+      "Réserver le matériel (camion, outils spéciaux, etc.)",
+      "Planifier le kick-off"
+    ]},
+    { id:'mi2-dossier-tech', title:'Dossier technicien', items:[
+      "2x BL Bexio",
+      "Les formulaires (selon guide de planification)",
+      "Indiquer sur un post-it la date d'intervention et l'intervenant",
+      "Si la mission est une maintenance préventive : imprimer une étiquette de suivi de maintenance",
+      "Déposer le dossier dans le bac du technicien en charge"
+    ]},
+    { id:'mi2-dossier-magasin', title:'Dossier magasin', items:[
+      "1x BL de préparation (tracer ce qui ne concerne pas le magasin)",
+      "Rédiger la « Commande magasin » 4F-742 pour détailler si nécessaire",
+      "Indiquer sur un post-it la date d'intervention et l'intervenant",
+      "Déposer le dossier au magasin"
+    ]},
+    { id:'mi2-dossier-prep', title:'Dossier de préparation', items:[
+      "1x BL de préparation",
+      "Surligner les options à monter",
+      "La/les FAT nécessaire(s) à la préparation",
+      "Indiquer sur un post-it la date de préparation et le nom du préparateur",
+      "Déposer le dossier de préparation dans le bac du préparateur (le responsable d'atelier doit être disponible pour superviser)"
+    ]},
+    { id:'mi2-mail', title:'Mail de confirmation', items:[
+      "Envoyer le mail de confirmation avec date, nom de l'intervenant et contraintes, en copie à operations@volkart-sa.ch"
+    ]}
+  ]}
+];
+
 const FICHE_TEMPLATE = [
   { id:'info-gen', title:'Informations générales', fields:[
     {id:'client', label:'Nom client', type:'text'},
@@ -630,17 +827,17 @@ const FICHE_TEMPLATE = [
     {id:'phs', label:'PHS', type:'select', options:['','Non','Client','VAC']}
   ]},
   { id:'infra', title:'Infrastructure et accessibilité', fields:[
-    {id:'dim-portes', label:'Dimensions des portes et accès', type:'text'},
-    {id:'levage', label:'Nécessité d\u2019un moyen de levage (grue / transpalette / chèvre)', type:'text'},
-    {id:'emplacement', label:'Emplacement de l\u2019installation (intérieur / extérieur / toiture)', type:'text'},
-    {id:'type-sol', label:'Type de sol (dalle, structure, vibration)', type:'text'},
-    {id:'type-mur', label:'Type de mur (béton, placo, plâtre, parpaing)', type:'text'},
-    {id:'acces-type', label:'Accès (ascenseur / monte-charge / escalier / marche H=cm)', type:'text'},
-    {id:'stationnement', label:'Stationnement (parking / souterrain / rue) — hauteur / largeur maxi', type:'text'},
-    {id:'environnement', label:'Environnement (poussières, humidité, contraintes)', type:'text'},
+    {id:'dim-portes', label:'Dimensions des portes et accès', type:'doors', wide:true},
+    {id:'levage', label:'Nécessité d\u2019un moyen de levage', type:'choices', choices:['Grue','Transpalette','Chèvre'], wide:true},
+    {id:'emplacement', label:'Emplacement de l\u2019installation', type:'choices', choices:['Intérieur','Extérieur','Toiture'], wide:true},
+    {id:'type-sol', label:'Type de sol', type:'choices', choices:['Dalle','Structure','Vibration'], wide:true},
+    {id:'type-mur', label:'Type de mur', type:'choices', choices:['Béton','Placo','Plâtre','Parpaing'], wide:true},
+    {id:'acces-type', label:'Accès', type:'choices', choices:['Ascenseur','Monte-charge','Escalier','Marche'], wide:true},
+    {id:'stationnement', label:'Stationnement', type:'choices', choices:['Parking','Souterrain','Rue'], wide:true},
+    {id:'environnement', label:'Environnement', type:'choices', choices:['Poussières','Humidité','Contraintes'], wide:true},
     {id:'detecteur-incendie', label:'Détecteur incendie', type:'select', options:['','Oui','Non']},
     {id:'bruit', label:'Bruit', type:'select', options:['','Oui','Non']},
-    {id:'materiels-specifiques', label:'Matériels spécifiques (échelles, nacelles, fabrication marche)', type:'text'},
+    {id:'materiels-specifiques', label:'Matériels spécifiques', type:'choices', choices:['Échelles','Nacelles','Fabrication marche'], wide:true},
     {id:'hauteur-chariot', label:'Hauteur chariot, grue', type:'text'},
     {id:'plan-acces', label:"Plan d'accès (description / renvoi document)", type:'textarea', wide:true}
   ]},
@@ -704,6 +901,9 @@ const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 
 function uid(){ return 'p_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8); }
+function sortedProjectsForDisplay(){
+  return [...projects.filter(p => !p.finished), ...projects.filter(p => p.finished)];
+}
 function itemKey(sectionId, idx){ return sectionId + '__' + idx; }
 function normalize(str){ return String(str||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function escapeHtml(str){ return String(str||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -746,6 +946,7 @@ function wireNoteToggles(container, rerenderFn){
 /* ============================= COLLAPSIBLE PHOTO BLOCK (same idea, for item photos) ============================= */
 
 let expandedPhotoIds = new Set();
+let expandedItemIds = new Set();
 
 function photoBlockHtml(itemId, photos, dataAttrName){
   photos = photos || [];
@@ -931,11 +1132,12 @@ let checklistTemplates = {};
 function loadChecklistTemplates(){
   const v = lsGet('checklistTemplates');
   const parsed = v ? JSON.parse(v) : {};
+  const useOrDefault = (existing, def) => (existing && existing.length) ? existing : JSON.parse(JSON.stringify(def));
   return {
-    'PRJ': parsed['PRJ'] || JSON.parse(JSON.stringify(DEFAULT_PRJ_CHECKLIST_TEMPLATE)),
-    'MI-0': parsed['MI-0'] || [],
-    'MI-1': parsed['MI-1'] || [],
-    'MI-2': parsed['MI-2'] || []
+    'PRJ': useOrDefault(parsed['PRJ'], DEFAULT_PRJ_CHECKLIST_TEMPLATE),
+    'MI-0': useOrDefault(parsed['MI-0'], DEFAULT_MI0_CHECKLIST_TEMPLATE),
+    'MI-1': useOrDefault(parsed['MI-1'], DEFAULT_MI1_CHECKLIST_TEMPLATE),
+    'MI-2': useOrDefault(parsed['MI-2'], DEFAULT_MI2_CHECKLIST_TEMPLATE)
   };
 }
 function saveChecklistTemplates(){
@@ -1028,7 +1230,7 @@ async function renderSidebar(){
     return;
   }
   const rows = [];
-  for(const p of projects){
+  for(const p of sortedProjectsForDisplay()){
     const stats = await getProjectStats(p.id);
     const pct = stats.total ? Math.round((stats.checked / stats.total) * 100) : 0;
     const isActive = currentView === 'project' && p.id === currentProjectId;
@@ -1036,9 +1238,9 @@ async function renderSidebar(){
       ? `<div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div><div class="pbar-label">${stats.checked}/${stats.total} POINTS · ${pct}%</div>`
       : `<div class="pbar-label">Flux ${escapeHtml(p.numFlux || '—')} · pas de checklist</div>`;
     rows.push(`
-      <div class="project-item ${isActive?'active':''}" data-id="${p.id}">
-        <div class="pname">${escapeHtml(p.name || 'Sans nom')}</div>
-        <div class="pclient">${escapeHtml(p.client || 'Client non défini')}</div>
+      <div class="project-item ${isActive?'active':''} ${p.finished?'finished':''}" data-id="${p.id}">
+        <div class="pname">${escapeHtml(p.client || 'Client non défini')} ${p.finished?'<span class="badge done" style="margin-left:4px;">✓ Terminé</span>':''}</div>
+        <div class="pclient">${escapeHtml(p.name || 'Sans nom')}</div>
         ${progressHtml}      </div>
     `);
   }
@@ -1072,15 +1274,15 @@ async function renderDashboardView(){
   const todayStr = new Date().toISOString().slice(0,10);
   const rows = [];
   let totalChecked = 0, totalPossible = 0;
-  for(const p of projects){
+  for(const p of sortedProjectsForDisplay()){
     const s = await getProjectStats(p.id, true);
     totalChecked += s.checked;
     totalPossible += s.total;
     const pct = s.total ? Math.round((s.checked / s.total) * 100) : 0;
-    const isOverdue = !!(p.echeance && p.echeance < todayStr && s.checked < s.total);
+    const isOverdue = !p.finished && !!(p.echeance && p.echeance < todayStr && s.checked < s.total);
     const refTime = s.lastModified || p.createdAt || Date.now();
     const daysSince = Math.floor((Date.now() - refTime) / 86400000);
-    const isStalled = daysSince > 14 && s.checked < s.total;
+    const isStalled = !p.finished && daysSince > 14 && s.checked < s.total;
     rows.push({ p, checked:s.checked, total:s.total, pct, isOverdue, isStalled, daysSince });
   }
 
@@ -1095,15 +1297,15 @@ async function renderDashboardView(){
     </div>` : '';
 
   const cardsHtml = rows.map(r => `
-    <div class="project-card" data-id="${r.p.id}">
-      <div class="pc-name">${escapeHtml(r.p.name)}</div>
-      <div class="pc-client">${escapeHtml(r.p.client || 'Client non défini')}</div>
+    <div class="project-card ${r.p.finished?'finished':''}" data-id="${r.p.id}">
+      <div class="pc-name">${escapeHtml(r.p.client || 'Client non défini')}</div>
+      <div class="pc-client">${escapeHtml(r.p.name)}</div>
       ${r.total ? `
       <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
       <div class="pbar-label">${r.checked}/${r.total} POINTS · ${r.pct}%</div>
       ` : `<div class="pbar-label">Flux ${escapeHtml(r.p.numFlux || '—')} · pas de checklist</div>`}
       <div class="badge-row">
-        ${(r.total && r.checked===r.total)?'<span class="badge done">Terminé</span>':''}
+        ${r.p.finished?'<span class="badge done">✓ Terminé</span>':''}
         ${r.isOverdue?'<span class="badge overdue">En retard</span>':''}
         ${r.isStalled?'<span class="badge stalled">Inactif '+r.daysSince+'j</span>':''}
       </div>
@@ -1842,6 +2044,13 @@ async function openProject(id){
   if(!currentData.activeOptions) currentData.activeOptions = {};
   if(!currentData.customChecklist) currentData.customChecklist = [];
   if(currentData.generalNotes === undefined) currentData.generalNotes = '';
+  {
+    const p = projects.find(x => x.id === id);
+    if(p){
+      if(!currentData.fiche.client && p.client) currentData.fiche.client = p.client;
+      if(!currentData.fiche['num-au'] && p.numCommande) currentData.fiche['num-au'] = p.numCommande;
+    }
+  }
   currentView = 'project';
   currentTab = 'checklist';
   searchQuery = '';
@@ -1907,6 +2116,11 @@ function renderProjectHeader(){
   titleEl.title = p.name || 'Sans nom';
   fitTitleText();
 
+  const finBtn = $('#toggleFinishedBtn');
+  finBtn.textContent = p.finished ? '↺' : '✓';
+  finBtn.title = p.finished ? 'Rouvrir le projet' : 'Marquer comme terminé';
+  finBtn.classList.toggle('active-finished', !!p.finished);
+
   const checklistApplicable = fluxHasChecklist(p.numFlux);
   $('#tabBtnChecklist').style.display = checklistApplicable ? 'flex' : 'none';
   if(!checklistApplicable && currentTab === 'checklist'){
@@ -1918,7 +2132,7 @@ function renderProjectHeader(){
     ['Flux', p.numFlux], ['Date', p.date ? new Date(p.date).toLocaleDateString('fr-FR') : ''],
     ['Échéance', p.echeance ? formatEcheanceLabel(p) : '']
   ];
-  $('#phSummary').innerHTML = parts.map(([label, val], i) =>
+  $('#phSummary').innerHTML = (p.finished ? '<span class="badge done" style="margin-right:8px;">✓ Terminé</span>' : '') + parts.map(([label, val], i) =>
     `<span class="phs-item"><b>${label} :</b> ${escapeHtml(val || '—')}</span>${i < parts.length-1 ? '<span class="phs-sep">·</span>' : ''}`
   ).join('');
 
@@ -2079,6 +2293,15 @@ function openProjectFormModal(existingProject){
 }
 
 $('#deleteProjectBtn').addEventListener('click', deleteCurrentProject);
+$('#toggleFinishedBtn').addEventListener('click', async () => {
+  const p = projects.find(x => x.id === currentProjectId);
+  if(!p) return;
+  p.finished = !p.finished;
+  saveProjects();
+  renderProjectHeader();
+  await renderSidebar();
+  showToast(p.finished ? 'Projet marqué comme terminé' : 'Projet réouvert');
+});
 $('#editProjectInfoBtn').addEventListener('click', () => {
   const p = projects.find(x => x.id === currentProjectId);
   if(p) openProjectFormModal(p);
@@ -2146,13 +2369,23 @@ function renderChecklistTab(){
         if(st.checked){ secChecked++; partieChecked++; }
         partieTotal++;
         if(itemMatchesSearch(label, st.note) && itemMatchesStatus(st.checked)){
+          const itemExpanded = expandedItemIds.has(k);
+          const hasNote = !!(st.note && st.note.trim());
+          const hasPhotos = !!(st.photos && st.photos.length);
           visibleItems.push(`
             <div class="item-row ${st.checked?'done':''}" data-key="${k}">
               <input type="checkbox" class="item-check" ${st.checked?'checked':''} data-key="${k}">
               <div class="item-main">
-                <div class="item-label" data-key="${k}">${escapeHtml(label)}</div>
-                ${noteBlockHtml(k, st.note, 'item-note', `data-key="${k}"`)}
-                ${photoBlockHtml(k, st.photos, 'data-key')}
+                <div class="item-label-row" data-item-toggle="${k}">
+                  <div class="item-label" data-key="${k}">${escapeHtml(label)}</div>
+                  ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
+                  ${hasPhotos?'<span class="item-badge" title="A des photos">📷</span>':''}
+                  <span class="item-expand-chev">${itemExpanded?'▾':'▸'}</span>
+                </div>
+                ${itemExpanded ? `
+                  ${noteBlockHtml(k, st.note, 'item-note', `data-key="${k}"`)}
+                  ${photoBlockHtml(k, st.photos, 'data-key')}
+                ` : ''}
               </div>
             </div>
           `);
@@ -2174,7 +2407,7 @@ function renderChecklistTab(){
 
     if(filtering && sectionBlocks.length === 0) return '';
     const collapsedKeyP = 'partie_' + partie.id;
-    const isCollapsedP = filtering ? false : !!currentData.collapsed[collapsedKeyP];
+    const isCollapsedP = filtering ? false : (currentData.collapsed[collapsedKeyP] !== false);
     const pct = partieTotal ? Math.round((partieChecked/partieTotal)*100) : 0;
     return `
       <div class="partie ${isCollapsedP?'collapsed':''}" data-partie="${partie.id}">
@@ -2215,7 +2448,8 @@ function renderChecklistTab(){
 
   $$('[data-toggle-partie]').forEach(el => el.addEventListener('click', () => {
     const key = 'partie_' + el.dataset.togglePartie;
-    currentData.collapsed[key] = !currentData.collapsed[key];
+    const currentlyCollapsed = currentData.collapsed[key] !== false;
+    currentData.collapsed[key] = currentlyCollapsed ? false : true;
     scheduleSaveProjectData();
     renderChecklistTab();
   }));
@@ -2234,11 +2468,10 @@ function renderChecklistTab(){
     renderSidebar();
     renderChecklistTab();
   }));
-  $$('.item-label').forEach(lbl => lbl.addEventListener('click', () => {
-    const k = lbl.dataset.key;
-    const cb = document.querySelector(`.item-check[data-key="${k}"]`);
-    cb.checked = !cb.checked;
-    cb.dispatchEvent(new Event('change'));
+  $$('[data-item-toggle]').forEach(row => row.addEventListener('click', () => {
+    const k = row.dataset.itemToggle;
+    if(expandedItemIds.has(k)) expandedItemIds.delete(k); else expandedItemIds.add(k);
+    renderChecklistTab();
   }));
   $$('.item-note').forEach(ta => ta.addEventListener('input', () => {
     const k = ta.dataset.key;
@@ -2303,21 +2536,86 @@ function renderFicheGallery(){
   `;
 }
 
+function choicesFieldHtml(f, val){
+  val = val || {};
+  const selected = val.selected || {};
+  const chips = f.choices.map(c => `
+    <label class="choice-chip">
+      <input type="checkbox" class="choice-check" data-fid="${f.id}" data-choice="${escapeHtml(c)}" ${selected[c] ? 'checked':''}>
+      ${escapeHtml(c)}
+    </label>
+  `).join('');
+  const autreChecked = !!val.autre;
+  return `
+    <div class="choices-field" data-fid="${f.id}">
+      <div class="choices-row">
+        ${chips}
+        <label class="choice-chip">
+          <input type="checkbox" class="choice-autre-check" data-fid="${f.id}" ${autreChecked?'checked':''}>
+          Autre
+        </label>
+      </div>
+      ${autreChecked ? `<textarea class="choice-autre-note" data-fid="${f.id}" placeholder="Précision…">${escapeHtml(val.autreNote||'')}</textarea>` : ''}
+    </div>
+  `;
+}
+
+function doorsFieldHtml(f, val){
+  val = val || {};
+  const count = val.count || 0;
+  const doors = val.doors || [];
+  const rows = [];
+  for(let i = 0; i < count; i++){
+    const d = doors[i] || { dimension:'', note:'' };
+    rows.push(`
+      <div class="door-card">
+        <div class="door-card-title">Porte ${i+1}</div>
+        <div class="door-card-fields">
+          <div class="door-field-group">
+            <label>Dimensions</label>
+            <input type="text" class="door-dim" data-fid="${f.id}" data-idx="${i}" placeholder="ex. 120 x 210 cm" value="${escapeHtml(d.dimension||'')}">
+          </div>
+          <div class="door-field-group">
+            <label>Note</label>
+            <input type="text" class="door-note" data-fid="${f.id}" data-idx="${i}" placeholder="ex. porte d'entrée" value="${escapeHtml(d.note||'')}">
+          </div>
+        </div>
+      </div>
+    `);
+  }
+  return `
+    <div class="doors-field" data-fid="${f.id}">
+      <div class="doors-count-row">
+        <label>Nombre de portes</label>
+        <input type="number" class="doors-count-input" data-fid="${f.id}" min="0" step="1" value="${count}">
+      </div>
+      <div class="doors-list">${rows.join('') || '<div class="settings-empty">Indique un nombre de portes pour générer les champs.</div>'}</div>
+    </div>
+  `;
+}
+
 function renderFicheTab(){
   const container = $('#tabContent');
   const fieldSectionsHtml = FICHE_TEMPLATE.map(sec => {
     const fieldsHtml = sec.fields.map(f => {
-      const val = currentData.fiche[f.id] || '';
       let control = '';
-      if(f.type === 'textarea'){
-        control = `<textarea data-fid="${f.id}">${escapeHtml(val)}</textarea>`;
-      } else if(f.type === 'select'){
-        const opts = f.options.map(o => `<option value="${escapeHtml(o)}" ${o===val?'selected':''}>${o===''?'—':escapeHtml(o)}</option>`).join('');
-        control = `<select data-fid="${f.id}">${opts}</select>`;
+      if(f.type === 'choices'){
+        control = choicesFieldHtml(f, currentData.fiche[f.id]);
+      } else if(f.type === 'doors'){
+        control = doorsFieldHtml(f, currentData.fiche[f.id]);
       } else {
-        control = `<input type="text" data-fid="${f.id}" value="${escapeHtml(val)}">`;
+        const val = currentData.fiche[f.id] || '';
+        if(f.type === 'textarea'){
+          control = `<textarea data-fid="${f.id}">${escapeHtml(val)}</textarea>`;
+        } else if(f.type === 'select'){
+          const opts = f.options.map(o => `<option value="${escapeHtml(o)}" ${o===val?'selected':''}>${o===''?'—':escapeHtml(o)}</option>`).join('');
+          control = `<select data-fid="${f.id}">${opts}</select>`;
+        } else {
+          control = `<input type="text" data-fid="${f.id}" value="${escapeHtml(val)}">`;
+        }
       }
-      return `<div class="fiche-field ${f.wide?'wide':''}"><label>${escapeHtml(f.label)}</label>${control}</div>`;
+      const boxed = (f.type === 'choices' || f.type === 'doors') ? 'fiche-field-boxed' : '';
+      return `<div class="fiche-field ${f.wide?'wide':''} ${boxed}"><label>${escapeHtml(f.label)}</label>${control}</div>`;
     }).join('');
     return `<div class="fiche-section"><div class="fiche-section-head"><h4>${escapeHtml(sec.title)}</h4></div><div class="fiche-fields">${fieldsHtml}</div></div>`;
   }).join('');
@@ -2357,7 +2655,56 @@ function renderFicheTab(){
   }));
   $$('.fg-img').forEach(img => img.addEventListener('click', () => showLightbox(img.src)));
 
+  container.querySelectorAll('.choice-check').forEach(cb => cb.addEventListener('change', () => {
+    const fid = cb.dataset.fid;
+    if(!currentData.fiche[fid] || typeof currentData.fiche[fid] !== 'object') currentData.fiche[fid] = { selected:{}, autre:false, autreNote:'' };
+    if(!currentData.fiche[fid].selected) currentData.fiche[fid].selected = {};
+    currentData.fiche[fid].selected[cb.dataset.choice] = cb.checked;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.choice-autre-check').forEach(cb => cb.addEventListener('change', () => {
+    const fid = cb.dataset.fid;
+    if(!currentData.fiche[fid] || typeof currentData.fiche[fid] !== 'object') currentData.fiche[fid] = { selected:{}, autre:false, autreNote:'' };
+    currentData.fiche[fid].autre = cb.checked;
+    scheduleSaveProjectData();
+    renderFicheTab();
+  }));
+  container.querySelectorAll('.choice-autre-note').forEach(ta => ta.addEventListener('input', () => {
+    const fid = ta.dataset.fid;
+    if(!currentData.fiche[fid]) currentData.fiche[fid] = { selected:{}, autre:true, autreNote:'' };
+    currentData.fiche[fid].autreNote = ta.value;
+    scheduleSaveProjectData();
+  }));
+
+  container.querySelectorAll('.doors-count-input').forEach(inp => inp.addEventListener('input', () => {
+    const fid = inp.dataset.fid;
+    let n = parseInt(inp.value, 10);
+    if(isNaN(n) || n < 0) n = 0;
+    if(n > 30) n = 30;
+    if(!currentData.fiche[fid] || typeof currentData.fiche[fid] !== 'object') currentData.fiche[fid] = { count:0, doors:[] };
+    currentData.fiche[fid].count = n;
+    const doors = currentData.fiche[fid].doors || [];
+    while(doors.length < n) doors.push({ dimension:'', note:'' });
+    doors.length = n;
+    currentData.fiche[fid].doors = doors;
+    scheduleSaveProjectData();
+    renderFicheTab();
+  }));
+  container.querySelectorAll('.door-dim').forEach(inp => inp.addEventListener('input', () => {
+    const fid = inp.dataset.fid, idx = +inp.dataset.idx;
+    currentData.fiche[fid].doors[idx].dimension = inp.value;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.door-note').forEach(inp => inp.addEventListener('input', () => {
+    const fid = inp.dataset.fid, idx = +inp.dataset.idx;
+    currentData.fiche[fid].doors[idx].note = inp.value;
+    scheduleSaveProjectData();
+  }));
+
   container.querySelectorAll('[data-fid]').forEach(el => {
+    if(el.tagName !== 'INPUT' && el.tagName !== 'SELECT' && el.tagName !== 'TEXTAREA') return;
+    if(el.classList.contains('choice-check') || el.classList.contains('choice-autre-check') || el.classList.contains('choice-autre-note') ||
+       el.classList.contains('doors-count-input') || el.classList.contains('door-dim') || el.classList.contains('door-note')) return;
     el.addEventListener('input', () => { currentData.fiche[el.dataset.fid] = el.value; scheduleSaveProjectData(); });
     if(el.tagName === 'SELECT'){
       el.addEventListener('change', () => { currentData.fiche[el.dataset.fid] = el.value; scheduleSaveProjectData(); });
@@ -2473,10 +2820,27 @@ function buildReportHtmlFragment(){
     return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
   }).join('') : `<p style="color:var(--steel);font-style:italic;">Aucune checklist de planification disponible pour le flux « ${escapeHtml(flux || '—')} ».</p>`;
 
+  function formatFicheFieldForReport(f, val){
+    if(f.type === 'choices'){
+      const selected = (val && val.selected) || {};
+      const picked = (f.choices || []).filter(c => selected[c]);
+      if(val && val.autre && val.autreNote) picked.push('Autre : ' + val.autreNote);
+      else if(val && val.autre) picked.push('Autre');
+      return picked.length ? escapeHtml(picked.join(', ')) : null;
+    }
+    if(f.type === 'doors'){
+      const doors = (val && val.doors) || [];
+      if(!doors.length) return null;
+      return doors.map((d,i) => escapeHtml(`Porte ${i+1} : ${d.dimension || '—'}${d.note ? ' (' + d.note + ')' : ''}`)).join('<br>');
+    }
+    return val ? escapeHtml(val) : null;
+  }
+
   const ficheHtml = FICHE_TEMPLATE.map(sec => {
     const rows = sec.fields.map(f => {
       const val = currentData.fiche[f.id];
-      return `<div class="rp-fiche-row"><b>${escapeHtml(f.label)} : </b><span class="val ${val?'':'empty'}">${val?escapeHtml(val):'non renseigné'}</span></div>`;
+      const formatted = formatFicheFieldForReport(f, val);
+      return `<div class="rp-fiche-row"><b>${escapeHtml(f.label)} : </b><span class="val ${formatted?'':'empty'}">${formatted || 'non renseigné'}</span></div>`;
     }).join('');
     return `<h3 class="rp-h3">${escapeHtml(sec.title)}</h3>${rows}`;
   }).join('');
@@ -2527,7 +2891,19 @@ function renderRapportTab(){
   const total = projectTotalItems(currentData, flux);
   const remaining = total - checked;
   let filledFiche = 0, totalFiche = 0;
-  FICHE_TEMPLATE.forEach(s => s.fields.forEach(f => { totalFiche++; if(currentData.fiche[f.id]) filledFiche++; }));
+  FICHE_TEMPLATE.forEach(s => s.fields.forEach(f => {
+    totalFiche++;
+    const val = currentData.fiche[f.id];
+    let isFilled;
+    if(f.type === 'choices'){
+      isFilled = !!(val && ((val.selected && Object.values(val.selected).some(Boolean)) || val.autre));
+    } else if(f.type === 'doors'){
+      isFilled = !!(val && val.count > 0);
+    } else {
+      isFilled = !!val;
+    }
+    if(isFilled) filledFiche++;
+  }));
 
   container.innerHTML = `
     <div id="reportActions">
@@ -2571,7 +2947,18 @@ function downloadReport(){
 
 async function exportAllData(){
   await flushAllPending();
-  const payload = { version:1, exportedAt:new Date().toISOString(), projects, projectData:{} };
+  const payload = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    projects,
+    projectData: {},
+    seanceMatin,
+    seanceOpeBoard,
+    appOptions,
+    checklistTemplates,
+    notesText,
+    appSettings
+  };
   for(const p of projects){
     payload.projectData[p.id] = (p.id === currentProjectId && currentData) ? currentData : await loadProjectData(p.id);
   }
@@ -2584,7 +2971,7 @@ async function exportAllData(){
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('Sauvegarde exportée');
+  showToast('Sauvegarde complète exportée');
 }
 
 async function importAllData(file){
@@ -2592,7 +2979,7 @@ async function importAllData(file){
     const text = await file.text();
     const payload = JSON.parse(text);
     if(!payload || !Array.isArray(payload.projects)) throw new Error('format invalide');
-    const ok = await customConfirm(`Importer ${payload.projects.length} projet(s) ? Les projets ayant le même identifiant seront remplacés.`, { okText:'Importer', danger:false });
+    const ok = await customConfirm(`Importer ${payload.projects.length} projet(s) et toutes les autres données (séances, réglages, checklists par flux, bloc-notes) ? Elles remplaceront les données actuelles ayant le même identifiant.`, { okText:'Importer', danger:false });
     if(!ok) return;
     for(const p of payload.projects){
       const idx = projects.findIndex(x => x.id === p.id);
@@ -2602,6 +2989,20 @@ async function importAllData(file){
     }
     projectStatsCache = {};
     saveProjects();
+
+    if(payload.seanceMatin){ seanceMatin = payload.seanceMatin; saveSeance('matin'); }
+    if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
+    if(payload.appOptions){
+      appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [] };
+      saveAppOptions();
+    }
+    if(payload.checklistTemplates){
+      checklistTemplates = payload.checklistTemplates;
+      saveChecklistTemplates();
+    }
+    if(typeof payload.notesText === 'string'){ notesText = payload.notesText; lsSet('projectNotes', notesText); }
+    if(payload.appSettings){ appSettings = payload.appSettings; applyTheme(); saveSettings(); }
+
     currentProjectId = null;
     currentData = null;
     await renderDashboardView();
