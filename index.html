@@ -2185,12 +2185,44 @@ function saveMorningRoutineState(){
 function allRoutineChecked(){
   return morningRoutineItems.length > 0 && morningRoutineItems.every(it => morningRoutineState.checked[it.id]);
 }
+function routineDoneForToday(){
+  return allRoutineChecked() || !!morningRoutineState.dismissedForToday;
+}
+
+let routineModalOpen = false;
+
+function checkAndMaybeShowRoutine(){
+  if(routineModalOpen) return;
+  if(!morningRoutineItems.length) return;
+  const todayStr = new Date().toISOString().slice(0,10);
+
+  if(morningRoutineState.date !== todayStr){
+    morningRoutineState = { date: todayStr, checked:{}, snoozeUntil: null, dismissedForToday: false };
+    saveMorningRoutineState();
+    if(!routineDoneForToday()) openMorningRoutineModal();
+    return;
+  }
+
+  if(appSettings.routineSpamMode){
+    if(!routineDoneForToday()) openMorningRoutineModal();
+    return;
+  }
+
+  if(morningRoutineState.snoozeUntil && Date.now() >= morningRoutineState.snoozeUntil && !routineDoneForToday()){
+    morningRoutineState.snoozeUntil = null;
+    saveMorningRoutineState();
+    openMorningRoutineModal();
+  }
+}
 
 function openMorningRoutineModal(){
+  if(routineModalOpen) return;
+  routineModalOpen = true;
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
 
   function close(){
+    routineModalOpen = false;
     if(backdrop.parentNode) document.body.removeChild(backdrop);
   }
 
@@ -2231,15 +2263,14 @@ function openMorningRoutineModal(){
       morningRoutineState.snoozeUntil = Date.now() + 3600000;
       saveMorningRoutineState();
       close();
-      setTimeout(() => {
-        if(!allRoutineChecked()) openMorningRoutineModal();
-      }, 3600000);
-      showToast('Ça revient dans 1h');
+      setTimeout(checkAndMaybeShowRoutine, 3600000);
+      showToast('Ça revient dans 1h (à la prochaine ouverture si l\u2019appli est en arrière-plan)');
     });
     backdrop.querySelector('#routineDoneBtn').addEventListener('click', async () => {
       const ok = await customConfirm('As-tu bien terminé tous les points de la routine du matin ?', { okText:'Oui, terminé', cancelText:'Pas encore', danger:false });
       if(!ok) return;
       morningRoutineState.snoozeUntil = null;
+      morningRoutineState.dismissedForToday = true;
       saveMorningRoutineState();
       close();
     });
@@ -2504,6 +2535,10 @@ async function renderSettingsView(){
       <div class="fiche-section-head"><h4>🌄 Routine du matin</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Cette liste s'affiche automatiquement en popup à la première ouverture de l'appli chaque jour. Les cases se recochent à zéro le lendemain.</p>
+        <label class="choice-chip" style="align-self:flex-start;margin-bottom:6px;">
+          <input type="checkbox" id="routineSpamToggle" ${appSettings.routineSpamMode?'checked':''}>
+          Rappel à chaque ouverture de l'appli (ignore le délai d'1h de « Plus tard »)
+        </label>
         <div class="settings-list" data-key="morningRoutine">
           ${morningRoutineItems.length ? morningRoutineItems.map((it,i) => `<div class="settings-item"><span>${escapeHtml(it.text)}</span><button class="settings-del" data-key="morningRoutine" data-idx="${i}">×</button></div>`).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
         </div>
@@ -2606,6 +2641,11 @@ async function renderSettingsView(){
     appSettings.linkSeanceTodo = e.target.checked;
     saveSettings();
     showToast(appSettings.linkSeanceTodo ? 'Liaison activée' : 'Liaison désactivée');
+  });
+  $('#routineSpamToggle').addEventListener('change', e => {
+    appSettings.routineSpamMode = e.target.checked;
+    saveSettings();
+    showToast(appSettings.routineSpamMode ? 'Rappel à chaque ouverture activé' : 'Rappel à chaque ouverture désactivé');
   });
   renderFluxTemplateEditor();
   $('#importFileInput').addEventListener('change', e => {
@@ -3990,26 +4030,19 @@ async function init(){
   loadProjects();
   await renderDashboardView();
 
-  const todayStr = new Date().toISOString().slice(0,10);
-  let showRoutineToday = false;
-  if(morningRoutineState.date !== todayStr){
-    morningRoutineState = { date: todayStr, checked:{}, snoozeUntil: null };
-    saveMorningRoutineState();
-    showRoutineToday = true;
-  } else if(morningRoutineState.snoozeUntil && Date.now() >= morningRoutineState.snoozeUntil && !allRoutineChecked()){
-    morningRoutineState.snoozeUntil = null;
-    saveMorningRoutineState();
-    showRoutineToday = true;
-  }
-
   if(!lsGet('hasSeenManual')){
     lsSet('hasSeenManual', '1');
     openManualModal();
-  } else if(showRoutineToday && morningRoutineItems.length && !allRoutineChecked()){
-    openMorningRoutineModal();
+  } else {
+    checkAndMaybeShowRoutine();
   }
 }
 init();
+
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') checkAndMaybeShowRoutine();
+});
+window.addEventListener('focus', checkAndMaybeShowRoutine);
 
 window.addEventListener('beforeunload', () => {
   if(saveTimer) saveProjectDataNow();
