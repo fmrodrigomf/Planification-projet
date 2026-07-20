@@ -122,6 +122,7 @@
   .project-item.active{background:#333e47;border-color:#48545f;}
   .project-item .pname{font-weight:600;font-size:14px;color:#f2efe9;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .project-item .pclient{font-size:11.5px;color:#9aa4ad;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .flux-badge{display:inline-block;font-family:var(--font-mono);font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:8px;background:var(--amber-tint);color:var(--amber-dark);vertical-align:middle;}
   .pbar{height:5px;background:#1d2327;border-radius:3px;overflow:hidden;}
   body.theme-dark .pbar{background:#10141a;}
   .pbar-fill{height:100%;background:linear-gradient(90deg,var(--amber),#f0a94f);border-radius:3px;transition:width .25s ease;}
@@ -334,6 +335,19 @@
   .seance-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:16px;flex-shrink:0;}
   .seance-del:hover{color:var(--danger);}
 
+  .cc-list{display:flex;flex-direction:column;gap:8px;}
+  .cc-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;}
+  .cc-item-top{display:flex;align-items:center;gap:10px;}
+  .cc-item .cc-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
+  .cc-item .cc-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
+  .cc-item.done .cc-text{color:var(--ok);}
+  .cc-item.ignored .cc-text{color:var(--danger);}
+  .cc-expand{background:none;border:none;color:var(--steel-light);font-size:11px;cursor:pointer;flex-shrink:0;padding:2px 3px;}
+  .cc-expand:hover{color:var(--amber-dark);}
+  .cc-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:16px;flex-shrink:0;}
+  .cc-del:hover{color:var(--danger);}
+  .cc-note{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:3px;padding:5px 8px;font-size:11.5px;font-family:var(--font-body);color:var(--graphite);background:var(--paper);resize:vertical;min-height:26px;}
+
   /* ---------- SÉANCE OPE (staging + 2 columns, drag & drop) ---------- */
   .ope-staging{
     background:var(--amber-tint);border:1px dashed var(--amber);border-radius:8px;
@@ -365,6 +379,12 @@
   .ope-note:focus{outline:2px solid var(--amber);outline-offset:-1px;}
   .ope-actions{display:flex;gap:10px;flex-wrap:wrap;}
   .notes-saved-hint{font-size:11px;color:var(--steel-light);margin-top:6px;font-family:var(--font-mono);}
+  .ignored-stat-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .ignored-stat-row:last-child{border-bottom:none;}
+  .ignored-stat-label{flex:1;font-size:12.5px;color:var(--graphite);min-width:0;}
+  .ignored-stat-bar-wrap{width:100px;height:6px;background:var(--paper);border:1px solid var(--line);border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .ignored-stat-bar{height:100%;background:var(--danger);}
+  .ignored-stat-count{font-family:var(--font-mono);font-size:11px;color:var(--steel);flex-shrink:0;width:90px;text-align:right;}
 
   .tabs{display:flex;gap:2px;margin-top:4px;}
   .tab-btn{background:none;border:none;padding:11px 18px;font-size:13.5px;font-weight:600;color:var(--steel);cursor:pointer;border-bottom:3px solid transparent;display:flex;align-items:center;gap:7px;font-family:var(--font-body);}
@@ -415,7 +435,10 @@
   .item-check{width:18px;height:18px;margin-top:2px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .item-main{flex:1;min-width:0;}
   .item-label{font-size:13.5px;color:var(--graphite);line-height:1.4;cursor:pointer;}
-  .item-row.done .item-label{color:var(--ok);text-decoration:line-through;text-decoration-color:#b7d2bd;}
+  .item-row.done .item-label{color:var(--ok);}
+  .item-row.ignored .item-label{color:var(--danger);}
+  .item-ignore-row{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--steel);cursor:pointer;}
+  .item-ignore-row input{width:15px;height:15px;accent-color:var(--danger);cursor:pointer;}
   .item-label-row{display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 0;}
   .item-label-row .item-label{flex:1;cursor:pointer;}
   .item-badge{font-size:11px;opacity:.85;}
@@ -523,7 +546,9 @@
   #reportPreview .rp-item{display:flex;gap:8px;font-size:13px;padding:4px 0;align-items:flex-start;flex-wrap:wrap;}
   #reportPreview .rp-item .mark{width:16px;flex-shrink:0;font-weight:700;}
   #reportPreview .rp-item.done .mark{color:var(--ok);}
-  #reportPreview .rp-item.pending .mark{color:var(--danger);}
+  #reportPreview .rp-item.pending .mark{color:var(--steel-light);}
+  #reportPreview .rp-item.ignored .mark{color:var(--danger);}
+  #reportPreview .rp-item.ignored div div:first-child{color:var(--danger);}
   #reportPreview .rp-item .note{color:var(--steel);font-style:italic;margin-top:1px;}
   #reportPreview .rp-photos{display:flex;gap:6px;margin:4px 0 4px 24px;flex-wrap:wrap;width:100%;}
   #reportPreview .rp-photo{width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid var(--line);}
@@ -667,72 +692,85 @@ function getAllFluxOptions(){
 }
 
 const DEFAULT_PRJ_CHECKLIST_TEMPLATE = [
-  { id:'p1', title:"PARTIE 1 — Édition de l'offre", sections:[
-    { id:'p1-analyse', title:'Analyse du besoin', items:[
-      "Besoin client défini","Relevé sur site effectué","Photos réalisées",
-      "Contraintes techniques identifiées","Contraintes d'accès identifiées",
-      "Contraintes sécurité identifiées","Budget estimé","Planning estimatif"
+  { id:'prj', title:'PRJ — Réalisation du projet', sections:[
+    { id:'prj-ouverture', title:'Ouverture du projet', items:[
+      "Créer le dossier « Projet » dans le dossier client",
+      "Compléter le document « Gestion de projet_V.. »"
     ]},
-    { id:'p1-etude', title:'Étude technique', items:[
-      "Plans réalisés","Schémas réalisés","Liste matériel réalisée","Chiffrage terminé",
-      "Temps de main-d'œuvre calculés","Sous-traitance chiffrée","Validation technique","Validation VAC"
+    { id:'prj-rdv', title:'Rendez-vous préalable', items:[
+      "Planifier un rendez-vous sur site avec le client (indication de la date)",
+      "Compléter la fiche « Visite chantier » lors de la visite",
+      "Analyser les besoins : pression, débit, qualité d'air",
+      "Vérifier si un contrat de maintenance existe déjà afin d'identifier une éventuelle opportunité commerciale",
+      "Analyser l'impact des modifications sur l'installation existante",
+      "Identifier les écarts entre l'installation existante et le projet"
     ]},
-    { id:'p1-offre', title:'Offre', items:[
-      "Offre éditée","Offre envoyée","Relance effectuée","Offre acceptée","Bon de commande reçu"
-    ]}
-  ]},
-  { id:'p2', title:'PARTIE 2 — Approvisionnement', sections:[
-    { id:'p2-commandes', title:'Commandes', items:[
-      "Toutes les pièces commandées","Délais fournisseurs validés","Sous-traitance commandée","Matériel spécifique réservé"
+    { id:'prj-dossier-exec', title:"Dossier d'exécution", items:[
+      "Compléter la demande de points techniques : électricité, MCR, etc.",
+      "Établir ou valider le plan d'implantation, si nécessaire",
+      "Établir ou valider le P&ID, si nécessaire",
+      "Définir le tableau de commande nécessaire, notamment AirMaster si applicable"
     ]},
-    { id:'p2-reception', title:'Réception', items:[
-      "Matériel réceptionné","Quantités vérifiées","Conformité vérifiée","Manquants signalés",
-      "Non-conformités traitées","Tout le matériel disponible"
-    ]}
-  ]},
-  { id:'p3', title:'PARTIE 3 — Réalisation du projet', sections:[
-    { id:'p3-visite', title:'Visite préalable', items:[
-      "Visite sur site","Formulaire (Visite de chantier)","Analyse besoin (Pression, débit, qualité d'air)",
-      "Contrat de maintenance déjà existant ? (amorce client)",
-      "Impact des modifications sur l'installation existante analysé",
-      "Écart entre l'existant et le projet identifié"
+    { id:'prj-validation-interne', title:'Validation interne VAC', items:[
+      "Faire valider l'ensemble des points du projet par YVK"
     ]},
-    { id:'p3-planif', title:'Planification', items:[
-      "Visite","Planification des fabrications (à développer)","Planification des préparations",
-      "FAT identifiée","Options identifiées","Kick-off planifié","Date intervention fixée",
-      "Techniciens affectés","Sous-traitants réservés","Camion réservé","Moyens de levage réservés",
-      "Outillage réservé","Plan de prévention établi","Client informé","Date confirmée","Mail de confirmation envoyé"
+    { id:'prj-validation-client', title:'Validation client', items:[
+      "Soumettre les éléments concernés au client pour validation",
+      "Obtenir l'accord du client avant lancement"
     ]},
-    { id:'p3-docs', title:'Documents', items:[
-      "Bons de livraison édités","Bon de préparation édité","Commentaire ajouté dans Bexio",
-      "Groupage GLATE réalisé","Ticket GLATE ouvert","Fiches d'intervention imprimées","Étiquettes créées"
+    { id:'prj-approvisionnement', title:'Approvisionnement', items:[
+      "Vérifier l'ensemble du matériel nécessaire au projet",
+      "Commander le matériel manquant"
     ]},
-    { id:'p3-atelier', title:'Atelier', items:[
-      "Préparation réalisée","Fabrication terminée","Contrôle qualité effectué","FAT réalisée","Matériel prêt"
+    { id:'prj-planification', title:'Planification', items:[
+      "Identifier les besoins liés au FAT et aux éventuelles options",
+      "Planifier la préparation du matériel en atelier : tableau, machine, fabrication ou autre équipement",
+      "Fixer la date d'intervention pour les techniciens",
+      "Planifier un kick-off avec les techniciens",
+      "Planifier la livraison et l'installation chez le client",
+      "Informer le client des dates prévues de livraison et d'intervention (mail de confirmation)",
+      "Réserver les sous-traitants (si nécessaire)",
+      "Réserver le camion (si nécessaire)",
+      "Réserver les moyens de levage (si nécessaire)",
+      "Réserver l'outillage nécessaire (si nécessaire)"
     ]},
-    { id:'p3-dossiers', title:'Dossiers', items:[
-      "Dossier technicien préparé","Dossier magasin préparé","Dossier préparation préparé"
+    { id:'prj-prep-docs', title:'Préparation des documents', items:[
+      "Éditer les bons de livraison",
+      "Éditer le bon de préparation",
+      "Ajouter les commentaires nécessaires dans Bexio",
+      "Préparer le dossier technicien",
+      "Préparer le dossier magasin",
+      "Préparer le dossier de préparation"
     ]},
-    { id:'p3-execution', title:'Exécution et accompagnement', items:[
-      "Matériel chargé","Équipe briefée","Temps saisis","Modifications consignées","Hôtel réservé",
-      "Photos réalisées","Essais réalisés","Mise en service","Formation client","Nettoyage","PV de réception signé"
+    { id:'prj-prep-fat', title:'Préparation / FAT', items:[
+      "Vérifier que le matériel a été correctement préparé",
+      "Réaliser les contrôles FAT nécessaires avant livraison, si applicable"
     ]},
-    { id:'p3-revision', title:'Révision documentaire', items:[
-      "Schémas mis à jour","Documentation archivée et à jour","Certificats archivés","Photos archivées",
-      "Documentation commune mise à jour"
+    { id:'prj-livraison-exec', title:'Livraison et exécution', items:[
+      "Vérifier le suivi de chantier réalisé par le technicien",
+      "S'assurer que l'ensemble des travaux prévus a été réalisé",
+      "Vérifier qu'aucun point en suspens ne subsiste"
     ]},
-    { id:'p3-cloture', title:'Clôture du projet', items:[
-      "Vérifier les pièces remplacées dans GLATE","Mettre à jour les références GLATE",
-      "Vérifier l'impact sur le contrat de maintenance","Mettre à jour le contrat de maintenance",
-      "Comparer l'installation finale avec l'installation d'origine",
-      "Vérifier que toutes les modifications sont reportées dans GLATE",
-      "Vérifier les paramètres de fonctionnement (pression, qualité de l'air, débit, etc.)",
-      "Valider la cohérence entre le projet, GLATE et le contrat de maintenance",
-      "Vérifier la marge du projet","Contrôler les écarts","Clôturer les commandes",
-      "Contrôler les factures fournisseurs","Projet clôturé dans l'ERP","Commande terminée"
+    { id:'prj-reception', title:"Réception de l'ouvrage", items:[
+      "Planifier un rendez-vous de réception sur site avec le client",
+      "Vérifier la conformité de l'installation par rapport à la demande initiale",
+      "Faire signer le formulaire « Réception de l'ouvrage » par le client",
+      "Confirmer que la réception avec le client a été réalisée"
     ]},
-    { id:'p3-facturation', title:'Facturation', items:[
-      "Heures validées","Matériel validé","Sous-traitance validée","Facture éditée","Facture envoyée"
+    { id:'prj-dossier-revision', title:'Dossier de révision', items:[
+      "Établir le dossier de révision",
+      "Vérifier que le dossier est complet",
+      "Transmettre le dossier de révision au client"
+    ]},
+    { id:'prj-cloture', title:'Clôture du projet', items:[
+      "Vérifier que l'ensemble du projet est terminé",
+      "Vérifier qu'aucun point ouvert ne subsiste",
+      "Contrôler que tous les points du formulaire « Clôture du projet » ont été traités"
+    ]},
+    { id:'prj-facturation', title:'Facturation', items:[
+      "Organiser une séance de facturation, si nécessaire",
+      "Vérifier que l'ensemble des prestations et fournitures est pris en compte",
+      "Transmettre le projet pour facturation"
     ]}
   ]}
 ];
@@ -1446,7 +1484,7 @@ async function renderSidebar(){
     rows.push(`
       <div class="project-item ${isActive?'active':''} ${p.finished?'finished':''}" data-id="${p.id}">
         <div class="pname">${escapeHtml(p.client || 'Client non défini')} ${p.finished?'<span class="badge done" style="margin-left:4px;">✓ Terminé</span>':''}</div>
-        <div class="pclient">${escapeHtml(p.name || 'Sans nom')}</div>
+        <div class="pclient">${escapeHtml(p.name || 'Sans nom')} ${p.numFlux?`<span class="flux-badge">${escapeHtml(p.numFlux)}</span>`:''}</div>
         ${progressHtml}      </div>
     `);
   }
@@ -1546,7 +1584,7 @@ async function renderDashboardView(){
   const cardsHtml = rows.map(r => `
     <div class="project-card ${r.p.finished?'finished':''}" data-id="${r.p.id}">
       <div class="pc-name">${escapeHtml(r.p.client || 'Client non défini')}</div>
-      <div class="pc-client">${escapeHtml(r.p.name)}</div>
+      <div class="pc-client">${escapeHtml(r.p.name)} ${r.p.numFlux?`<span class="flux-badge">${escapeHtml(r.p.numFlux)}</span>`:''}</div>
       ${r.total ? `
       <div class="pbar-cat">Planification</div>
       <div class="pbar"><div class="pbar-fill" style="width:${r.pct}%"></div></div>
@@ -2495,6 +2533,54 @@ function renderFluxTemplateEditor(){
   }
 }
 
+function computeIgnoredStats(){
+  const counts = {};
+  const totals = {};
+  projects.forEach(p => {
+    let data;
+    if(p.id === currentProjectId && currentData){
+      data = currentData;
+    } else {
+      try{ const raw = lsGet('project:' + p.id); data = raw ? JSON.parse(raw) : null; }catch(e){ data = null; }
+    }
+    if(!data || !data.checklist) return;
+    const template = projectTemplate(data, p.numFlux);
+    template.forEach(partie => partie.sections.forEach(sec => {
+      sec.items.forEach((label, idx) => {
+        const k = itemKey(sec.id, idx);
+        const st = data.checklist[k];
+        if(st){
+          totals[label] = (totals[label] || 0) + 1;
+          if(st.ignored) counts[label] = (counts[label] || 0) + 1;
+        }
+      });
+    }));
+  });
+  return Object.keys(counts).map(label => ({
+    label, ignoredCount: counts[label], totalCount: totals[label] || counts[label]
+  })).sort((a,b) => b.ignoredCount - a.ignoredCount);
+}
+
+function renderIgnoredStats(){
+  const host = $('#ignoredStatsList');
+  if(!host) return;
+  const stats = computeIgnoredStats();
+  if(!stats.length){
+    host.innerHTML = '<div class="settings-empty">Aucun point ignoré pour l\u2019instant, sur aucun projet.</div>';
+    return;
+  }
+  host.innerHTML = stats.slice(0, 25).map(s => {
+    const pct = s.totalCount ? Math.round((s.ignoredCount / s.totalCount) * 100) : 0;
+    return `
+      <div class="ignored-stat-row">
+        <div class="ignored-stat-label">${escapeHtml(s.label)}</div>
+        <div class="ignored-stat-bar-wrap"><div class="ignored-stat-bar" style="width:${pct}%"></div></div>
+        <div class="ignored-stat-count">${s.ignoredCount}/${s.totalCount} · ${pct}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
 async function renderSettingsView(){
   await flushAllPending();
   currentView = 'settings';
@@ -2587,6 +2673,13 @@ async function renderSettingsView(){
         <div class="notes-saved-hint" id="notesSavedHint"></div>
       </div>
     </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🚫 Points souvent ignorés</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Les points de checklist marqués « Ignorer » le plus souvent, toutes checklists et tous projets confondus. Utile pour repérer ceux qui n'ont peut-être plus leur place sur le long terme.</p>
+        <div id="ignoredStatsList"></div>
+      </div>
+    </div>
   `;
 
   function addValue(key){
@@ -2663,6 +2756,7 @@ async function renderSettingsView(){
     saveAppOptions();
     renderSettingsView();
   }));
+  renderIgnoredStats();
 }
 
 /* ============================= MANUEL D'UTILISATION ============================= */
@@ -3097,26 +3191,32 @@ function renderChecklistTab(){
       const visibleItems = [];
       sec.items.forEach((label, idx) => {
         const k = itemKey(sec.id, idx);
-        const st = currentData.checklist[k] || { checked:false, note:'', photos:[] };
+        const st = currentData.checklist[k] || { checked:false, note:'', photos:[], ignored:false };
         if(st.checked){ secChecked++; partieChecked++; }
         partieTotal++;
         if(itemMatchesSearch(label, st.note) && itemMatchesStatus(st.checked)){
           const itemExpanded = expandedItemIds.has(k);
           const hasNote = !!(st.note && st.note.trim());
           const hasPhotos = !!(st.photos && st.photos.length);
+          const rowClass = st.ignored ? 'ignored' : (st.checked ? 'done' : '');
           visibleItems.push(`
-            <div class="item-row ${st.checked?'done':''}" data-key="${k}">
+            <div class="item-row ${rowClass}" data-key="${k}">
               <input type="checkbox" class="item-check" ${st.checked?'checked':''} data-key="${k}">
               <div class="item-main">
                 <div class="item-label-row" data-item-toggle="${k}">
                   <div class="item-label" data-key="${k}">${escapeHtml(label)}</div>
                   ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
                   ${hasPhotos?'<span class="item-badge" title="A des photos">📷</span>':''}
+                  ${st.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':''}
                   <span class="item-expand-chev">${itemExpanded?'▾':'▸'}</span>
                 </div>
                 ${itemExpanded ? `
                   ${noteBlockHtml(k, st.note, 'item-note', `data-key="${k}"`)}
                   ${photoBlockHtml(k, st.photos, 'data-key')}
+                  <label class="item-ignore-row">
+                    <input type="checkbox" class="item-ignore" data-key="${k}" ${st.ignored?'checked':''}>
+                    🚫 Ignorer ce point (compté comme fait, affiché en rouge)
+                  </label>
                 ` : ''}
               </div>
             </div>
@@ -3193,8 +3293,18 @@ function renderChecklistTab(){
   }));
   $$('.item-check').forEach(cb => cb.addEventListener('change', () => {
     const k = cb.dataset.key;
-    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[], ignored:false };
     currentData.checklist[k].checked = cb.checked;
+    updateChecklistTabCount();
+    scheduleSaveProjectData();
+    renderSidebar();
+    renderChecklistTab();
+  }));
+  $$('.item-ignore').forEach(cb => cb.addEventListener('change', () => {
+    const k = cb.dataset.key;
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[], ignored:false };
+    currentData.checklist[k].ignored = cb.checked;
+    if(cb.checked) currentData.checklist[k].checked = true;
     updateChecklistTabCount();
     scheduleSaveProjectData();
     renderSidebar();
@@ -3207,7 +3317,7 @@ function renderChecklistTab(){
   }));
   $$('.item-note').forEach(ta => ta.addEventListener('input', () => {
     const k = ta.dataset.key;
-    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[], ignored:false };
     currentData.checklist[k].note = ta.value;
     scheduleSaveProjectData();
   }));
@@ -3215,7 +3325,7 @@ function renderChecklistTab(){
     const file = e.target.files[0];
     if(!file) return;
     const k = inp.dataset.key;
-    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[] };
+    if(!currentData.checklist[k]) currentData.checklist[k] = { checked:false, note:'', photos:[], ignored:false };
     if(!currentData.checklist[k].photos) currentData.checklist[k].photos = [];
     if(currentData.checklist[k].photos.length >= 3){ showToast('Maximum 3 photos par point'); return; }
     try{
@@ -3646,20 +3756,28 @@ function renderNotesTab(){
           <input type="text" id="customChecklistNewItem" placeholder="Ajouter un point…">
           <button class="btn btn-primary" id="customChecklistAddBtn">+ Ajouter</button>
         </div>
-        <div class="seance-list">
+        <div class="cc-list">
           ${ordered.length ? ordered.map(it => {
             const hasNote = !!(it.note && it.note.trim());
             const expanded = expandedItemIds.has(it.id);
+            const rowClass = it.ignored ? 'ignored' : (it.checked ? 'done' : '');
             return `
-            <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
-              <div class="seance-item-top">
-                <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
-                <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
+            <div class="cc-item ${rowClass}" data-id="${it.id}">
+              <div class="cc-item-top">
+                <input type="checkbox" class="cc-check" data-id="${it.id}" ${it.checked?'checked':''}>
+                <span class="cc-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
                 ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
-                <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
-                <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+                ${it.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':''}
+                <button class="cc-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
+                <button class="cc-del" data-id="${it.id}" title="Supprimer">×</button>
               </div>
-              ${expanded ? noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`) : ''}
+              ${expanded ? `
+                ${noteBlockHtml(it.id, it.note, 'cc-note', `data-id="${it.id}"`)}
+                <label class="item-ignore-row">
+                  <input type="checkbox" class="cc-ignore" data-id="${it.id}" ${it.ignored?'checked':''}>
+                  🚫 Ignorer ce point (compté comme fait, affiché en rouge)
+                </label>
+              ` : ''}
             </div>
           `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
         </div>
@@ -3680,11 +3798,11 @@ function renderNotesTab(){
     const p = projects.find(x => x.id === currentProjectId);
     if(appSettings.linkSeanceTodo){
       const linkId = uid();
-      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', linkId });
+      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false, linkId });
       todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? p.name : '' });
       scheduleSaveSeance('todo');
     } else {
-      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'' });
+      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false });
     }
     input.value = '';
     scheduleSaveProjectData();
@@ -3693,12 +3811,21 @@ function renderNotesTab(){
   $('#customChecklistAddBtn').addEventListener('click', addItem);
   $('#customChecklistNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
 
-  container.querySelectorAll('.seance-expand').forEach(btn => btn.addEventListener('click', () => {
+  container.querySelectorAll('.cc-expand').forEach(btn => btn.addEventListener('click', () => {
     const itemId = btn.dataset.id;
     if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
     renderNotesTab();
   }));
-  container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
+  container.querySelectorAll('.cc-ignore').forEach(cb => cb.addEventListener('change', () => {
+    const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
+    if(it){
+      it.ignored = cb.checked;
+      if(cb.checked) it.checked = true;
+    }
+    scheduleSaveProjectData();
+    renderNotesTab();
+  }));
+  container.querySelectorAll('.cc-check').forEach(cb => cb.addEventListener('change', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
     if(it){
       it.checked = cb.checked;
@@ -3707,7 +3834,7 @@ function renderNotesTab(){
     scheduleSaveProjectData();
     renderNotesTab();
   }));
-  container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
+  container.querySelectorAll('.cc-del').forEach(btn => btn.addEventListener('click', async () => {
     const it = (currentData.customChecklist || []).find(x => x.id === btn.dataset.id);
     const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Sa copie dans la To do list sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
@@ -3719,7 +3846,7 @@ function renderNotesTab(){
     scheduleSaveProjectData();
     renderNotesTab();
   }));
-  container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
+  container.querySelectorAll('.cc-text').forEach(span => span.addEventListener('blur', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === span.dataset.id);
     const newText = span.textContent.trim();
     if(it && newText && it.text !== newText){
@@ -3728,7 +3855,7 @@ function renderNotesTab(){
       scheduleSaveProjectData();
     }
   }));
-  container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
+  container.querySelectorAll('.cc-note').forEach(ta => ta.addEventListener('input', () => {
     const it = (currentData.customChecklist || []).find(x => x.id === ta.dataset.id);
     if(it){
       it.note = ta.value;
@@ -3752,10 +3879,12 @@ function buildReportHtmlFragment(){
     const secs = partie.sections.map(sec => {
       const items = sec.items.map((label, idx) => {
         const k = itemKey(sec.id, idx);
-        const st = currentData.checklist[k] || { checked:false, note:'', photos:[] };
+        const st = currentData.checklist[k] || { checked:false, note:'', photos:[], ignored:false };
         const photosHtml = (st.photos && st.photos.length) ? `<div class="rp-photos">${st.photos.map(ph=>`<img src="${ph}" class="rp-photo">`).join('')}</div>` : '';
-        return `<div class="rp-item ${st.checked?'done':'pending'}">
-          <div class="mark">${st.checked?'✓':'○'}</div>
+        const rpClass = st.ignored ? 'ignored' : (st.checked ? 'done' : 'pending');
+        const rpMark = st.ignored ? '⊘' : (st.checked ? '✓' : '○');
+        return `<div class="rp-item ${rpClass}">
+          <div class="mark">${rpMark}</div>
           <div><div>${escapeHtml(label)}</div>${st.note?`<div class="note">${escapeHtml(st.note)}</div>`:''}</div>
           ${photosHtml}
         </div>`;
@@ -3803,8 +3932,8 @@ function buildReportHtmlFragment(){
     <h3 class="rp-h3" style="background:var(--amber-dark)">NOTES GÉNÉRALES</h3>
     ${genNotes ? `<p style="white-space:pre-wrap;font-size:13px;color:var(--graphite);">${escapeHtml(genNotes)}</p>` : ''}
     ${ccItems.length ? `<h4 class="rp-h4">Points complémentaires</h4>${ccItems.map(it => `
-      <div class="rp-item ${it.checked?'done':'pending'}">
-        <div class="mark">${it.checked?'✓':'○'}</div>
+      <div class="rp-item ${it.ignored ? 'ignored' : (it.checked?'done':'pending')}">
+        <div class="mark">${it.ignored ? '⊘' : (it.checked?'✓':'○')}</div>
         <div><div>${escapeHtml(it.text)}</div>${it.note?`<div class="note">${escapeHtml(it.note)}</div>`:''}</div>
       </div>`).join('')}` : ''}` : '';
 
@@ -4015,6 +4144,11 @@ async function init(){
   applyTheme();
   appOptions = loadAppOptions();
   checklistTemplates = loadChecklistTemplates();
+  if(!lsGet('prjChecklistV3Seeded')){
+    checklistTemplates['PRJ'] = JSON.parse(JSON.stringify(DEFAULT_PRJ_CHECKLIST_TEMPLATE));
+    saveChecklistTemplates();
+    lsSet('prjChecklistV3Seeded', '1');
+  }
   notesText = loadNotes();
   seanceMatin = loadSeance('seance_matin');
   todoList = loadSeance('todo_list');
