@@ -687,6 +687,32 @@
 /* ============================= DATA TEMPLATES ============================= */
 
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
+const DEFAULT_AIRMASTER_ITEMS = [
+  "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
+  "Vérifier que le schéma électrique correspond à la commande du client",
+  "Commander le matériel électrique nécessaire à la fabrication de l\u2019AirMaster concerné",
+  "Commander la carte SIM destinée au module SMS",
+  "Planifier la fabrication du tableau électrique par un apprenti",
+  "S\u2019assurer de la bonne réception de l\u2019ensemble du matériel nécessaire à la fabrication",
+  "Effectuer un kick-off avec l\u2019apprenti au démarrage de la fabrication du tableau",
+  "Suivre l\u2019avancement de la fabrication et vérifier régulièrement que celle-ci se déroule correctement",
+  "Une fois le tableau terminé, effectuer une mise en service complète avec l\u2019apprenti afin de détecter d\u2019éventuels problèmes avant l\u2019installation sur site",
+  "Injecter le programme dans l\u2019automate",
+  "Installer la carte SIM dans le relais SMS",
+  "Débloquer et activer la carte SIM",
+  "Tester le bon fonctionnement du relais SMS",
+  "Tester l\u2019ensemble des fonctions du tableau",
+  "Valider le tableau comme terminé uniquement après réussite de l\u2019ensemble des tests"
+];
+function ensureAirmasterOption(force){
+  if(!appOptions.projectOptions) appOptions.projectOptions = [];
+  const existing = appOptions.projectOptions.find(o => o.name.trim().toLowerCase() === 'airmaster');
+  if(existing){
+    if(force || !existing.items || !existing.items.length) existing.items = DEFAULT_AIRMASTER_ITEMS.slice();
+  } else {
+    appOptions.projectOptions.push({ id: uid(), name: 'AirMaster', items: DEFAULT_AIRMASTER_ITEMS.slice() });
+  }
+}
 function getAllFluxOptions(){
   return FLUX_OPTIONS.concat(appOptions.customFlux || []);
 }
@@ -4116,11 +4142,18 @@ async function importAllData(file){
     if(payload.todoList){ todoList = payload.todoList; saveSeance('todo'); }
     if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
     if(payload.appOptions){
-      appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [] };
+      appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [], customFlux: payload.appOptions.customFlux || [] };
+      ensureAirmasterOption(false);
       saveAppOptions();
     }
     if(payload.checklistTemplates){
       checklistTemplates = payload.checklistTemplates;
+      const importedPrj = checklistTemplates['PRJ'];
+      const looksUpToDate = importedPrj && importedPrj.some(partie => partie.sections && partie.sections.some(s => s.id === 'prj-ouverture'));
+      if(!looksUpToDate){
+        checklistTemplates['PRJ'] = JSON.parse(JSON.stringify(DEFAULT_PRJ_CHECKLIST_TEMPLATE));
+        showToast('La checklist PRJ importée était une ancienne version — remise à jour automatiquement');
+      }
       saveChecklistTemplates();
     }
     if(typeof payload.notesText === 'string'){ notesText = payload.notesText; lsSet('projectNotes', notesText); }
@@ -4150,30 +4183,7 @@ async function init(){
     lsSet('prjChecklistV3Seeded', '1');
   }
   if(!lsGet('airmasterOptionSeeded')){
-    const airmasterItems = [
-      "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
-      "Vérifier que le schéma électrique correspond à la commande du client",
-      "Commander le matériel électrique nécessaire à la fabrication de l\u2019AirMaster concerné",
-      "Commander la carte SIM destinée au module SMS",
-      "Planifier la fabrication du tableau électrique par un apprenti",
-      "S\u2019assurer de la bonne réception de l\u2019ensemble du matériel nécessaire à la fabrication",
-      "Effectuer un kick-off avec l\u2019apprenti au démarrage de la fabrication du tableau",
-      "Suivre l\u2019avancement de la fabrication et vérifier régulièrement que celle-ci se déroule correctement",
-      "Une fois le tableau terminé, effectuer une mise en service complète avec l\u2019apprenti afin de détecter d\u2019éventuels problèmes avant l\u2019installation sur site",
-      "Injecter le programme dans l\u2019automate",
-      "Installer la carte SIM dans le relais SMS",
-      "Débloquer et activer la carte SIM",
-      "Tester le bon fonctionnement du relais SMS",
-      "Tester l\u2019ensemble des fonctions du tableau",
-      "Valider le tableau comme terminé uniquement après réussite de l\u2019ensemble des tests"
-    ];
-    if(!appOptions.projectOptions) appOptions.projectOptions = [];
-    const existing = appOptions.projectOptions.find(o => o.name.trim().toLowerCase() === 'airmaster');
-    if(existing){
-      existing.items = airmasterItems;
-    } else {
-      appOptions.projectOptions.push({ id: uid(), name: 'AirMaster', items: airmasterItems });
-    }
+    ensureAirmasterOption(true);
     saveAppOptions();
     lsSet('airmasterOptionSeeded', '1');
   }
