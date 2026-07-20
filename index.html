@@ -4149,6 +4149,34 @@ async function init(){
     saveChecklistTemplates();
     lsSet('prjChecklistV3Seeded', '1');
   }
+  if(!lsGet('airmasterOptionSeeded')){
+    const airmasterItems = [
+      "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
+      "Vérifier que le schéma électrique correspond à la commande du client",
+      "Commander le matériel électrique nécessaire à la fabrication de l\u2019AirMaster concerné",
+      "Commander la carte SIM destinée au module SMS",
+      "Planifier la fabrication du tableau électrique par un apprenti",
+      "S\u2019assurer de la bonne réception de l\u2019ensemble du matériel nécessaire à la fabrication",
+      "Effectuer un kick-off avec l\u2019apprenti au démarrage de la fabrication du tableau",
+      "Suivre l\u2019avancement de la fabrication et vérifier régulièrement que celle-ci se déroule correctement",
+      "Une fois le tableau terminé, effectuer une mise en service complète avec l\u2019apprenti afin de détecter d\u2019éventuels problèmes avant l\u2019installation sur site",
+      "Injecter le programme dans l\u2019automate",
+      "Installer la carte SIM dans le relais SMS",
+      "Débloquer et activer la carte SIM",
+      "Tester le bon fonctionnement du relais SMS",
+      "Tester l\u2019ensemble des fonctions du tableau",
+      "Valider le tableau comme terminé uniquement après réussite de l\u2019ensemble des tests"
+    ];
+    if(!appOptions.projectOptions) appOptions.projectOptions = [];
+    const existing = appOptions.projectOptions.find(o => o.name.trim().toLowerCase() === 'airmaster');
+    if(existing){
+      existing.items = airmasterItems;
+    } else {
+      appOptions.projectOptions.push({ id: uid(), name: 'AirMaster', items: airmasterItems });
+    }
+    saveAppOptions();
+    lsSet('airmasterOptionSeeded', '1');
+  }
   notesText = loadNotes();
   seanceMatin = loadSeance('seance_matin');
   todoList = loadSeance('todo_list');
