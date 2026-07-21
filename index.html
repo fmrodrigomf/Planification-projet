@@ -395,6 +395,11 @@
 
   #tabContent{flex:1;overflow-y:auto;padding:26px 32px 60px;}
 
+  .hub-subnav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+  .hub-pill{border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:8px 16px;border-radius:20px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .hub-pill .count{font-family:var(--font-mono);font-size:10.5px;background:var(--paper);color:var(--steel);padding:1px 6px;border-radius:9px;}
+  .hub-pill.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
+  .hub-pill.active .count{background:rgba(0,0,0,.12);color:#1c1305;}
   .checklist-toolbar{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
   .options-panel{background:var(--amber-tint);border:1px solid var(--amber);border-radius:6px;padding:12px 16px;margin-bottom:18px;}
   .options-panel-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber-dark);margin-bottom:9px;}
@@ -464,6 +469,11 @@
 
   /* ---------- FICHE ---------- */
   .fiche-section{background:var(--paper-2);border:1px solid var(--line);border-radius:6px;margin-bottom:18px;overflow:hidden;}
+  .fiche-section.collapsed .fiche-fields{display:none;}
+  .settings-collapsible-head{cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+  .settings-collapsible-head:hover{background:var(--paper);}
+  .settings-chev{font-size:11px;color:var(--steel-light);transition:transform .15s ease;flex-shrink:0;}
+  .fiche-section.collapsed .settings-chev{transform:rotate(-90deg);}
   .fiche-section-head{padding:12px 18px;background:var(--paper);border-bottom:1px solid var(--line);}
   .fiche-section-head h4{margin:0;font-family:var(--font-display);font-size:15px;color:var(--graphite);}
   .fiche-fields{padding:16px 18px 8px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;}
@@ -497,6 +507,14 @@
   .door-field-group label{display:block;font-size:11px;color:var(--steel);font-weight:600;margin-bottom:4px;}
   .door-dim, .door-note{width:100%;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
 
+  .visits-list{display:flex;flex-direction:column;gap:8px;}
+  .visit-row{display:flex;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:9px 10px;}
+  .visit-row.past{opacity:.55;}
+  .visit-date{width:145px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-type{width:120px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-label{flex:1;min-width:120px;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:15px;flex-shrink:0;}
+  .visit-del:hover{color:var(--danger);}
   .pl-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;}
   .pl-table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px;}
   .pl-table thead th{background:var(--graphite-2);color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;white-space:nowrap;}
@@ -588,7 +606,7 @@
     #sidebar{
       position:fixed;left:0;top:0;bottom:0;z-index:40;width:82vw;max-width:320px;min-width:0;
       transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.4);
-      padding-top:calc(56px + env(safe-area-inset-top));
+      padding-top:env(safe-area-inset-top);
     }
     body.sidebar-open #sidebar{transform:translateX(0);}
     #main{width:100%;}
@@ -615,7 +633,7 @@
 
   @media print{
     body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
-    html, body, #app, #main, #projectView{height:auto !important;overflow:visible !important;}
+    html, body, #app, #main, #projectView, #settingsView{height:auto !important;overflow:visible !important;}
     #sidebar, #projectHeader, #reportActions, #toast, .report-sections-row{display:none !important;}
     #tabContent{padding:0;overflow:visible !important;height:auto !important;}
     #reportPreview{border:none;padding:0;max-width:100%;}
@@ -669,9 +687,7 @@
         </div>
         <div class="ph-summary" id="phSummary"></div>
         <div class="tabs">
-          <button class="tab-btn active" data-tab="checklist" id="tabBtnChecklist">Checklist planification <span class="count" id="tabCountChecklist">0/0</span></button>
-          <button class="tab-btn" data-tab="fiche">Fiche de visite de chantier</button>
-          <button class="tab-btn" data-tab="planning">Planning intentionnel</button>
+          <button class="tab-btn active" data-tab="hub" id="tabBtnHub">Gestion de projet</button>
           <button class="tab-btn" data-tab="notes">Notes générales</button>
           <button class="tab-btn" data-tab="rapport">Rapport</button>
         </div>
@@ -686,6 +702,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
+const APP_VERSION = '2.0';
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -985,7 +1002,8 @@ function defaultPlanningData(){
   return {
     startDate: new Date().toISOString().slice(0,10),
     echeanceOverride: null,
-    tasks: DEFAULT_PLANNING_TASKS.map(label => ({ id: uid(), label, debut:null, duree:null, debutReel:null, dureeReel:null }))
+    tasks: DEFAULT_PLANNING_TASKS.map(label => ({ id: uid(), label, debut:null, duree:null, debutReel:null, dureeReel:null })),
+    visits: []
   };
 }
 
@@ -1722,12 +1740,39 @@ async function renderEcheancesView(){
     `;
   }).join('') : '<div class="settings-empty">Aucun projet actif avec une échéance définie.</div>';
 
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const upcomingVisits = collectUpcomingVisits();
+  const visitsHtml = upcomingVisits.length ? upcomingVisits.map(({project, visit}) => {
+    const isOverdueVisit = visit.date < todayStr;
+    const days = Math.ceil((new Date(visit.date) - new Date(todayStr)) / 86400000);
+    const daysLabel = days === 0 ? "aujourd'hui" : (days === 1 ? 'demain' : `dans ${days}j`);
+    return `
+      <div class="ech-row" data-id="${project.id}">
+        <div class="ech-date">
+          <div class="ech-date-day">${new Date(visit.date).toLocaleDateString('fr-FR')}</div>
+          <div class="ech-date-rel">${daysLabel}</div>
+        </div>
+        <div class="ech-body">
+          <div class="ech-client">${escapeHtml(project.client || 'Client non défini')}</div>
+          <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="settings-empty">Aucun rendez-vous planifié à venir.</div>';
+
   ev.innerHTML = `
     <div class="dashboard-header">
       <h2>Échéances</h2>
       <p>Tous les projets actifs (non terminés, non archivés) avec une échéance, triés du plus urgent au plus lointain.</p>
     </div>
-    <div class="ech-list">${rowsHtml}</div>
+    <div class="alert-section">
+      <h3>📅 Rendez-vous à venir</h3>
+      <div class="ech-list">${visitsHtml}</div>
+    </div>
+    <div class="alert-section">
+      <h3>🏁 Échéances des projets</h3>
+      <div class="ech-list">${rowsHtml}</div>
+    </div>
   `;
   ev.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
 }
@@ -2218,6 +2263,7 @@ $('#todoNavBtn').addEventListener('click', () => renderSeanceView('todo'));
 /* ============================= SETTINGS (dropdown options) ============================= */
 
 let appOptions = { coordinateurs:[], flux:[], projectOptions:[], customFlux:[] };
+let settingsExpanded = {};
 
 let morningRoutineItems = [];
 let morningRoutineState = { date:'', checked:{} };
@@ -2254,6 +2300,76 @@ function routineDoneForToday(){
 }
 
 let routineModalOpen = false;
+
+function collectUpcomingVisits(daysAhead){
+  const todayStr = new Date().toISOString().slice(0,10);
+  const limit = new Date(); limit.setDate(limit.getDate() + (daysAhead === undefined ? 3650 : daysAhead));
+  const limitStr = limit.toISOString().slice(0,10);
+  const results = [];
+  projects.forEach(p => {
+    if(p.archived || p.finished) return;
+    const data = loadAnyProjectData(p.id);
+    if(!data || !data.planning || !data.planning.visits) return;
+    data.planning.visits.forEach(v => {
+      if(v.date && v.date >= todayStr && v.date <= limitStr){
+        results.push({ project: p, visit: v });
+      }
+    });
+  });
+  results.sort((a,b) => a.visit.date < b.visit.date ? -1 : 1);
+  return results;
+}
+
+function checkVisitAlerts(){
+  const todayStr = new Date().toISOString().slice(0,10);
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = tomorrow.toISOString().slice(0,10);
+  let shownState;
+  try{ shownState = JSON.parse(lsGet('visitAlertsShown') || '{}'); }catch(e){ shownState = {}; }
+  if(shownState.date !== todayStr) shownState = { date: todayStr, shownIds: [] };
+
+  const dueSoon = collectUpcomingVisits().filter(u => u.visit.date === todayStr || u.visit.date === tomorrowStr);
+  const notYetShown = dueSoon.filter(u => !shownState.shownIds.includes(u.visit.id));
+  if(notYetShown.length){
+    openVisitAlertModal(notYetShown);
+    shownState.shownIds.push(...notYetShown.map(u => u.visit.id));
+    lsSet('visitAlertsShown', JSON.stringify(shownState));
+  }
+}
+
+function openVisitAlertModal(items){
+  const todayStr = new Date().toISOString().slice(0,10);
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal manual-modal">
+      <h3>📅 Rendez-vous à venir</h3>
+      <div class="modal-scroll manual-scroll">
+        <div class="seance-list">
+          ${items.map(({project, visit}) => `
+            <div class="seance-item" data-project-id="${project.id}">
+              <div class="seance-item-top">
+                <span class="item-badge" style="font-size:13px;">${visit.date===todayStr?'🔴 Aujourd\u2019hui':'🟠 Demain'}</span>
+                <span class="seance-text" style="cursor:pointer;text-decoration:underline;" data-open-project="${project.id}">${escapeHtml(project.client||project.name)} — ${escapeHtml(visitTypeLabels[visit.type]||'RDV')}${visit.label?' : '+escapeHtml(visit.label):''}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="visitAlertCloseBtn">Fermer</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  function close(){ if(backdrop.parentNode) document.body.removeChild(backdrop); }
+  backdrop.querySelector('#visitAlertCloseBtn').addEventListener('click', close);
+  backdrop.querySelectorAll('[data-open-project]').forEach(el => el.addEventListener('click', () => {
+    close();
+    openProject(el.dataset.openProject);
+  }));
+}
 
 function checkAndMaybeShowRoutine(){
   if(routineModalOpen) return;
@@ -2587,6 +2703,109 @@ function computeIgnoredStats(){
   })).sort((a,b) => b.ignoredCount - a.ignoredCount);
 }
 
+let tasksReportSections = { matin:true, ope:true, todo:true, projects:false, ccDetail:false };
+
+function loadAnyProjectData(id){
+  if(id === currentProjectId && currentData) return currentData;
+  try{ const raw = lsGet('project:' + id); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+}
+
+function buildAllProjectsCcDetailHtml(){
+  if(!projects.length) return '<p style="color:var(--steel);font-style:italic;">Aucun projet.</p>';
+  const todayStr = new Date().toISOString().slice(0,10);
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  let html = '';
+  sortedProjectsForDisplay(true).forEach(p => {
+    const data = loadAnyProjectData(p.id);
+    if(!data) return;
+    const items = (data.customChecklist || []).filter(it => !it.checked);
+    const visits = ((data.planning && data.planning.visits) || []).filter(v => v.date && v.date >= todayStr).sort((a,b) => a.date < b.date ? -1 : 1);
+    if(!items.length && !visits.length) return;
+    html += `<h4 class="rp-h4">${escapeHtml(p.client || 'Client non défini')} — ${escapeHtml(p.name)}</h4>`;
+    html += visits.map(v => `<div class="rp-item pending"><div class="mark">📅</div><div><div>RDV ${escapeHtml(visitTypeLabels[v.type]||'')} — ${new Date(v.date).toLocaleDateString('fr-FR')}${v.label?' : '+escapeHtml(v.label):''}</div></div></div>`).join('');
+    html += items.map(it => `<div class="rp-item pending"><div class="mark">○</div><div><div>${escapeHtml(it.text)}</div>${it.note?`<div class="note">${escapeHtml(it.note)}</div>`:''}</div></div>`).join('');
+  });
+  return html || '<p style="color:var(--steel);font-style:italic;">Aucun point en cours, tous projets confondus.</p>';
+}
+
+async function buildAllProjectsSummaryHtml(){
+  if(!projects.length) return '<p style="color:var(--steel);font-style:italic;">Aucun projet.</p>';
+  const rows = [];
+  for(const p of sortedProjectsForDisplay(true)){
+    const s = await getProjectStats(p.id, true);
+    const pct = s.total ? Math.round((s.checked/s.total)*100) : 0;
+    const ccPct = s.ccTotal ? Math.round((s.ccChecked/s.ccTotal)*100) : 0;
+    rows.push(`
+      <div class="rp-fiche-row">
+        <b>${escapeHtml(p.client || 'Client non défini')} — ${escapeHtml(p.name)} ${p.finished?'(terminé)':''}${p.archived?'(archivé)':''} :</b>
+        <span class="val">Flux ${escapeHtml(p.numFlux||'—')} · Checklist ${s.checked}/${s.total} (${pct}%) · Points à traiter ${s.ccChecked}/${s.ccTotal} (${ccPct}%)${p.echeance?' · Échéance ' + new Date(p.echeance).toLocaleDateString('fr-FR'):''}</span>
+      </div>
+    `);
+  }
+  return rows.join('');
+}
+
+async function buildTasksReportHtmlFragment(){
+  function itemsBlock(items){
+    if(!items.length) return '<p style="color:var(--steel);font-style:italic;">Aucun point.</p>';
+    return items.map(it => `
+      <div class="rp-item ${it.checked?'done':'pending'}">
+        <div class="mark">${it.checked?'✓':'○'}</div>
+        <div>
+          <div>${escapeHtml(it.text)}</div>
+          ${it.note ? `<div class="note">${escapeHtml(it.note)}</div>` : ''}
+          ${it.origin === 'project' && it.originProjectName ? `<div class="note">Origine : projet « ${escapeHtml(it.originProjectName)} »</div>` : ''}
+          ${it.origin === 'matin' ? `<div class="note">Origine : Séance du matin</div>` : ''}
+          ${it.origin === 'ope' ? `<div class="note">Origine : Séance OPE</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+  const ope = seanceOpeBoard;
+  return `
+    <h2 class="rp-title">Rapport des tâches</h2>
+    <div class="rp-sub">Séances &amp; To do list — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+    ${tasksReportSections.matin ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🌅 SÉANCE DU MATIN</h3>
+    ${itemsBlock(seanceMatin)}` : ''}
+    ${tasksReportSections.ope ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🛠 SÉANCE OPE — Non triés</h3>
+    ${itemsBlock(ope.staging)}
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🛠 SÉANCE OPE — Dernière séance</h3>
+    ${itemsBlock(ope.derniere)}
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🛠 SÉANCE OPE — Séance du jour</h3>
+    ${itemsBlock(ope.jour)}` : ''}
+    ${tasksReportSections.todo ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">✅ TO DO LIST</h3>
+    ${itemsBlock(todoList)}` : ''}
+    ${tasksReportSections.projects ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">📁 RÉSUMÉ DE TOUS LES PROJETS</h3>
+    ${await buildAllProjectsSummaryHtml()}` : ''}
+    ${tasksReportSections.ccDetail ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">📌 POINTS EN COURS PAR PROJET</h3>
+    ${buildAllProjectsCcDetailHtml()}` : ''}
+  `;
+}
+
+async function downloadTasksReport(){
+  const fragment = await buildTasksReportHtmlFragment();
+  const styles = document.querySelector('style').innerHTML;
+  const full = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Rapport des tâches</title>
+  <style>${styles}
+  body{padding:40px;background:#fff;}
+  #reportPreview{border:none;padding:0;max-width:820px;margin:0 auto;}
+  </style></head><body><div id="reportPreview">${fragment}</div></body></html>`;
+  const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rapport_taches_${new Date().toISOString().slice(0,10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Rapport des tâches téléchargé');
+}
+
 function renderIgnoredStats(){
   const host = $('#ignoredStatsList');
   if(!host) return;
@@ -2609,6 +2828,7 @@ function renderIgnoredStats(){
 
 async function renderSettingsView(){
   await flushAllPending();
+  if(currentView !== 'settings') settingsExpanded = {};
   currentView = 'settings';
   hideAllViews();
   const sv = $('#settingsView');
@@ -2644,6 +2864,24 @@ async function renderSettingsView(){
       </div>
     </div>
     <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🗒 Rapport des tâches (Séances &amp; To do)</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Génère un document listant tous les points de la Séance du matin, de la Séance OPE et de la To do list, avec leur statut, leur note et leur origine. Choisis ce que tu veux inclure :</p>
+        <div class="report-sections-row">
+          <label class="choice-chip"><input type="checkbox" id="trSecMatin" ${tasksReportSections.matin?'checked':''}> Séance du matin</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecOpe" ${tasksReportSections.ope?'checked':''}> Séance OPE</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecTodo" ${tasksReportSections.todo?'checked':''}> To do list complète</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecProjects" ${tasksReportSections.projects?'checked':''}> Résumé de tous les projets</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecCcDetail" ${tasksReportSections.ccDetail?'checked':''}> Points en cours par projet</label>
+        </div>
+        <div id="reportActions" style="display:flex;gap:10px;margin:16px 0 20px;">
+          <button class="btn btn-primary" id="downloadTasksReportBtn">⬇ Télécharger (HTML)</button>
+          <button class="btn btn-ghost" id="printTasksReportBtn">🖶 Imprimer / PDF</button>
+        </div>
+        <div id="reportPreview"></div>
+      </div>
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
       <div class="fiche-section-head"><h4>🌄 Routine du matin</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Cette liste s'affiche automatiquement en popup à la première ouverture de l'appli chaque jour. Les cases se recochent à zéro le lendemain.</p>
@@ -2661,9 +2899,7 @@ async function renderSettingsView(){
         <button class="btn btn-ghost" id="previewRoutineBtn" style="align-self:flex-start;margin-top:10px;">👁 Aperçu de la popup</button>
       </div>
     </div>
-    <div class="settings-grid" style="margin-top:20px;">
-      ${buildOptionListHtml('coordinateurs', 'Coordinateurs', 'ex. Jean Dupont')}
-    </div>
+    ${buildOptionListHtml('coordinateurs', '🙋 Coordinateurs', 'ex. Jean Dupont')}
     <div class="fiche-section" style="margin-top:20px;">
       <div class="fiche-section-head"><h4>📋 Checklists par flux</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
@@ -2704,6 +2940,20 @@ async function renderSettingsView(){
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Les points de checklist marqués « Ignorer » le plus souvent, toutes checklists et tous projets confondus. Utile pour repérer ceux qui n'ont peut-être plus leur place sur le long terme.</p>
         <div id="ignoredStatsList"></div>
+      </div>
+    </div>
+    <div class="fiche-section no-collapse" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>📱 Partager l'appli (QR code)</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Si tu héberges ce fichier quelque part (serveur, GitHub Pages, etc.), colle l'adresse ici pour générer un QR code à scanner et ouvrir l'appli directement depuis un téléphone.</p>
+        <input type="text" id="qrUrlInput" placeholder="https://…" value="${escapeHtml(appSettings.hostedUrl||'')}">
+        <div id="qrCodeDisplay" style="margin-top:12px;"></div>
+      </div>
+    </div>
+    <div class="fiche-section no-collapse" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>ℹ️ Version de l'appli</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint" style="margin:0;">Tu utilises actuellement la <b>version ${APP_VERSION}</b> de Gestion de Projet.</p>
       </div>
     </div>
   `;
@@ -2782,22 +3032,65 @@ async function renderSettingsView(){
     saveAppOptions();
     renderSettingsView();
   }));
+  async function refreshTasksReportPreview(){
+    $('#reportPreview').innerHTML = await buildTasksReportHtmlFragment();
+  }
+  function renderQrCode(){
+    const host = $('#qrCodeDisplay');
+    if(!host) return;
+    const url = (appSettings.hostedUrl || '').trim();
+    host.innerHTML = url
+      ? `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" alt="QR code" style="border-radius:6px;border:1px solid var(--line);background:#fff;padding:8px;display:block;">`
+      : '<p class="settings-empty" style="padding:0;">Renseigne une adresse ci-dessus pour générer le QR code.</p>';
+  }
+  renderQrCode();
+  $('#qrUrlInput').addEventListener('input', e => {
+    appSettings.hostedUrl = e.target.value;
+    saveSettings();
+    renderQrCode();
+  });
+  await refreshTasksReportPreview();
+  $('#trSecMatin').addEventListener('change', e => { tasksReportSections.matin = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecOpe').addEventListener('change', e => { tasksReportSections.ope = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecTodo').addEventListener('change', e => { tasksReportSections.todo = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecProjects').addEventListener('change', e => { tasksReportSections.projects = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecCcDetail').addEventListener('change', e => { tasksReportSections.ccDetail = e.target.checked; refreshTasksReportPreview(); });
+  $('#downloadTasksReportBtn').addEventListener('click', downloadTasksReport);
+  $('#printTasksReportBtn').addEventListener('click', () => window.print());
   renderIgnoredStats();
+
+  let secIdx = 0;
+  sv.querySelectorAll('.fiche-section').forEach(sec => {
+    if(sec.classList.contains('no-collapse')) return;
+    const key = 'sec' + (secIdx++);
+    const head = sec.querySelector('.fiche-section-head');
+    if(!head) return;
+    head.classList.add('settings-collapsible-head');
+    head.insertAdjacentHTML('beforeend', '<span class="settings-chev">▾</span>');
+    sec.classList.toggle('collapsed', !settingsExpanded[key]);
+    head.addEventListener('click', () => {
+      settingsExpanded[key] = !settingsExpanded[key];
+      sec.classList.toggle('collapsed', !settingsExpanded[key]);
+    });
+  });
 }
 
 /* ============================= MANUEL D'UTILISATION ============================= */
 
 const MANUAL_SECTIONS = [
-  { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de la Séance du matin, de la Séance OPE et de la To do list. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (nom du client en gras, projets terminés en bas et estompés)." },
-  { icon:'📅', title:'Échéances', body:"Liste de tous les projets actifs (non terminés, non archivés) qui ont une échéance, triés du plus urgent au plus lointain — pratique pour voir d'un coup d'œil ce qui approche, tous flux confondus." },
-  { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom, coordinateur, flux, date, échéance (en semaines ou date fixe) et options de projet à cocher. L'icône ✎ rouvre ce même formulaire pour tout modifier. Dans l'en-tête d'un projet : ✓ le marque comme terminé, ⧉ le duplique comme modèle (flux/coordinateur/options repris, reste vierge), 📦 l'archive (le sort des listes sans le supprimer)." },
-  { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (Réglages → Checklists par flux). Les parties sont repliées par défaut : clique sur leur nom pour les ouvrir. Chaque point n'affiche que la case et le titre ; clique dessus pour faire apparaître la note et l'ajout de photo (un badge 🗒/📷 discret indique s'il y en a déjà). Recherche et filtres À faire/Fait en haut." },
-  { icon:'🧾', title:'Fiche de visite de chantier', body:"Nom du client et N° AU sont pré-remplis depuis les infos du projet. Certains champs (emplacement, type de sol/mur, accès, stationnement, environnement, matériels, levage) sont des cases à cocher prédéfinies + « Autre » avec note ; le champ portes génère automatiquement une carte Dimensions/Note par porte selon le nombre indiqué. Galerie photos en haut avec légendes." },
-  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux : une zone de texte libre, et une mini-checklist « Points complémentaires » où tu ajoutes tes propres points à la volée." },
-  { icon:'🌅', title:'Séance du matin / ✅ To do list', body:"Deux listes simples et indépendantes, au même fonctionnement : ajoute un point, coche-le pour le faire descendre en bas de liste en transparence (rien n'est supprimé sauf avec le ×). Clique sur un point pour dérouler sa note." },
-  { icon:'🛠', title:'Séance OPE', body:"Un tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut (zone non triée), glisse-le dans la colonne voulue ou écris directement dans le champ en haut d'une colonne. « Basculer » envoie tout le contenu du jour vers « Dernière séance ». Clique un point pour sa note." },
-  { icon:'🖶', title:'Rapport', body:"Coche ce que tu veux inclure — Checklist, Fiche de visite, Notes générales — puis télécharge en HTML ou imprime/exporte en PDF." },
-  { icon:'⚙', title:'Réglages', body:"Coordinateurs (liste du menu déroulant) · Checklists par flux (modifie/ajoute/supprime parties, sous-parties et points par flux ; télécharge une version vierge à imprimer) · Options de projet (modules d'étapes optionnels cochables à la création d'un projet) · Bloc-notes libre · Apparence & données (mode sombre, export/import complet, ce manuel)." },
+  { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de la Séance du matin, de la Séance OPE et de la To do list. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (client en gras, flux affiché, deux barres de progression — Planification et Points à traiter —, badge « points restants » coloré selon leur nombre, projets terminés en bas et estompés)." },
+  { icon:'📅', title:'Échéances', body:"Deux listes triées chronologiquement : les rendez-vous à venir (tous projets confondus) tout en haut, puis les échéances de projets avec une petite barre comparant le planning prévu et l'avancement réel (vert = dans les temps, rouge = en retard)." },
+  { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom, coordinateur, flux (fixes ou personnalisés, ajoutables dans Réglages) et options de projet à cocher. La date de création est automatique. L'icône ✎ dans l'en-tête rouvre ce même formulaire. ✓ marque le projet comme terminé, ⧉ le duplique comme modèle (flux/coordinateur/options repris, reste vierge), 📦 l'archive (le sort des listes sans le supprimer)." },
+  { icon:'🗂', title:'Gestion de projet (dans un projet)', body:"Regroupe trois vues accessibles par un petit sous-menu en haut : « Checklist planification » (dépend du flux), « Fiche de visite » et « Planning intentionnel ». Deux autres onglets restent séparés à côté : « Notes générales » et « Rapport »." },
+  { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (Réglages → Checklists par flux). Les parties sont repliées par défaut. Chaque point n'affiche que la case et le titre ; clique dessus pour dérouler la note, la photo, et une option « 🚫 Ignorer » (le point compte comme fait mais s'affiche en rouge dans le rapport — un point coché normalement s'affiche en vert, sans barré, pour rester lisible)." },
+  { icon:'🧾', title:'Fiche de visite de chantier', body:"Nom du client et N° AU pré-remplis depuis le projet. Plusieurs champs (emplacement, sols/murs, accès, stationnement, environnement, matériels, levage) sont des cases à cocher prédéfinies + « Autre » avec note. Le champ portes génère une carte Dimensions/Note par porte selon leur nombre. Galerie photo en haut." },
+  { icon:'📐', title:'Planning intentionnel', body:"D'abord les Visites et RDV : ajoute une date, un type (commercial/technique/autre) et un objet — une alerte s'affiche automatiquement la veille et le jour même, et ils apparaissent triés dans Échéances. Ensuite, une date de début de projet et un tableau de tâches (Début/Durée en semaines, glisser-déposer pour réordonner) qui calcule automatiquement l'échéance du projet — ou force une date manuelle si tu préfères. Début réel/Durée réelle permettent de comparer le prévu au réel." },
+  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux : texte libre, et une mini-checklist « Points complémentaires » (même système de note/ignorer que la checklist principale, avec un compteur d'avancement)." },
+  { icon:'🌅', title:'Séance du matin / ✅ To do list', body:"Deux listes indépendantes : ajoute un point, coche-le pour le faire descendre en bas de liste, en transparence. Clique un point pour dérouler sa note." },
+  { icon:'🛠', title:'Séance OPE', body:"Tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut ou directement dans une colonne, glisse-le où tu veux. « Basculer » envoie le contenu du jour vers « Dernière séance »." },
+  { icon:'🔗', title:'Liaison Séances/Projets ↔ To do', body:"Activable dans Réglages : les nouveaux points de la Séance du matin, de la Séance OPE et des « Points complémentaires » d'un projet sont recopiés dans la To do list et restent liés (cocher, modifier ou supprimer l'un agit sur tous). La To do list peut être filtrée par origine (manuel / matin / OPE / projet)." },
+  { icon:'🖶', title:'Rapport (par projet)', body:"Coche ce que tu veux inclure — Checklist, Fiche de visite, Notes générales — puis télécharge en HTML ou imprime/exporte en PDF." },
+  { icon:'⚙', title:'Réglages', body:"Chaque catégorie est repliée par défaut (sauf Version et QR code) — clique sur son titre pour la déplier ; tout se referme en quittant Réglages. On y trouve : Coordinateurs, Checklists par flux (+ ajout de flux personnalisés, export vierge imprimable), Options de projet, Bloc-notes, Rapport des tâches (Séances/To do/résumé ou détail de tous les projets, sélectif), Routine du matin (+ mode rappel à chaque ouverture), Points souvent ignorés, Apparence & données (mode sombre, export/import complet), QR code de partage et numéro de version." },
   { icon:'💾', title:'Où sont mes données ?', body:"Tout est enregistré localement, dans ce navigateur, sur cet appareil — rien n'est partagé avec d'autres personnes ou appareils. Pense à exporter régulièrement une sauvegarde depuis Réglages." }
 ];
 
@@ -2918,6 +3211,7 @@ async function openProject(id){
   if(!currentData.customChecklist) currentData.customChecklist = [];
   if(currentData.generalNotes === undefined) currentData.generalNotes = '';
   if(!currentData.planning) currentData.planning = defaultPlanningData();
+  if(!currentData.planning.visits) currentData.planning.visits = [];
   {
     const p = projects.find(x => x.id === id);
     if(p){
@@ -3010,7 +3304,6 @@ function renderProjectHeader(){
   archBtn.classList.toggle('active-finished', !!p.archived);
 
   const checklistApplicable = fluxHasChecklist(p.numFlux);
-  $('#tabBtnChecklist').style.display = checklistApplicable ? 'flex' : 'none';
   if(!checklistApplicable && currentTab === 'checklist'){
     currentTab = 'fiche';
   }
@@ -3036,10 +3329,8 @@ function getCurrentProjectFlux(){
 }
 
 function updateChecklistTabCount(){
-  const flux = getCurrentProjectFlux();
-  const checked = countChecked(currentData, flux);
-  const total = projectTotalItems(currentData, flux);
-  $('#tabCountChecklist').textContent = `${checked}/${total}`;
+  // The checklist count now lives on the "Checklist planification" pill inside the
+  // Gestion de projet hub sub-nav, which is rebuilt fresh every time that tab renders.
 }
 
 /* ============================= CREATE / EDIT PROJECT MODAL (shared) ============================= */
@@ -3166,16 +3457,46 @@ $('#sidebarOverlay').addEventListener('click', () => document.body.classList.rem
 /* ============================= TABS ============================= */
 
 $$('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => { currentTab = btn.dataset.tab; renderTabs(); });
+  btn.addEventListener('click', () => {
+    const tab = btn.dataset.tab;
+    if(tab === 'hub'){
+      if(!['checklist','fiche','planning'].includes(currentTab)){
+        currentTab = fluxHasChecklist(getCurrentProjectFlux()) ? 'checklist' : 'fiche';
+      }
+    } else {
+      currentTab = tab;
+    }
+    renderTabs();
+  });
 });
 
 function renderTabs(){
-  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === currentTab));
+  const topTab = (currentTab === 'checklist' || currentTab === 'fiche' || currentTab === 'planning') ? 'hub' : currentTab;
+  $$('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === topTab));
   if(currentTab === 'checklist') renderChecklistTab();
   else if(currentTab === 'fiche') renderFicheTab();
   else if(currentTab === 'planning') renderPlanningTab();
   else if(currentTab === 'notes') renderNotesTab();
   else renderRapportTab();
+}
+
+function hubSubNavHtml(active){
+  const checklistApplicable = fluxHasChecklist(getCurrentProjectFlux());
+  const checked = currentData ? countChecked(currentData, getCurrentProjectFlux()) : 0;
+  const total = currentData ? projectTotalItems(currentData, getCurrentProjectFlux()) : 0;
+  return `
+    <div class="hub-subnav">
+      ${checklistApplicable ? `<button class="hub-pill ${active==='checklist'?'active':''}" data-hub-tab="checklist">Checklist planification <span class="count">${checked}/${total}</span></button>` : ''}
+      <button class="hub-pill ${active==='fiche'?'active':''}" data-hub-tab="fiche">Fiche de visite</button>
+      <button class="hub-pill ${active==='planning'?'active':''}" data-hub-tab="planning">Planning intentionnel</button>
+    </div>
+  `;
+}
+function wireHubSubNav(container){
+  container.querySelectorAll('[data-hub-tab]').forEach(btn => btn.addEventListener('click', () => {
+    currentTab = btn.dataset.hubTab;
+    renderTabs();
+  }));
 }
 
 /* ============================= CHECKLIST TAB ============================= */
@@ -3196,12 +3517,13 @@ function renderChecklistTab(){
   const flux = getCurrentProjectFlux();
 
   if(!fluxHasChecklist(flux)){
-    container.innerHTML = `
+    container.innerHTML = hubSubNavHtml('checklist') + `
       <div class="no-results" style="padding:60px 20px;">
         <div style="font-size:34px;margin-bottom:10px;">🚧</div>
         <p style="margin:0 0 4px;font-weight:600;color:var(--graphite);">Aucune checklist disponible pour le flux « ${escapeHtml(flux || '—')} » pour l'instant.</p>
         <p style="margin:0;">Ajoute des points pour ce flux dans Réglages → Checklists par flux.</p>
       </div>`;
+    wireHubSubNav(container);
     return;
   }
 
@@ -3293,7 +3615,8 @@ function renderChecklistTab(){
   `;
 
   const bodyHtml = parties.length ? parties.join('') : (filtering ? '<div class="no-results">Aucun point ne correspond à la recherche / au filtre.</div>' : '');
-  container.innerHTML = toolbarHtml + bodyHtml;
+  container.innerHTML = hubSubNavHtml('checklist') + toolbarHtml + bodyHtml;
+  wireHubSubNav(container);
 
   if(hadFocus){
     const si = $('#checklistSearch');
@@ -3302,7 +3625,7 @@ function renderChecklistTab(){
   }
 
   $('#checklistSearch').addEventListener('input', e => { searchQuery = e.target.value; renderChecklistTab(); });
-  $$('.pill').forEach(btn => btn.addEventListener('click', () => { statusFilter = btn.dataset.filter; renderChecklistTab(); }));
+  $$('.filter-pills .pill').forEach(btn => btn.addEventListener('click', () => { statusFilter = btn.dataset.filter; renderChecklistTab(); }));
 
   $$('[data-toggle-partie]').forEach(el => el.addEventListener('click', () => {
     const key = 'partie_' + el.dataset.togglePartie;
@@ -3488,7 +3811,8 @@ function renderFicheTab(){
     return `<div class="fiche-section"><div class="fiche-section-head"><h4>${escapeHtml(sec.title)}</h4></div><div class="fiche-fields">${fieldsHtml}</div></div>`;
   }).join('');
 
-  container.innerHTML = renderFicheGallery() + fieldSectionsHtml;
+  container.innerHTML = hubSubNavHtml('fiche') + renderFicheGallery() + fieldSectionsHtml;
+  wireHubSubNav(container);
 
   const galleryInput = $('#ficheGalleryInput');
   if(galleryInput){
@@ -3585,9 +3909,29 @@ function renderFicheTab(){
 function renderPlanningTab(){
   const container = $('#tabContent');
   const planning = currentData.planning || (currentData.planning = defaultPlanningData());
+  if(!planning.visits) planning.visits = [];
   const plannedEcheance = computePlannedEcheance(planning);
   const spanWeeks = computePlanningSpanWeeks(planning);
   const realSpanWeeks = computeRealSpanWeeks(planning);
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const sortedVisits = [...planning.visits].sort((a,b) => (a.date||'') < (b.date||'') ? -1 : 1);
+  const visitsRowsHtml = sortedVisits.map(v => {
+    const isPast = v.date && v.date < todayStr;
+    return `
+      <div class="visit-row ${isPast?'past':''}" data-id="${v.id}">
+        <input type="date" class="visit-date" data-id="${v.id}" value="${v.date||''}">
+        <select class="visit-type" data-id="${v.id}">
+          <option value="commercial" ${v.type==='commercial'?'selected':''}>Commercial</option>
+          <option value="technique" ${v.type==='technique'?'selected':''}>Technique</option>
+          <option value="autre" ${v.type==='autre'?'selected':''}>Autre</option>
+        </select>
+        <input type="text" class="visit-label" data-id="${v.id}" placeholder="Objet du RDV (optionnel)" value="${escapeHtml(v.label||'')}">
+        <button class="visit-del" data-id="${v.id}" title="Supprimer">×</button>
+      </div>
+    `;
+  }).join('');
 
   const rowsHtml = planning.tasks.map((t, idx) => {
     const plannedEnd = addWeeksToDate(planning.startDate, (t.debut!==null&&t.debut!==''&&t.duree!==null&&t.duree!=='') ? (parseFloat(t.debut)+parseFloat(t.duree)) : null);
@@ -3607,7 +3951,15 @@ function renderPlanningTab(){
     `;
   }).join('');
 
-  container.innerHTML = `
+  container.innerHTML = hubSubNavHtml('planning') + `
+    <div class="fiche-section">
+      <div class="fiche-section-head"><h4>📅 Visites et RDV</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Planifie tes rendez-vous (commercial, technique, autre). Une alerte s'affiche automatiquement la veille et le jour même, et ils apparaissent triés dans l'onglet Échéances.</p>
+        <div class="visits-list">${visitsRowsHtml || '<div class="settings-empty">Aucun rendez-vous planifié.</div>'}</div>
+        <button class="btn btn-ghost" id="visitAddBtn" style="align-self:flex-start;margin-top:10px;">+ Ajouter un RDV</button>
+      </div>
+    </div>
     <div class="fiche-section">
       <div class="fiche-section-head"><h4>📐 Paramètres du planning</h4></div>
       <div class="fiche-fields">
@@ -3749,6 +4101,37 @@ function renderPlanningTab(){
   }
   $('#plTaskAddBtn').addEventListener('click', addTask);
   $('#plTaskAddInput').addEventListener('keydown', e => { if(e.key === 'Enter') addTask(); });
+
+  container.querySelectorAll('.visit-date').forEach(inp => inp.addEventListener('input', () => {
+    const v = planning.visits.find(x => x.id === inp.dataset.id);
+    if(v) v.date = inp.value;
+    scheduleSaveProjectData();
+    renderPlanningTab();
+  }));
+  container.querySelectorAll('.visit-type').forEach(sel => sel.addEventListener('change', () => {
+    const v = planning.visits.find(x => x.id === sel.dataset.id);
+    if(v) v.type = sel.value;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.visit-label').forEach(inp => inp.addEventListener('input', () => {
+    const v = planning.visits.find(x => x.id === inp.dataset.id);
+    if(v) v.label = inp.value;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.visit-del').forEach(btn => btn.addEventListener('click', async () => {
+    const ok = await customConfirm('Supprimer ce rendez-vous ?', { okText:'Supprimer' });
+    if(!ok) return;
+    planning.visits = planning.visits.filter(x => x.id !== btn.dataset.id);
+    scheduleSaveProjectData();
+    renderPlanningTab();
+  }));
+  $('#visitAddBtn').addEventListener('click', () => {
+    planning.visits.push({ id: uid(), date: new Date().toISOString().slice(0,10), type:'commercial', label:'' });
+    scheduleSaveProjectData();
+    renderPlanningTab();
+  });
+
+  wireHubSubNav(container);
 }
 
 /* ============================= RAPPORT TAB ============================= */
@@ -4207,14 +4590,18 @@ async function init(){
     openManualModal();
   } else {
     checkAndMaybeShowRoutine();
+    checkVisitAlerts();
   }
 }
 init();
 
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'visible') checkAndMaybeShowRoutine();
+  if(document.visibilityState === 'visible'){
+    checkAndMaybeShowRoutine();
+    checkVisitAlerts();
+  }
 });
-window.addEventListener('focus', checkAndMaybeShowRoutine);
+window.addEventListener('focus', () => { checkAndMaybeShowRoutine(); checkVisitAlerts(); });
 
 window.addEventListener('beforeunload', () => {
   if(saveTimer) saveProjectDataNow();
