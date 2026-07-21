@@ -1430,7 +1430,7 @@ function flushPendingSaveSilent(){
 
 async function flushAllPending(){
   flushPendingSaveSilent();
-  flushSeanceSaveSilent('matin');
+  flushSeanceMatin();
   flushSeanceSaveSilent('todo');
   flushSeanceOpeSilent();
 }
@@ -1919,17 +1919,41 @@ async function renderAgendaView(){
 
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
 
-let seanceMatin = [];
+// Séance du matin is now a small 2-column board: "discuter" and "faire".
+let seanceMatin = { discuter:[], faire:[] };
 let todoOriginFilter = 'all';
 let todoList = [];
 // Séance OPE is a small board: unsorted "staging" items above two columns,
 // "derniere" (last session) and "jour" (today's session).
 let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
-function getSimpleList(id){ return id === 'matin' ? seanceMatin : todoList; }
-function setSimpleList(id, arr){ if(id === 'matin') seanceMatin = arr; else todoList = arr; }
-function seanceStorageKey(id){ if(id === 'matin') return 'seance_matin'; if(id === 'todo') return 'todo_list'; return 'seance_ope'; }
+function getSimpleList(id){ return todoList; }
+function setSimpleList(id, arr){ todoList = arr; }
+function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; return 'seance_ope'; }
 function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; return 'Séance OPE'; }
+
+function loadSeanceMatin(){
+  const v = lsGet('seance_matin');
+  if(!v) return { discuter:[], faire:[] };
+  const parsed = JSON.parse(v);
+  // Migrate old flat-list format (before the "À discuter / À faire" split) into "faire".
+  if(Array.isArray(parsed)) return { discuter:[], faire:parsed };
+  return { discuter: parsed.discuter||[], faire: parsed.faire||[] };
+}
+function saveSeanceMatin(){
+  flashSaveStatus(lsSet('seance_matin', JSON.stringify(seanceMatin)));
+}
+let matinSaveTimer = null;
+function scheduleSaveSeanceMatin(){
+  clearTimeout(matinSaveTimer);
+  matinSaveTimer = setTimeout(saveSeanceMatin, 300);
+}
+function flushSeanceMatin(){
+  if(matinSaveTimer){ clearTimeout(matinSaveTimer); matinSaveTimer = null; saveSeanceMatin(); }
+}
+function allMatinItems(){
+  return [...seanceMatin.discuter, ...seanceMatin.faire];
+}
 
 // When "link" is enabled, an item created in Séance du matin/OPE gets a shared linkId
 // and a mirrored copy in the To do list. Checking either copy syncs the other(s).
@@ -1962,7 +1986,7 @@ function deleteLinkedProjectItem(projectId, linkId){
 
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
-  [seanceMatin, todoList, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
+  [seanceMatin.discuter, seanceMatin.faire, todoList, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
   const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
@@ -1972,14 +1996,15 @@ function deleteLinkedItems(linkId){
   if(!linkId) return;
   const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
   if(todoItem && todoItem.originProjectId) deleteLinkedProjectItem(todoItem.originProjectId, linkId);
-  seanceMatin = seanceMatin.filter(it => it.linkId !== linkId);
+  seanceMatin.discuter = seanceMatin.discuter.filter(it => it.linkId !== linkId);
+  seanceMatin.faire = seanceMatin.faire.filter(it => it.linkId !== linkId);
   todoList = todoList.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
   seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
   seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
 }
 function saveAllLinkedLists(){
-  saveSeance('matin');
+  saveSeanceMatin();
   saveSeance('todo');
   saveSeanceOpeBoard();
 }
@@ -1997,6 +2022,12 @@ function opePct(){
 
 function seancePct(id){
   if(id === 'ope') return opePct();
+  if(id === 'matin'){
+    const items = allMatinItems();
+    const total = items.length;
+    const checked = items.filter(it => it.checked).length;
+    return { total, checked, pct: total === 0 ? 100 : Math.round((checked/total)*100) };
+  }
   const items = getSimpleList(id);
   const total = items.length;
   const checked = items.filter(it => it.checked).length;
@@ -2074,6 +2105,7 @@ async function renderSeanceView(id){
   await renderSidebar();
 
   if(id === 'ope'){ renderSeanceOpeView(); return; }
+  if(id === 'matin'){ renderSeanceMatinBoard(); return; }
 
   const items = getSimpleList(id);
   const filtered = (id === 'todo' && todoOriginFilter !== 'all')
@@ -2131,13 +2163,7 @@ async function renderSeanceView(id){
     const input = $('#seanceNewItem');
     const text = input.value.trim();
     if(!text) return;
-    if(id === 'matin' && appSettings.linkSeanceTodo){
-      const linkId = uid();
-      getSimpleList('matin').unshift({ id: uid(), text, checked:false, note:'', linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'matin' });
-      scheduleSaveSeance('matin');
-      scheduleSaveSeance('todo');
-    } else if(id === 'todo'){
+    if(id === 'todo'){
       getSimpleList('todo').unshift({ id: uid(), text, checked:false, note:'', origin:'todo' });
       scheduleSaveSeance('todo');
     } else {
@@ -2219,6 +2245,132 @@ function opeItemCardHtml(it, listName){
       ${expanded ? noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`) : ''}
     </div>
   `;
+}
+
+function renderSeanceMatinBoard(){
+  const container = $('#seanceView');
+  const m = seanceMatin;
+
+  container.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Séance du matin</h2>
+      <p>Deux colonnes : « À discuter » pour préparer la séance, « À faire » pour les actions concrètes. Glisse un point de l'une à l'autre si besoin.</p>
+    </div>
+    <div class="ope-board">
+      <div class="ope-column" data-list="discuter">
+        <div class="ope-column-head"><h4>🗣 À discuter</h4><span class="opt-count">${m.discuter.length} pt(s)</span></div>
+        <div class="ope-column-add"><input type="text" class="matin-col-add-input" data-list="discuter" placeholder="Ajouter un point à discuter…"></div>
+        <div class="ope-column-body">${m.discuter.length ? m.discuter.map(it => opeItemCardHtml(it,'discuter')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
+      </div>
+      <div class="ope-column" data-list="faire">
+        <div class="ope-column-head"><h4>✅ À faire</h4><span class="opt-count">${m.faire.length} pt(s)</span></div>
+        <div class="ope-column-add"><input type="text" class="matin-col-add-input" data-list="faire" placeholder="Ajouter un point à faire…"></div>
+        <div class="ope-column-body">${m.faire.length ? m.faire.map(it => opeItemCardHtml(it,'faire')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
+      </div>
+    </div>
+  `;
+
+  function makeMatinItem(text){
+    if(appSettings.linkSeanceTodo){
+      const linkId = uid();
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'matin' });
+      scheduleSaveSeance('todo');
+      return { id: uid(), text, note:'', checked:false, linkId };
+    }
+    return { id: uid(), text, note:'', checked:false };
+  }
+
+  container.querySelectorAll('.matin-col-add-input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if(e.key !== 'Enter') return;
+      const text = inp.value.trim();
+      if(!text) return;
+      m[inp.dataset.list].unshift(makeMatinItem(text));
+      scheduleSaveSeanceMatin();
+      renderSeanceMatinBoard();
+    });
+  });
+
+  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', () => {
+    const it = m[cb.dataset.list].find(x => x.id === cb.dataset.id);
+    if(it){
+      it.checked = cb.checked;
+      if(it.linkId){
+        syncLinkedItems(it.linkId, { checked: it.checked });
+        saveAllLinkedLists();
+      } else {
+        scheduleSaveSeanceMatin();
+      }
+    }
+    renderSeanceMatinBoard();
+  }));
+
+  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async () => {
+    const it = m[btn.dataset.list].find(x => x.id === btn.dataset.id);
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    if(it && it.linkId){
+      deleteLinkedItems(it.linkId);
+      saveAllLinkedLists();
+    } else {
+      m[btn.dataset.list] = m[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
+      scheduleSaveSeanceMatin();
+    }
+    renderSeanceMatinBoard();
+  }));
+
+  container.querySelectorAll('.ope-text').forEach(span => span.addEventListener('blur', () => {
+    const it = m[span.dataset.list].find(x => x.id === span.dataset.id);
+    const newText = span.textContent.trim();
+    if(it && newText && it.text !== newText){
+      it.text = newText;
+      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
+      else { scheduleSaveSeanceMatin(); }
+    }
+  }));
+  container.querySelectorAll('.ope-note').forEach(ta => ta.addEventListener('input', () => {
+    const it = m[ta.dataset.list].find(x => x.id === ta.dataset.id);
+    if(it){
+      it.note = ta.value;
+      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
+      else { scheduleSaveSeanceMatin(); }
+    }
+  }));
+
+  container.querySelectorAll('.ope-card').forEach(card => {
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', JSON.stringify({ id: card.dataset.id, from: card.dataset.from }));
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  });
+
+  container.querySelectorAll('.ope-column').forEach(zone => {
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      let data;
+      try{ data = JSON.parse(e.dataTransfer.getData('text/plain')); }catch(err){ return; }
+      const toList = zone.dataset.list;
+      if(!data || data.from === toList) return;
+      const idx = m[data.from].findIndex(x => x.id === data.id);
+      if(idx < 0) return;
+      const [item] = m[data.from].splice(idx, 1);
+      m[toList].unshift(item);
+      scheduleSaveSeanceMatin();
+      renderSeanceMatinBoard();
+    });
+  });
+
+  container.querySelectorAll('.ope-expand').forEach(btn => btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const itemId = btn.dataset.id;
+    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
+    renderSeanceMatinBoard();
+  }));
+  wireNoteToggles(container, renderSeanceMatinBoard);
 }
 
 function renderSeanceOpeView(){
@@ -2949,8 +3101,10 @@ async function buildTasksReportHtmlFragment(){
     <h2 class="rp-title">Rapport des tâches</h2>
     <div class="rp-sub">Séances &amp; To do list — généré le ${new Date().toLocaleDateString('fr-FR')}</div>
     ${tasksReportSections.matin ? `
-    <h3 class="rp-h3" style="background:var(--amber-dark)">🌅 SÉANCE DU MATIN</h3>
-    ${itemsBlock(seanceMatin)}` : ''}
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🌅 SÉANCE DU MATIN — À discuter</h3>
+    ${itemsBlock(seanceMatin.discuter)}
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🌅 SÉANCE DU MATIN — À faire</h3>
+    ${itemsBlock(seanceMatin.faire)}` : ''}
     ${tasksReportSections.ope ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">🛠 SÉANCE OPE — Non triés</h3>
     ${itemsBlock(ope.staging)}
@@ -4774,7 +4928,10 @@ async function importAllData(file){
     projectStatsCache = {};
     saveProjects();
 
-    if(payload.seanceMatin){ seanceMatin = payload.seanceMatin; saveSeance('matin'); }
+    if(payload.seanceMatin){
+      seanceMatin = Array.isArray(payload.seanceMatin) ? { discuter:[], faire: payload.seanceMatin } : { discuter: payload.seanceMatin.discuter||[], faire: payload.seanceMatin.faire||[] };
+      saveSeanceMatin();
+    }
     if(payload.todoList){ todoList = payload.todoList; saveSeance('todo'); }
     if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
     if(payload.appOptions){
@@ -4824,7 +4981,7 @@ async function init(){
     lsSet('airmasterOptionSeeded', '1');
   }
   notesText = loadNotes();
-  seanceMatin = loadSeance('seance_matin');
+  seanceMatin = loadSeanceMatin();
   todoList = loadSeance('todo_list');
   seanceOpeBoard = loadSeanceOpeBoard();
   morningRoutineItems = loadMorningRoutineItems();
@@ -4858,6 +5015,7 @@ window.addEventListener('focus', () => { checkAndMaybeShowRoutine(); checkVisitA
 
 window.addEventListener('beforeunload', () => {
   if(saveTimer) saveProjectDataNow();
+  if(matinSaveTimer){ clearTimeout(matinSaveTimer); saveSeanceMatin(); }
   Object.keys(seanceSaveTimers).forEach(id => { if(seanceSaveTimers[id]) saveSeance(id); });
   if(opeSaveTimer){ clearTimeout(opeSaveTimer); saveSeanceOpeBoard(); }
   if(notesSaveTimer){ clearTimeout(notesSaveTimer); lsSet('projectNotes', notesText); }
