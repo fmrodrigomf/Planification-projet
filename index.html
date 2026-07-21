@@ -194,6 +194,28 @@
   .ech-client{font-family:var(--font-display);font-size:14.5px;color:var(--graphite);font-weight:600;}
   .ech-name{font-size:12px;color:var(--steel);margin-top:2px;}
   .ech-progress{font-family:var(--font-mono);font-size:12px;color:var(--steel);flex-shrink:0;}
+
+  .agenda-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .agenda-month-label{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--graphite);text-transform:capitalize;min-width:150px;text-align:center;}
+  .agenda-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:24px;}
+  .agenda-dow{text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--steel-light);padding-bottom:4px;}
+  .agenda-day{min-height:56px;border:1px solid var(--line);border-radius:6px;padding:6px;background:var(--paper-2);cursor:pointer;transition:border-color .12s;}
+  .agenda-day.empty{border:none;background:none;cursor:default;}
+  .agenda-day:not(.empty):hover{border-color:var(--amber);}
+  .agenda-day.today{border-color:var(--amber);border-width:2px;}
+  .agenda-day.selected{background:var(--amber-tint);}
+  .agenda-day-num{font-size:12.5px;font-weight:600;color:var(--graphite);}
+  .agenda-day-dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px;}
+  .agenda-dot{width:6px;height:6px;border-radius:50%;background:var(--steel-light);}
+  .agenda-dot.status-a_confirmer{background:var(--amber);}
+  .agenda-dot.status-confirme{background:var(--ok);}
+  .agenda-dot.status-annule{background:var(--danger);}
+  .agenda-detail h3{font-family:var(--font-display);font-size:15px;color:var(--graphite);margin-bottom:12px;text-transform:capitalize;}
+  @media(max-width:700px){
+    .agenda-day{min-height:44px;padding:4px;}
+    .agenda-day-num{font-size:11px;}
+    .agenda-month-label{min-width:auto;font-size:14px;}
+  }
   .ech-gantt{margin-top:8px;max-width:320px;}
   .ech-gantt-track{position:relative;height:8px;background:var(--paper);border:1px solid var(--line);border-radius:4px;overflow:visible;}
   .ech-gantt-fill{position:absolute;top:0;left:0;bottom:0;border-radius:4px 0 0 4px;transition:width .3s ease;}
@@ -273,6 +295,7 @@
   #settingsView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   #seanceView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   #echeancesView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+  #agendaView{flex:1;overflow-y:auto;padding:28px 32px 60px;}
   .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
   .settings-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
   .settings-item{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;color:var(--graphite);}
@@ -507,13 +530,22 @@
   .door-field-group label{display:block;font-size:11px;color:var(--steel);font-weight:600;margin-bottom:4px;}
   .door-dim, .door-note{width:100%;border:1px solid var(--line);border-radius:3px;padding:6px 9px;font-size:12.5px;background:var(--paper);color:var(--graphite);}
 
-  .visits-list{display:flex;flex-direction:column;gap:8px;}
-  .visit-row{display:flex;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:9px 10px;}
+  .visits-list{display:flex;flex-direction:column;gap:10px;}
+  .visit-row{display:flex;flex-direction:column;gap:8px;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--steel-light);border-radius:5px;padding:11px 12px;}
   .visit-row.past{opacity:.55;}
-  .visit-date{width:145px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
-  .visit-type{width:120px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
-  .visit-label{flex:1;min-width:120px;border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
-  .visit-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:15px;flex-shrink:0;}
+  .visit-row.status-confirme{border-left-color:var(--ok);}
+  .visit-row.status-annule{border-left-color:var(--danger);text-decoration:line-through;}
+  .visit-row.status-a_confirmer{border-left-color:var(--amber);}
+  .visit-row-line1{display:flex;gap:8px;align-items:center;}
+  .visit-row-line2{display:flex;gap:8px;flex-wrap:wrap;}
+  .visit-date{flex:1;min-width:0;border:1px solid var(--line);border-radius:3px;padding:7px 6px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-time{width:88px;flex-shrink:0;border:1px solid var(--line);border-radius:3px;padding:7px 6px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-type{flex:1;min-width:100px;border:1px solid var(--line);border-radius:3px;padding:7px 6px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-status{flex:1;min-width:130px;border:1px solid var(--line);border-radius:3px;padding:7px 6px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-label{width:100%;border:1px solid var(--line);border-radius:3px;padding:7px 8px;font-size:12.5px;background:var(--paper-2);color:var(--graphite);}
+  .visit-subcontractor{width:100%;border:1px solid var(--amber);border-radius:3px;padding:7px 8px;font-size:12.5px;background:var(--amber-tint);color:var(--graphite);}
+  .visit-phase{width:100%;border:1px solid var(--line);border-radius:3px;padding:7px 8px;font-size:11.5px;background:var(--paper);color:var(--steel);}
+  .visit-del{background:none;border:none;color:var(--steel);cursor:pointer;font-size:17px;flex-shrink:0;padding:0 4px;}
   .visit-del:hover{color:var(--danger);}
   .pl-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;}
   .pl-table{width:100%;border-collapse:collapse;font-size:12px;min-width:760px;}
@@ -611,7 +643,7 @@
     body.sidebar-open #sidebar{transform:translateX(0);}
     #main{width:100%;}
     #projectHeader{padding:calc(64px + env(safe-area-inset-top)) 16px 0;}
-    #dashboardView, #settingsView, #seanceView, #echeancesView, #tabContent{padding:calc(64px + env(safe-area-inset-top)) 16px 60px;}
+    #dashboardView, #settingsView, #seanceView, #echeancesView, #agendaView, #tabContent{padding:calc(64px + env(safe-area-inset-top)) 16px 60px;}
     .ph-meta, .settings-grid, .fiche-fields{grid-template-columns:1fr !important;}
     .ope-board{grid-template-columns:1fr;}
     .door-card-fields{grid-template-columns:1fr;}
@@ -658,6 +690,7 @@
     <button id="newProjectBtn">+ Nouveau projet</button>
     <button id="dashboardNavBtn" class="nav-btn">🏠 Tableau de bord</button>
     <button id="echeancesNavBtn" class="nav-btn">📅 Échéances</button>
+    <button id="agendaNavBtn" class="nav-btn">🗓 Agenda</button>
     <button id="seanceMatinNavBtn" class="nav-btn">🌅 Séance du matin</button>
     <button id="seanceOpeNavBtn" class="nav-btn">🛠 Séance OPE</button>
     <button id="todoNavBtn" class="nav-btn">✅ To do list</button>
@@ -674,6 +707,7 @@
     <div id="settingsView" style="display:none;"></div>
     <div id="seanceView" style="display:none;"></div>
     <div id="echeancesView" style="display:none;"></div>
+    <div id="agendaView" style="display:none;"></div>
 
     <div id="projectView" style="display:none;">
       <div id="projectHeader">
@@ -1505,6 +1539,7 @@ function hideAllViews(){
   $('#settingsView').style.display = 'none';
   $('#seanceView').style.display = 'none';
   $('#echeancesView').style.display = 'none';
+  $('#agendaView').style.display = 'none';
   $('#projectView').style.display = 'none';
   document.body.classList.remove('sidebar-open');
 }
@@ -1516,6 +1551,7 @@ async function renderSidebar(){
   $('#seanceOpeNavBtn').classList.toggle('active', currentView === 'seance_ope');
   $('#todoNavBtn').classList.toggle('active', currentView === 'seance_todo');
   $('#echeancesNavBtn').classList.toggle('active', currentView === 'echeances');
+  $('#agendaNavBtn').classList.toggle('active', currentView === 'agenda');
   const list = $('#projectList');
   if(projects.length === 0){
     list.innerHTML = '<div class="empty-side">Aucun projet pour l\u2019instant. Cliquez sur « + Nouveau projet » pour commencer une checklist.</div>';
@@ -1674,7 +1710,12 @@ async function renderDashboardView(){
     si.focus();
     if(caret !== null) si.setSelectionRange(caret, caret);
   }
-  $('#dashSearchInput').addEventListener('input', e => { dashSearchQuery = e.target.value; renderDashboardView(); });
+  let dashSearchDebounce = null;
+  $('#dashSearchInput').addEventListener('input', e => {
+    dashSearchQuery = e.target.value;
+    clearTimeout(dashSearchDebounce);
+    dashSearchDebounce = setTimeout(renderDashboardView, 350);
+  });
   $('#dashFilterFlux').addEventListener('change', e => { dashFilterFlux = e.target.value; renderDashboardView(); });
   $('#dashFilterCoord').addEventListener('change', e => { dashFilterCoord = e.target.value; renderDashboardView(); });
   $('#dashFilterOverdue').addEventListener('change', e => { dashFilterOverdueOnly = e.target.checked; renderDashboardView(); });
@@ -1744,8 +1785,9 @@ async function renderEcheancesView(){
     `;
   }).join('') : '<div class="settings-empty">Aucun projet actif avec une échéance définie.</div>';
 
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
   const upcomingVisits = collectUpcomingVisits();
+  const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
   const visitsHtml = upcomingVisits.length ? upcomingVisits.map(({project, visit}) => {
     const isOverdueVisit = visit.date < todayStr;
     const days = Math.ceil((new Date(visit.date) - new Date(todayStr)) / 86400000);
@@ -1753,13 +1795,14 @@ async function renderEcheancesView(){
     return `
       <div class="ech-row" data-id="${project.id}">
         <div class="ech-date">
-          <div class="ech-date-day">${new Date(visit.date).toLocaleDateString('fr-FR')}</div>
+          <div class="ech-date-day">${new Date(visit.date).toLocaleDateString('fr-FR')}${visit.time?' · '+visit.time:''}</div>
           <div class="ech-date-rel">${daysLabel}</div>
         </div>
         <div class="ech-body">
           <div class="ech-client">${escapeHtml(project.client || 'Client non défini')}</div>
-          <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
+          <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
         </div>
+        <div class="ech-progress">${visitStatusLabels[visit.status || 'a_confirmer']}</div>
       </div>
     `;
   }).join('') : '<div class="settings-empty">Aucun rendez-vous planifié à venir.</div>';
@@ -1779,6 +1822,99 @@ async function renderEcheancesView(){
     </div>
   `;
   ev.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+}
+
+/* ============================= AGENDA (calendrier mensuel, tous RDV) ============================= */
+
+let agendaCursor = new Date();
+agendaCursor.setDate(1);
+let agendaSelectedDate = null;
+
+async function renderAgendaView(){
+  await flushAllPending();
+  currentView = 'agenda';
+  hideAllViews();
+  const av = $('#agendaView');
+  av.style.display = 'block';
+  await renderSidebar();
+
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
+  const todayStr = new Date().toISOString().slice(0,10);
+  const allVisits = collectAllVisits();
+  const byDate = {};
+  allVisits.forEach(u => { (byDate[u.visit.date] = byDate[u.visit.date] || []).push(u); });
+
+  const year = agendaCursor.getFullYear(), month = agendaCursor.getMonth();
+  const monthLabel = agendaCursor.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
+  const firstOfMonth = new Date(year, month, 1);
+  const startOffset = (firstOfMonth.getDay() + 6) % 7; // Monday-first
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for(let i = 0; i < startOffset; i++) cells.push(null);
+  for(let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while(cells.length % 7 !== 0) cells.push(null);
+
+  const dowHtml = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => `<div class="agenda-dow">${d}</div>`).join('');
+  const cellsHtml = cells.map(d => {
+    if(d === null) return '<div class="agenda-day empty"></div>';
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayVisits = byDate[dateStr] || [];
+    const isToday = dateStr === todayStr;
+    const isSelected = dateStr === agendaSelectedDate;
+    return `
+      <div class="agenda-day ${isToday?'today':''} ${isSelected?'selected':''} ${dayVisits.length?'has-visits':''}" data-date="${dateStr}">
+        <div class="agenda-day-num">${d}</div>
+        <div class="agenda-day-dots">${dayVisits.slice(0,4).map(u => `<span class="agenda-dot status-${u.visit.status||'a_confirmer'}"></span>`).join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  if(!agendaSelectedDate || !byDate[agendaSelectedDate]){
+    agendaSelectedDate = byDate[todayStr] ? todayStr : agendaSelectedDate;
+  }
+  const detailVisits = agendaSelectedDate ? (byDate[agendaSelectedDate] || []) : [];
+  const detailHtml = agendaSelectedDate ? `
+    <h3>${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}</h3>
+    <div class="ech-list">
+      ${detailVisits.length ? detailVisits.map(({project, visit}) => `
+        <div class="ech-row" data-id="${project.id}">
+          <div class="ech-date">
+            <div class="ech-date-day">${visit.time || '—'}</div>
+          </div>
+          <div class="ech-body">
+            <div class="ech-client">${escapeHtml(project.client || 'Client non défini')}</div>
+            <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
+          </div>
+          <div class="ech-progress">${visitStatusLabels[visit.status||'a_confirmer']}</div>
+        </div>
+      `).join('') : '<div class="settings-empty">Aucun rendez-vous ce jour-là.</div>'}
+    </div>
+  ` : '<div class="settings-empty">Sélectionne un jour du calendrier pour voir ses rendez-vous.</div>';
+
+  av.innerHTML = `
+    <div class="dashboard-header">
+      <h2>Agenda</h2>
+      <p>Tous les rendez-vous programmés dans tes projets, tous confondus.</p>
+    </div>
+    <div class="agenda-nav">
+      <button class="btn btn-ghost" id="agendaPrevBtn">‹</button>
+      <div class="agenda-month-label">${monthLabel}</div>
+      <button class="btn btn-ghost" id="agendaNextBtn">›</button>
+      <button class="btn btn-ghost" id="agendaTodayBtn" style="margin-left:auto;">Aujourd'hui</button>
+    </div>
+    <div class="agenda-grid">${dowHtml}${cellsHtml}</div>
+    <div class="agenda-detail">${detailHtml}</div>
+  `;
+
+  av.querySelectorAll('.agenda-day[data-date]').forEach(el => el.addEventListener('click', () => {
+    agendaSelectedDate = el.dataset.date;
+    renderAgendaView();
+  }));
+  $('#agendaPrevBtn').addEventListener('click', () => { agendaCursor.setMonth(agendaCursor.getMonth() - 1); renderAgendaView(); });
+  $('#agendaNextBtn').addEventListener('click', () => { agendaCursor.setMonth(agendaCursor.getMonth() + 1); renderAgendaView(); });
+  $('#agendaTodayBtn').addEventListener('click', () => { agendaCursor = new Date(); agendaCursor.setDate(1); agendaSelectedDate = todayStr; renderAgendaView(); });
+  av.querySelectorAll('.agenda-detail [data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
 }
 
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
@@ -2305,6 +2441,23 @@ function routineDoneForToday(){
 
 let routineModalOpen = false;
 
+function collectAllVisits(){
+  const results = [];
+  projects.forEach(p => {
+    if(p.archived) return;
+    const data = loadAnyProjectData(p.id);
+    if(!data || !data.planning || !data.planning.visits) return;
+    data.planning.visits.forEach(v => {
+      if(v.date) results.push({ project: p, visit: v });
+    });
+  });
+  results.sort((a,b) => {
+    if(a.visit.date !== b.visit.date) return a.visit.date < b.visit.date ? -1 : 1;
+    return (a.visit.time||'') < (b.visit.time||'') ? -1 : 1;
+  });
+  return results;
+}
+
 function collectUpcomingVisits(daysAhead){
   const todayStr = new Date().toISOString().slice(0,10);
   const limit = new Date(); limit.setDate(limit.getDate() + (daysAhead === undefined ? 3650 : daysAhead));
@@ -2315,13 +2468,27 @@ function collectUpcomingVisits(daysAhead){
     const data = loadAnyProjectData(p.id);
     if(!data || !data.planning || !data.planning.visits) return;
     data.planning.visits.forEach(v => {
-      if(v.date && v.date >= todayStr && v.date <= limitStr){
+      if(v.date && v.date >= todayStr && v.date <= limitStr && v.status !== 'annule'){
         results.push({ project: p, visit: v });
       }
     });
   });
-  results.sort((a,b) => a.visit.date < b.visit.date ? -1 : 1);
+  results.sort((a,b) => {
+    if(a.visit.date !== b.visit.date) return a.visit.date < b.visit.date ? -1 : 1;
+    return (a.visit.time||'') < (b.visit.time||'') ? -1 : 1;
+  });
   return results;
+}
+
+function canNotify(){
+  return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+}
+function fireSystemNotification(title, body){
+  if(!canNotify()) return;
+  try{
+    const iconLink = document.querySelector('link[rel="apple-touch-icon"]');
+    new Notification(title, { body, icon: iconLink ? iconLink.href : undefined });
+  }catch(e){}
 }
 
 function checkVisitAlerts(){
@@ -2336,6 +2503,12 @@ function checkVisitAlerts(){
   const notYetShown = dueSoon.filter(u => !shownState.shownIds.includes(u.visit.id));
   if(notYetShown.length){
     openVisitAlertModal(notYetShown);
+    if(notYetShown.length === 1){
+      const { project, visit } = notYetShown[0];
+      fireSystemNotification('📅 RDV ' + (visit.date === todayStr ? "aujourd'hui" : 'demain'), `${project.client || project.name}${visit.time ? ' à ' + visit.time : ''}`);
+    } else {
+      fireSystemNotification('📅 Rendez-vous à venir', `${notYetShown.length} rendez-vous prévus aujourd'hui/demain`);
+    }
     shownState.shownIds.push(...notYetShown.map(u => u.visit.id));
     lsSet('visitAlertsShown', JSON.stringify(shownState));
   }
@@ -2343,7 +2516,7 @@ function checkVisitAlerts(){
 
 function openVisitAlertModal(items){
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
@@ -2355,7 +2528,7 @@ function openVisitAlertModal(items){
             <div class="seance-item" data-project-id="${project.id}">
               <div class="seance-item-top">
                 <span class="item-badge" style="font-size:13px;">${visit.date===todayStr?'🔴 Aujourd\u2019hui':'🟠 Demain'}</span>
-                <span class="seance-text" style="cursor:pointer;text-decoration:underline;" data-open-project="${project.id}">${escapeHtml(project.client||project.name)} — ${escapeHtml(visitTypeLabels[visit.type]||'RDV')}${visit.label?' : '+escapeHtml(visit.label):''}</span>
+                <span class="seance-text" style="cursor:pointer;text-decoration:underline;" data-open-project="${project.id}">${escapeHtml(project.client||project.name)} — ${escapeHtml(visitTypeLabels[visit.type]||'RDV')}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.time?' à '+visit.time:''}${visit.label?' : '+escapeHtml(visit.label):''}</span>
               </div>
             </div>
           `).join('')}
@@ -2383,12 +2556,18 @@ function checkAndMaybeShowRoutine(){
   if(morningRoutineState.date !== todayStr){
     morningRoutineState = { date: todayStr, checked:{}, snoozeUntil: null, dismissedForToday: false };
     saveMorningRoutineState();
-    if(!routineDoneForToday()) openMorningRoutineModal();
+    if(!routineDoneForToday()){
+      openMorningRoutineModal();
+      fireSystemNotification('🌄 Routine du matin', 'Ta routine du matin t\u2019attend.');
+    }
     return;
   }
 
   if(appSettings.routineSpamMode){
-    if(!routineDoneForToday()) openMorningRoutineModal();
+    if(!routineDoneForToday()){
+      openMorningRoutineModal();
+      fireSystemNotification('🌄 Routine du matin', 'Il te reste des points à cocher.');
+    }
     return;
   }
 
@@ -2396,6 +2575,7 @@ function checkAndMaybeShowRoutine(){
     morningRoutineState.snoozeUntil = null;
     saveMorningRoutineState();
     openMorningRoutineModal();
+    fireSystemNotification('🌄 Routine du matin', 'C\u2019est l\u2019heure du rappel !');
   }
 }
 
@@ -2717,16 +2897,16 @@ function loadAnyProjectData(id){
 function buildAllProjectsCcDetailHtml(){
   if(!projects.length) return '<p style="color:var(--steel);font-style:italic;">Aucun projet.</p>';
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
   let html = '';
   sortedProjectsForDisplay(true).forEach(p => {
     const data = loadAnyProjectData(p.id);
     if(!data) return;
     const items = (data.customChecklist || []).filter(it => !it.checked);
-    const visits = ((data.planning && data.planning.visits) || []).filter(v => v.date && v.date >= todayStr).sort((a,b) => a.date < b.date ? -1 : 1);
+    const visits = ((data.planning && data.planning.visits) || []).filter(v => v.date && v.date >= todayStr && v.status !== 'annule').sort((a,b) => a.date < b.date ? -1 : 1);
     if(!items.length && !visits.length) return;
     html += `<h4 class="rp-h4">${escapeHtml(p.client || 'Client non défini')} — ${escapeHtml(p.name)}</h4>`;
-    html += visits.map(v => `<div class="rp-item pending"><div class="mark">📅</div><div><div>RDV ${escapeHtml(visitTypeLabels[v.type]||'')} — ${new Date(v.date).toLocaleDateString('fr-FR')}${v.label?' : '+escapeHtml(v.label):''}</div></div></div>`).join('');
+    html += visits.map(v => `<div class="rp-item pending"><div class="mark">📅</div><div><div>RDV ${escapeHtml(visitTypeLabels[v.type]||'')}${v.type==='sous_traitant' && v.subcontractor?' ('+escapeHtml(v.subcontractor)+')':''} — ${new Date(v.date).toLocaleDateString('fr-FR')}${v.time?' à '+v.time:''}${v.label?' : '+escapeHtml(v.label):''}</div></div></div>`).join('');
     html += items.map(it => `<div class="rp-item pending"><div class="mark">○</div><div><div>${escapeHtml(it.text)}</div>${it.note?`<div class="note">${escapeHtml(it.note)}</div>`:''}</div></div>`).join('');
   });
   return html || '<p style="color:var(--steel);font-style:italic;">Aucun point en cours, tous projets confondus.</p>';
@@ -2883,6 +3063,14 @@ async function renderSettingsView(){
           <button class="btn btn-ghost" id="printTasksReportBtn">🖶 Imprimer / PDF</button>
         </div>
         <div id="reportPreview"></div>
+      </div>
+    </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🔔 Notifications</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Pour recevoir de vraies notifications système (routine du matin, RDV à venir) : 1) sur iPhone, ajoute d'abord cette page à ton écran d'accueil depuis Safari (icône Partager → « Sur l'écran d'accueil ») — depuis un simple onglet, iOS bloque les notifications. 2) Active-les ci-dessous. Elles ne se déclenchent que tant que l'appli est ouverte ou récemment active — pas si le téléphone est verrouillé depuis longtemps.</p>
+        <button class="btn btn-primary" id="enableNotifBtn" style="align-self:flex-start;">🔔 Activer les notifications</button>
+        <p class="settings-hint" id="notifStatusText" style="margin-top:10px;margin-bottom:0;"></p>
       </div>
     </div>
     <div class="fiche-section" style="margin-top:20px;">
@@ -3048,6 +3236,21 @@ async function renderSettingsView(){
       : '<p class="settings-empty" style="padding:0;">Renseigne une adresse ci-dessus pour générer le QR code.</p>';
   }
   renderQrCode();
+  function updateNotifStatusText(){
+    const el = $('#notifStatusText');
+    if(!el) return;
+    if(typeof Notification === 'undefined'){ el.textContent = "Non supporté par ce navigateur/appareil."; return; }
+    if(Notification.permission === 'granted') el.textContent = '✅ Notifications activées.';
+    else if(Notification.permission === 'denied') el.textContent = '🚫 Notifications refusées — réactive-les dans les réglages de Safari/du navigateur pour ce site.';
+    else el.textContent = 'Pas encore activées.';
+  }
+  updateNotifStatusText();
+  $('#enableNotifBtn').addEventListener('click', async () => {
+    if(typeof Notification === 'undefined'){ showToast('Non supporté sur cet appareil'); return; }
+    const perm = await Notification.requestPermission();
+    updateNotifStatusText();
+    if(perm === 'granted') showToast('Notifications activées !');
+  });
   $('#qrUrlInput').addEventListener('input', e => {
     appSettings.hostedUrl = e.target.value;
     saveSettings();
@@ -3453,6 +3656,7 @@ $('#editProjectInfoBtn').addEventListener('click', () => {
 });
 $('#dashboardNavBtn').addEventListener('click', renderDashboardView);
 $('#echeancesNavBtn').addEventListener('click', renderEcheancesView);
+$('#agendaNavBtn').addEventListener('click', renderAgendaView);
 $('#settingsNavBtn').addEventListener('click', renderSettingsView);
 $('#newProjectBtn').addEventListener('click', () => openProjectFormModal(null));
 $('#mobileMenuBtn').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
@@ -3628,7 +3832,12 @@ function renderChecklistTab(){
     if(caret !== null) si.setSelectionRange(caret, caret);
   }
 
-  $('#checklistSearch').addEventListener('input', e => { searchQuery = e.target.value; renderChecklistTab(); });
+  let checklistSearchDebounce = null;
+  $('#checklistSearch').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    clearTimeout(checklistSearchDebounce);
+    checklistSearchDebounce = setTimeout(renderChecklistTab, 350);
+  });
   $$('.filter-pills .pill').forEach(btn => btn.addEventListener('click', () => { statusFilter = btn.dataset.filter; renderChecklistTab(); }));
 
   $$('[data-toggle-partie]').forEach(el => el.addEventListener('click', () => {
@@ -3919,20 +4128,38 @@ function renderPlanningTab(){
   const realSpanWeeks = computeRealSpanWeeks(planning);
 
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
   const sortedVisits = [...planning.visits].sort((a,b) => (a.date||'') < (b.date||'') ? -1 : 1);
   const visitsRowsHtml = sortedVisits.map(v => {
     const isPast = v.date && v.date < todayStr;
+    const status = v.status || 'a_confirmer';
     return `
-      <div class="visit-row ${isPast?'past':''}" data-id="${v.id}">
-        <input type="date" class="visit-date" data-id="${v.id}" value="${v.date||''}">
-        <select class="visit-type" data-id="${v.id}">
-          <option value="commercial" ${v.type==='commercial'?'selected':''}>Commercial</option>
-          <option value="technique" ${v.type==='technique'?'selected':''}>Technique</option>
-          <option value="autre" ${v.type==='autre'?'selected':''}>Autre</option>
-        </select>
+      <div class="visit-row ${isPast?'past':''} status-${status}" data-id="${v.id}">
+        <div class="visit-row-line1">
+          <input type="date" class="visit-date" data-id="${v.id}" value="${v.date||''}">
+          <input type="time" class="visit-time" data-id="${v.id}" value="${v.time||''}">
+          <button class="visit-del" data-id="${v.id}" title="Supprimer">×</button>
+        </div>
         <input type="text" class="visit-label" data-id="${v.id}" placeholder="Objet du RDV (optionnel)" value="${escapeHtml(v.label||'')}">
-        <button class="visit-del" data-id="${v.id}" title="Supprimer">×</button>
+        ${v.type==='sous_traitant' ? `<input type="text" class="visit-subcontractor" data-id="${v.id}" placeholder="Nom du sous-traitant" value="${escapeHtml(v.subcontractor||'')}">` : ''}
+        <div class="visit-row-line2">
+          <select class="visit-type" data-id="${v.id}">
+            <option value="commercial" ${v.type==='commercial'?'selected':''}>Commercial</option>
+            <option value="technique" ${v.type==='technique'?'selected':''}>Technique</option>
+            <option value="sous_traitant" ${v.type==='sous_traitant'?'selected':''}>Sous-traitant</option>
+            <option value="autre" ${v.type==='autre'?'selected':''}>Autre</option>
+          </select>
+          <select class="visit-status" data-id="${v.id}">
+            <option value="a_confirmer" ${status==='a_confirmer'?'selected':''}>🟡 À confirmer</option>
+            <option value="confirme" ${status==='confirme'?'selected':''}>🟢 Confirmé</option>
+            <option value="annule" ${status==='annule'?'selected':''}>🔴 Annulé</option>
+          </select>
+        </div>
+        <select class="visit-phase" data-id="${v.id}">
+          <option value="">— Étape du projet liée (optionnel) —</option>
+          ${(planning.tasks||[]).map(t => `<option value="${t.id}" ${v.phaseTaskId===t.id?'selected':''}>${escapeHtml(t.label)}</option>`).join('')}
+        </select>
       </div>
     `;
   }).join('');
@@ -4112,9 +4339,31 @@ function renderPlanningTab(){
     scheduleSaveProjectData();
     renderPlanningTab();
   }));
+  container.querySelectorAll('.visit-time').forEach(inp => inp.addEventListener('input', () => {
+    const v = planning.visits.find(x => x.id === inp.dataset.id);
+    if(v) v.time = inp.value;
+    scheduleSaveProjectData();
+  }));
   container.querySelectorAll('.visit-type').forEach(sel => sel.addEventListener('change', () => {
     const v = planning.visits.find(x => x.id === sel.dataset.id);
     if(v) v.type = sel.value;
+    scheduleSaveProjectData();
+    renderPlanningTab();
+  }));
+  container.querySelectorAll('.visit-subcontractor').forEach(inp => inp.addEventListener('input', () => {
+    const v = planning.visits.find(x => x.id === inp.dataset.id);
+    if(v) v.subcontractor = inp.value;
+    scheduleSaveProjectData();
+  }));
+  container.querySelectorAll('.visit-status').forEach(sel => sel.addEventListener('change', () => {
+    const v = planning.visits.find(x => x.id === sel.dataset.id);
+    if(v) v.status = sel.value;
+    scheduleSaveProjectData();
+    renderPlanningTab();
+  }));
+  container.querySelectorAll('.visit-phase').forEach(sel => sel.addEventListener('change', () => {
+    const v = planning.visits.find(x => x.id === sel.dataset.id);
+    if(v) v.phaseTaskId = sel.value || null;
     scheduleSaveProjectData();
   }));
   container.querySelectorAll('.visit-label').forEach(inp => inp.addEventListener('input', () => {
@@ -4130,7 +4379,7 @@ function renderPlanningTab(){
     renderPlanningTab();
   }));
   $('#visitAddBtn').addEventListener('click', () => {
-    planning.visits.push({ id: uid(), date: new Date().toISOString().slice(0,10), type:'commercial', label:'' });
+    planning.visits.push({ id: uid(), date: new Date().toISOString().slice(0,10), time:'', type:'commercial', status:'a_confirmer', label:'', phaseTaskId:null });
     scheduleSaveProjectData();
     renderPlanningTab();
   });
