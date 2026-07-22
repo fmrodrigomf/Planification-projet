@@ -689,11 +689,8 @@
     </div>
     <button id="newProjectBtn">+ Nouveau projet</button>
     <button id="dashboardNavBtn" class="nav-btn">🏠 Tableau de bord</button>
-    <button id="echeancesNavBtn" class="nav-btn">📅 Échéances</button>
     <button id="agendaNavBtn" class="nav-btn">🗓 Agenda</button>
-    <button id="seanceMatinNavBtn" class="nav-btn">🌅 Séance du matin</button>
-    <button id="seanceOpeNavBtn" class="nav-btn">🛠 Séance OPE</button>
-    <button id="todoNavBtn" class="nav-btn">✅ To do list</button>
+    <button id="seancesNavBtn" class="nav-btn">✅ Séances &amp; To do</button>
     <button id="settingsNavBtn" class="nav-btn">⚙ Réglages</button>
     <div class="sidebar-label">Projets</div>
     <div id="projectList"></div>
@@ -1535,23 +1532,40 @@ async function getProjectStats(id, forceRefresh){
 /* ============================= RENDER: SIDEBAR ============================= */
 
 function hideAllViews(){
-  $('#dashboardView').style.display = 'none';
-  $('#settingsView').style.display = 'none';
-  $('#seanceView').style.display = 'none';
-  $('#echeancesView').style.display = 'none';
-  $('#agendaView').style.display = 'none';
-  $('#projectView').style.display = 'none';
+  const viewIds = ['#dashboardView', '#settingsView', '#seanceView', '#echeancesView', '#agendaView', '#projectView'];
+  viewIds.forEach(sel => {
+    const el = $(sel);
+    el.style.display = 'none';
+    el.scrollTop = 0;
+  });
   document.body.classList.remove('sidebar-open');
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  const mainEl = $('#main');
+  if(mainEl) mainEl.scrollTop = 0;
+}
+
+// Resetting scrollTop on a display:none element doesn't reliably "stick" on mobile Safari.
+// Call this right after a view is made visible (display set back to block/flex) instead.
+function resetViewScroll(el){
+  const doReset = () => {
+    if(el) el.scrollTop = 0;
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const mainEl = $('#main');
+    if(mainEl) mainEl.scrollTop = 0;
+  };
+  doReset();
+  requestAnimationFrame(doReset);
 }
 
 async function renderSidebar(){
   $('#dashboardNavBtn').classList.toggle('active', currentView === 'dashboard');
   $('#settingsNavBtn').classList.toggle('active', currentView === 'settings');
-  $('#seanceMatinNavBtn').classList.toggle('active', currentView === 'seance_matin');
-  $('#seanceOpeNavBtn').classList.toggle('active', currentView === 'seance_ope');
-  $('#todoNavBtn').classList.toggle('active', currentView === 'seance_todo');
-  $('#echeancesNavBtn').classList.toggle('active', currentView === 'echeances');
-  $('#agendaNavBtn').classList.toggle('active', currentView === 'agenda');
+  $('#seancesNavBtn').classList.toggle('active', currentView === 'seance_matin' || currentView === 'seance_ope' || currentView === 'seance_todo');
+  $('#agendaNavBtn').classList.toggle('active', currentView === 'agenda' || currentView === 'echeances');
   const list = $('#projectList');
   if(projects.length === 0){
     list.innerHTML = '<div class="empty-side">Aucun projet pour l\u2019instant. Cliquez sur « + Nouveau projet » pour commencer une checklist.</div>';
@@ -1601,6 +1615,7 @@ async function renderDashboardView(){
   hideAllViews();
   const dv = $('#dashboardView');
   dv.style.display = 'block';
+  resetViewScroll(dv);
   await renderSidebar();
 
   const seanceSummaryHtml = buildSeanceSummaryHtml();
@@ -1725,12 +1740,27 @@ async function renderDashboardView(){
 
 /* ============================= ÉCHÉANCES (all projects, sorted by due date) ============================= */
 
+function agendaEcheancesSubNavHtml(active){
+  return `
+    <div class="hub-subnav">
+      <button class="hub-pill ${active==='agenda'?'active':''}" data-ae-tab="agenda">🗓 Agenda</button>
+      <button class="hub-pill ${active==='echeances'?'active':''}" data-ae-tab="echeances">📅 Échéances</button>
+    </div>
+  `;
+}
+function wireAgendaEcheancesSubNav(container){
+  container.querySelectorAll('[data-ae-tab]').forEach(btn => btn.addEventListener('click', () => {
+    if(btn.dataset.aeTab === 'agenda') renderAgendaView(); else renderEcheancesView();
+  }));
+}
+
 async function renderEcheancesView(){
   await flushAllPending();
   currentView = 'echeances';
   hideAllViews();
   const ev = $('#echeancesView');
   ev.style.display = 'block';
+  resetViewScroll(ev);
   await renderSidebar();
 
   const todayStr = new Date().toISOString().slice(0,10);
@@ -1785,36 +1815,10 @@ async function renderEcheancesView(){
     `;
   }).join('') : '<div class="settings-empty">Aucun projet actif avec une échéance définie.</div>';
 
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
-  const upcomingVisits = collectUpcomingVisits();
-  const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
-  const visitsHtml = upcomingVisits.length ? upcomingVisits.map(({project, visit}) => {
-    const isOverdueVisit = visit.date < todayStr;
-    const days = Math.ceil((new Date(visit.date) - new Date(todayStr)) / 86400000);
-    const daysLabel = days === 0 ? "aujourd'hui" : (days === 1 ? 'demain' : `dans ${days}j`);
-    return `
-      <div class="ech-row" data-id="${project.id}">
-        <div class="ech-date">
-          <div class="ech-date-day">${new Date(visit.date).toLocaleDateString('fr-FR')}${visit.time?' · '+visit.time:''}</div>
-          <div class="ech-date-rel">${daysLabel}</div>
-        </div>
-        <div class="ech-body">
-          <div class="ech-client">${escapeHtml(project.client || 'Client non défini')}</div>
-          <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
-        </div>
-        <div class="ech-progress">${visitStatusLabels[visit.status || 'a_confirmer']}</div>
-      </div>
-    `;
-  }).join('') : '<div class="settings-empty">Aucun rendez-vous planifié à venir.</div>';
-
-  ev.innerHTML = `
+  ev.innerHTML = agendaEcheancesSubNavHtml('echeances') + `
     <div class="dashboard-header">
       <h2>Échéances</h2>
-      <p>Tous les projets actifs (non terminés, non archivés) avec une échéance, triés du plus urgent au plus lointain.</p>
-    </div>
-    <div class="alert-section">
-      <h3>📅 Rendez-vous à venir</h3>
-      <div class="ech-list">${visitsHtml}</div>
+      <p>Tous les projets actifs (non terminés, non archivés) avec une échéance, triés du plus urgent au plus lointain. Pour les rendez-vous, direction l'Agenda.</p>
     </div>
     <div class="alert-section">
       <h3>🏁 Échéances des projets</h3>
@@ -1822,6 +1826,7 @@ async function renderEcheancesView(){
     </div>
   `;
   ev.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+  wireAgendaEcheancesSubNav(ev);
 }
 
 /* ============================= AGENDA (calendrier mensuel, tous RDV) ============================= */
@@ -1836,9 +1841,10 @@ async function renderAgendaView(){
   hideAllViews();
   const av = $('#agendaView');
   av.style.display = 'block';
+  resetViewScroll(av);
   await renderSidebar();
 
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
   const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
   const todayStr = new Date().toISOString().slice(0,10);
   const allVisits = collectAllVisits();
@@ -1892,7 +1898,7 @@ async function renderAgendaView(){
     </div>
   ` : '<div class="settings-empty">Sélectionne un jour du calendrier pour voir ses rendez-vous.</div>';
 
-  av.innerHTML = `
+  av.innerHTML = agendaEcheancesSubNavHtml('agenda') + `
     <div class="dashboard-header">
       <h2>Agenda</h2>
       <p>Tous les rendez-vous programmés dans tes projets, tous confondus.</p>
@@ -1915,6 +1921,7 @@ async function renderAgendaView(){
   $('#agendaNextBtn').addEventListener('click', () => { agendaCursor.setMonth(agendaCursor.getMonth() + 1); renderAgendaView(); });
   $('#agendaTodayBtn').addEventListener('click', () => { agendaCursor = new Date(); agendaCursor.setDate(1); agendaSelectedDate = todayStr; renderAgendaView(); });
   av.querySelectorAll('.agenda-detail [data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
+  wireAgendaEcheancesSubNav(av);
 }
 
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
@@ -2102,6 +2109,7 @@ async function renderSeanceView(id){
   hideAllViews();
   const container = $('#seanceView');
   container.style.display = 'block';
+  resetViewScroll(container);
   await renderSidebar();
 
   if(id === 'ope'){ renderSeanceOpeView(); return; }
@@ -2120,7 +2128,7 @@ async function renderSeanceView(id){
     </div>
   ` : '';
 
-  container.innerHTML = `
+  container.innerHTML = seanceSubNavHtml('todo') + `
     <div class="dashboard-header">
       <h2>${seanceTitleFor(id)}</h2>
       <p>Coche un point pour le faire descendre en bas de liste, en transparence. Rien n'est supprimé, sauf si tu cliques sur ×.</p>
@@ -2225,6 +2233,7 @@ async function renderSeanceView(id){
     renderSeanceView(id);
   }));
   wireNoteToggles(container, () => renderSeanceView(id));
+  wireSeanceSubNav(container);
 }
 
 /* ---- Séance OPE: two-column drag-and-drop board ---- */
@@ -2247,11 +2256,24 @@ function opeItemCardHtml(it, listName){
   `;
 }
 
+function seanceSubNavHtml(active){
+  return `
+    <div class="hub-subnav">
+      <button class="hub-pill ${active==='todo'?'active':''}" data-seance-tab="todo">✅ To do list</button>
+      <button class="hub-pill ${active==='matin'?'active':''}" data-seance-tab="matin">🌅 Séance du matin</button>
+      <button class="hub-pill ${active==='ope'?'active':''}" data-seance-tab="ope">🛠 Séance OPE</button>
+    </div>
+  `;
+}
+function wireSeanceSubNav(container){
+  container.querySelectorAll('[data-seance-tab]').forEach(btn => btn.addEventListener('click', () => renderSeanceView(btn.dataset.seanceTab)));
+}
+
 function renderSeanceMatinBoard(){
   const container = $('#seanceView');
   const m = seanceMatin;
 
-  container.innerHTML = `
+  container.innerHTML = seanceSubNavHtml('matin') + `
     <div class="dashboard-header">
       <h2>Séance du matin</h2>
       <p>Deux colonnes : « À discuter » pour préparer la séance, « À faire » pour les actions concrètes. Glisse un point de l'une à l'autre si besoin.</p>
@@ -2371,13 +2393,14 @@ function renderSeanceMatinBoard(){
     renderSeanceMatinBoard();
   }));
   wireNoteToggles(container, renderSeanceMatinBoard);
+  wireSeanceSubNav(container);
 }
 
 function renderSeanceOpeView(){
   const container = $('#seanceView');
   const b = seanceOpeBoard;
 
-  container.innerHTML = `
+  container.innerHTML = seanceSubNavHtml('ope') + `
     <div class="dashboard-header">
       <h2>Séance OPE</h2>
       <p>Ajoute un point, puis glisse-le dans la colonne voulue — ou écris directement dans la colonne visée.</p>
@@ -2546,11 +2569,10 @@ function renderSeanceOpeView(){
     renderSeanceOpeView();
   }));
   wireNoteToggles(container, renderSeanceOpeView);
+  wireSeanceSubNav(container);
 }
 
-$('#seanceMatinNavBtn').addEventListener('click', () => renderSeanceView('matin'));
-$('#seanceOpeNavBtn').addEventListener('click', () => renderSeanceView('ope'));
-$('#todoNavBtn').addEventListener('click', () => renderSeanceView('todo'));
+$('#seancesNavBtn').addEventListener('click', () => renderSeanceView('todo'));
 
 /* ============================= SETTINGS (dropdown options) ============================= */
 
@@ -2668,7 +2690,7 @@ function checkVisitAlerts(){
 
 function openVisitAlertModal(items){
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.innerHTML = `
@@ -3049,7 +3071,7 @@ function loadAnyProjectData(id){
 function buildAllProjectsCcDetailHtml(){
   if(!projects.length) return '<p style="color:var(--steel);font-style:italic;">Aucun projet.</p>';
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
   let html = '';
   sortedProjectsForDisplay(true).forEach(p => {
     const data = loadAnyProjectData(p.id);
@@ -3171,6 +3193,7 @@ async function renderSettingsView(){
   hideAllViews();
   const sv = $('#settingsView');
   sv.style.display = 'block';
+  resetViewScroll(sv);
   await renderSidebar();
 
   sv.innerHTML = `
@@ -3589,6 +3612,7 @@ async function openProject(id){
   $('#projectView').style.display = 'flex';
   $('#projectView').style.flexDirection = 'column';
   $('#projectView').style.height = '100%';
+  resetViewScroll($('#tabContent'));
   renderProjectHeader();
   renderTabs();
   await renderSidebar();
@@ -3809,7 +3833,6 @@ $('#editProjectInfoBtn').addEventListener('click', () => {
   if(p) openProjectFormModal(p);
 });
 $('#dashboardNavBtn').addEventListener('click', renderDashboardView);
-$('#echeancesNavBtn').addEventListener('click', renderEcheancesView);
 $('#agendaNavBtn').addEventListener('click', renderAgendaView);
 $('#settingsNavBtn').addEventListener('click', renderSettingsView);
 $('#newProjectBtn').addEventListener('click', () => openProjectFormModal(null));
@@ -3840,6 +3863,7 @@ function renderTabs(){
   else if(currentTab === 'planning') renderPlanningTab();
   else if(currentTab === 'notes') renderNotesTab();
   else renderRapportTab();
+  resetViewScroll($('#tabContent'));
 }
 
 function hubSubNavHtml(active){
@@ -4282,7 +4306,7 @@ function renderPlanningTab(){
   const realSpanWeeks = computeRealSpanWeeks(planning);
 
   const todayStr = new Date().toISOString().slice(0,10);
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', autre:'Autre' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
   const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
   const sortedVisits = [...planning.visits].sort((a,b) => (a.date||'') < (b.date||'') ? -1 : 1);
   const visitsRowsHtml = sortedVisits.map(v => {
@@ -4302,6 +4326,10 @@ function renderPlanningTab(){
             <option value="commercial" ${v.type==='commercial'?'selected':''}>Commercial</option>
             <option value="technique" ${v.type==='technique'?'selected':''}>Technique</option>
             <option value="sous_traitant" ${v.type==='sous_traitant'?'selected':''}>Sous-traitant</option>
+            <option value="prepa" ${v.type==='prepa'?'selected':''}>PREPA</option>
+            <option value="liv" ${v.type==='liv'?'selected':''}>LIV</option>
+            <option value="inst" ${v.type==='inst'?'selected':''}>INST</option>
+            <option value="pre_projet" ${v.type==='pre_projet'?'selected':''}>PRÉ PROJET</option>
             <option value="autre" ${v.type==='autre'?'selected':''}>Autre</option>
           </select>
           <select class="visit-status" data-id="${v.id}">
