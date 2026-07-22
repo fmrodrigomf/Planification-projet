@@ -352,6 +352,8 @@
   .seance-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
   .seance-item-top{display:flex;align-items:center;gap:10px;}
   .seance-item.done{opacity:.42;}
+  .seance-item.urgent{border-color:var(--danger);border-width:2px;background:#fff4f3;}
+  body.theme-dark .seance-item.urgent{background:#3a1f1d;}
   .seance-item .seance-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .seance-item .seance-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
   .seance-item.done .seance-text{text-decoration:line-through;}
@@ -756,6 +758,33 @@ const DEFAULT_AIRMASTER_ITEMS = [
   "Tester l\u2019ensemble des fonctions du tableau",
   "Valider le tableau comme terminé uniquement après réussite de l\u2019ensemble des tests"
 ];
+function fixMissingTodoOrigins(){
+  let changed = false;
+  todoList.forEach(it => {
+    if(!it.linkId) return;
+    if(it.origin && it.origin !== 'todo') return; // already correctly tagged
+    if(seanceMatin.discuter.some(x => x.linkId === it.linkId) || seanceMatin.faire.some(x => x.linkId === it.linkId)){
+      it.origin = 'matin'; changed = true;
+    } else if(seanceOpeBoard.staging.some(x => x.linkId === it.linkId) || seanceOpeBoard.derniere.some(x => x.linkId === it.linkId) || seanceOpeBoard.jour.some(x => x.linkId === it.linkId)){
+      it.origin = 'ope'; changed = true;
+    } else if(seance1a1.some(x => x.linkId === it.linkId)){
+      it.origin = '1a1'; changed = true;
+    } else {
+      for(const p of projects){
+        const data = loadAnyProjectData(p.id);
+        if(data && data.customChecklist && data.customChecklist.some(x => x.linkId === it.linkId)){
+          it.origin = 'project';
+          it.originProjectId = p.id;
+          it.originProjectName = p.name;
+          changed = true;
+          break;
+        }
+      }
+    }
+  });
+  if(changed) saveSeance('todo');
+}
+
 function ensureAirmasterOption(force){
   if(!appOptions.projectOptions) appOptions.projectOptions = [];
   const existing = appOptions.projectOptions.find(o => o.name.trim().toLowerCase() === 'airmaster');
@@ -1611,11 +1640,12 @@ function dashboardProjectMatches(p){
 
 async function renderDashboardView(){
   await flushAllPending();
+  const enteringFresh = currentView !== 'dashboard';
   currentView = 'dashboard';
   hideAllViews();
   const dv = $('#dashboardView');
   dv.style.display = 'block';
-  resetViewScroll(dv);
+  if(enteringFresh) resetViewScroll(dv);
   await renderSidebar();
 
   const seanceSummaryHtml = buildSeanceSummaryHtml();
@@ -1756,11 +1786,12 @@ function wireAgendaEcheancesSubNav(container){
 
 async function renderEcheancesView(){
   await flushAllPending();
+  const enteringFresh = currentView !== 'echeances';
   currentView = 'echeances';
   hideAllViews();
   const ev = $('#echeancesView');
   ev.style.display = 'block';
-  resetViewScroll(ev);
+  if(enteringFresh) resetViewScroll(ev);
   await renderSidebar();
 
   const todayStr = new Date().toISOString().slice(0,10);
@@ -1837,11 +1868,12 @@ let agendaSelectedDate = null;
 
 async function renderAgendaView(){
   await flushAllPending();
+  const enteringFresh = currentView !== 'agenda';
   currentView = 'agenda';
   hideAllViews();
   const av = $('#agendaView');
   av.style.display = 'block';
-  resetViewScroll(av);
+  if(enteringFresh) resetViewScroll(av);
   await renderSidebar();
 
   const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
@@ -1934,10 +1966,11 @@ let todoList = [];
 // "derniere" (last session) and "jour" (today's session).
 let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
-function getSimpleList(id){ return todoList; }
-function setSimpleList(id, arr){ todoList = arr; }
-function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; return 'seance_ope'; }
-function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; return 'Séance OPE'; }
+let seance1a1 = [];
+function getSimpleList(id){ return id === '1a1' ? seance1a1 : todoList; }
+function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else todoList = arr; }
+function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; return 'seance_ope'; }
+function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; return 'Séance OPE'; }
 
 function loadSeanceMatin(){
   const v = lsGet('seance_matin');
@@ -1993,7 +2026,7 @@ function deleteLinkedProjectItem(projectId, linkId){
 
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
-  [seanceMatin.discuter, seanceMatin.faire, todoList, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
+  [seanceMatin.discuter, seanceMatin.faire, todoList, seance1a1, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
   const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
@@ -2006,6 +2039,7 @@ function deleteLinkedItems(linkId){
   seanceMatin.discuter = seanceMatin.discuter.filter(it => it.linkId !== linkId);
   seanceMatin.faire = seanceMatin.faire.filter(it => it.linkId !== linkId);
   todoList = todoList.filter(it => it.linkId !== linkId);
+  seance1a1 = seance1a1.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
   seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
   seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
@@ -2013,9 +2047,10 @@ function deleteLinkedItems(linkId){
 function saveAllLinkedLists(){
   saveSeanceMatin();
   saveSeance('todo');
+  saveSeance('1a1');
   saveSeanceOpeBoard();
 }
-function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; return '🛠'; }
+function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; return '🛠'; }
 
 function allOpeItems(){
   return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour];
@@ -2043,7 +2078,7 @@ function seancePct(id){
 }
 
 function buildSeanceSummaryHtml(){
-  const cards = ['matin', 'ope', 'todo'].map(id => {
+  const cards = ['matin', 'ope', 'todo', '1a1'].map(id => {
     const { total, checked, pct } = seancePct(id);
     const label = total === 0 ? 'Rien à cocher — 100%' : `${checked}/${total} points · ${pct}%`;
     return `
@@ -2105,11 +2140,12 @@ function flushSeanceOpeSilent(){
 
 async function renderSeanceView(id){
   await flushAllPending();
+  const enteringFresh = currentView !== 'seance_' + id;
   currentView = 'seance_' + id;
   hideAllViews();
   const container = $('#seanceView');
   container.style.display = 'block';
-  resetViewScroll(container);
+  if(enteringFresh) resetViewScroll(container);
   await renderSidebar();
 
   if(id === 'ope'){ renderSeanceOpeView(); return; }
@@ -2119,16 +2155,18 @@ async function renderSeanceView(id){
   const filtered = (id === 'todo' && todoOriginFilter !== 'all')
     ? items.filter(it => (it.origin || 'todo') === todoOriginFilter)
     : items;
-  const ordered = filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
+  const ordered = id === 'todo'
+    ? filtered.filter(it => !it.checked && it.urgent).concat(filtered.filter(it => !it.checked && !it.urgent)).concat(filtered.filter(it => it.checked))
+    : filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
 
-  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', project:'📁 Projet' };
+  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', project:'📁 Projet' };
   const filterBarHtml = (id === 'todo') ? `
     <div class="filter-pills" style="margin-bottom:16px;">
-      ${['all','todo','matin','ope','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
+      ${['all','todo','matin','ope','1a1','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
     </div>
   ` : '';
 
-  container.innerHTML = seanceSubNavHtml('todo') + `
+  container.innerHTML = seanceSubNavHtml(id) + `
     <div class="dashboard-header">
       <h2>${seanceTitleFor(id)}</h2>
       <p>Coche un point pour le faire descendre en bas de liste, en transparence. Rien n'est supprimé, sauf si tu cliques sur ×.</p>
@@ -2145,17 +2183,26 @@ async function renderSeanceView(id){
         const originTag = (id === 'todo' && it.origin && it.origin !== 'todo')
           ? `<span class="item-badge origin-badge" title="Origine">${it.origin==='project' ? '📁 ' + escapeHtml(it.originProjectName||'Projet') : originLabels[it.origin]}</span>` : '';
         return `
-        <div class="seance-item ${it.checked?'done':''}" data-id="${it.id}">
+        <div class="seance-item ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
             <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
             ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
             ${it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':''}
+            ${(id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">🔥</span>':''}
             ${originTag}
             <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
           </div>
-          ${expanded ? noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`) : ''}
+          ${expanded ? `
+            ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
+            ${id === 'todo' ? `
+              <label class="item-ignore-row">
+                <input type="checkbox" class="todo-urgent" data-id="${it.id}" ${it.urgent?'checked':''}>
+                🔥 Urgent (remonte tout en haut de la liste)
+              </label>
+            ` : ''}
+          ` : ''}
         </div>
       `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
@@ -2163,6 +2210,12 @@ async function renderSeanceView(id){
   if(id === 'todo'){
     container.querySelectorAll('[data-origin-filter]').forEach(btn => btn.addEventListener('click', () => {
       todoOriginFilter = btn.dataset.originFilter;
+      renderSeanceView('todo');
+    }));
+    container.querySelectorAll('.todo-urgent').forEach(cb => cb.addEventListener('change', () => {
+      const it = todoList.find(x => x.id === cb.dataset.id);
+      if(it) it.urgent = cb.checked;
+      scheduleSaveSeance('todo');
       renderSeanceView('todo');
     }));
   }
@@ -2173,6 +2226,12 @@ async function renderSeanceView(id){
     if(!text) return;
     if(id === 'todo'){
       getSimpleList('todo').unshift({ id: uid(), text, checked:false, note:'', origin:'todo' });
+      scheduleSaveSeance('todo');
+    } else if(id === '1a1' && appSettings.linkSeanceTodo){
+      const linkId = uid();
+      getSimpleList('1a1').unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'1a1' });
+      scheduleSaveSeance('1a1');
       scheduleSaveSeance('todo');
     } else {
       getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
@@ -2262,6 +2321,7 @@ function seanceSubNavHtml(active){
       <button class="hub-pill ${active==='todo'?'active':''}" data-seance-tab="todo">✅ To do list</button>
       <button class="hub-pill ${active==='matin'?'active':''}" data-seance-tab="matin">🌅 Séance du matin</button>
       <button class="hub-pill ${active==='ope'?'active':''}" data-seance-tab="ope">🛠 Séance OPE</button>
+      <button class="hub-pill ${active==='1a1'?'active':''}" data-seance-tab="1a1">1️⃣ 1 à 1</button>
     </div>
   `;
 }
@@ -3188,12 +3248,13 @@ function renderIgnoredStats(){
 
 async function renderSettingsView(){
   await flushAllPending();
-  if(currentView !== 'settings') settingsExpanded = {};
+  const enteringFresh = currentView !== 'settings';
+  if(enteringFresh) settingsExpanded = {};
   currentView = 'settings';
   hideAllViews();
   const sv = $('#settingsView');
   sv.style.display = 'block';
-  resetViewScroll(sv);
+  if(enteringFresh) resetViewScroll(sv);
   await renderSidebar();
 
   sv.innerHTML = `
@@ -4917,6 +4978,7 @@ async function exportAllData(){
     projectData: {},
     seanceMatin,
     todoList,
+    seance1a1,
     seanceOpeBoard,
     appOptions,
     checklistTemplates,
@@ -4961,6 +5023,7 @@ async function importAllData(file){
       saveSeanceMatin();
     }
     if(payload.todoList){ todoList = payload.todoList; saveSeance('todo'); }
+    if(payload.seance1a1){ seance1a1 = payload.seance1a1; saveSeance('1a1'); }
     if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
     if(payload.appOptions){
       appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [], customFlux: payload.appOptions.customFlux || [] };
@@ -5011,6 +5074,7 @@ async function init(){
   notesText = loadNotes();
   seanceMatin = loadSeanceMatin();
   todoList = loadSeance('todo_list');
+  seance1a1 = loadSeance('seance_1a1');
   seanceOpeBoard = loadSeanceOpeBoard();
   morningRoutineItems = loadMorningRoutineItems();
   if(!lsGet('morningRoutineV2Seeded')){
@@ -5021,6 +5085,7 @@ async function init(){
   }
   morningRoutineState = loadMorningRoutineState();
   loadProjects();
+  fixMissingTodoOrigins();
   await renderDashboardView();
 
   if(!lsGet('hasSeenManual')){
