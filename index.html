@@ -746,7 +746,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.0'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.2.1'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1920,7 +1920,10 @@ async function renderAgendaView(){
   }
   const detailVisits = agendaSelectedDate ? (byDate[agendaSelectedDate] || []) : [];
   const detailHtml = agendaSelectedDate ? `
-    <h3>${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <h3 style="margin:0;">${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}</h3>
+      <button class="btn btn-primary" id="agendaAddVisitBtn">+ Ajouter un RDV</button>
+    </div>
     <div class="ech-list">
       ${detailVisits.length ? detailVisits.map(({project, visit}) => `
         <div class="ech-row" data-id="${project.id}">
@@ -1961,6 +1964,8 @@ async function renderAgendaView(){
   $('#agendaTodayBtn').addEventListener('click', () => { agendaCursor = new Date(); agendaCursor.setDate(1); agendaSelectedDate = todayStr; renderAgendaView(); });
   av.querySelectorAll('.agenda-detail [data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
   wireAgendaEcheancesSubNav(av);
+  const addVisitBtn = $('#agendaAddVisitBtn');
+  if(addVisitBtn) addVisitBtn.addEventListener('click', () => openAddVisitModal(agendaSelectedDate, renderAgendaView));
 }
 
 /* ============================= SÉANCES (Séance du matin / Séance OPE) ============================= */
@@ -2753,6 +2758,85 @@ function checkVisitAlerts(){
     shownState.shownIds.push(...notYetShown.map(u => u.visit.id));
     lsSet('visitAlertsShown', JSON.stringify(shownState));
   }
+}
+
+function openAddVisitModal(dateStr, onDone){
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
+  const eligibleProjects = projects.filter(p => !p.archived && !p.finished);
+  if(!eligibleProjects.length){ showToast('Aucun projet actif — crée d\u2019abord un projet.'); return; }
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>Nouveau RDV — ${new Date(dateStr).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}</h3>
+      <div class="modal-scroll">
+        <label>Projet</label>
+        <select id="avProject"></select>
+        <label>Heure (optionnel)</label>
+        <input type="time" id="avTime">
+        <label>Type</label>
+        <select id="avType">
+          ${Object.entries(visitTypeLabels).map(([k,l]) => `<option value="${k}">${l}</option>`).join('')}
+        </select>
+        <div id="avSubcontractorWrap" style="display:none;">
+          <label>Nom du sous-traitant</label>
+          <input type="text" id="avSubcontractor" placeholder="Nom du sous-traitant">
+        </div>
+        <label>Objet (optionnel)</label>
+        <input type="text" id="avLabel" placeholder="Objet du RDV">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-text" id="avCancel">Annuler</button>
+        <button class="btn btn-primary" id="avSave">Ajouter</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const projSel = $('#avProject');
+  projSel.innerHTML = eligibleProjects.map(p => `<option value="${p.id}">${escapeHtml(p.client ? p.client + ' — ' + p.name : p.name)}</option>`).join('');
+
+  const typeSel = $('#avType');
+  const subWrap = $('#avSubcontractorWrap');
+  typeSel.addEventListener('change', () => { subWrap.style.display = typeSel.value === 'sous_traitant' ? 'block' : 'none'; });
+
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  $('#avCancel').addEventListener('click', close);
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  $('#avSave').addEventListener('click', () => {
+    const projectId = projSel.value;
+    const p = projects.find(x => x.id === projectId);
+    if(!p) return;
+    const newVisit = {
+      id: uid(), date: dateStr, time: $('#avTime').value || '',
+      type: typeSel.value, status: 'a_confirmer', label: $('#avLabel').value.trim(),
+      subcontractor: typeSel.value === 'sous_traitant' ? $('#avSubcontractor').value.trim() : '',
+      phaseTaskId: null
+    };
+    let data;
+    if(projectId === currentProjectId && currentData){
+      data = currentData;
+      if(!data.planning) data.planning = defaultPlanningData();
+      if(!data.planning.visits) data.planning.visits = [];
+      data.planning.visits.push(newVisit);
+      syncEcheanceFromPlanning(p, data);
+      saveProjects();
+      scheduleSaveProjectData();
+    } else {
+      data = loadAnyProjectData(projectId) || { checklist:{}, fiche:{}, fichePhotos:[], collapsed:{}, activeOptions:{}, generalNotes:'', customChecklist:[] };
+      if(!data.planning) data.planning = defaultPlanningData();
+      if(!data.planning.visits) data.planning.visits = [];
+      data.planning.visits.push(newVisit);
+      syncEcheanceFromPlanning(p, data);
+      saveProjects();
+      lsSet('project:' + projectId, JSON.stringify(data));
+    }
+    close();
+    showToast('RDV ajouté');
+    if(onDone) onDone();
+  });
 }
 
 function openVisitAlertModal(items){
