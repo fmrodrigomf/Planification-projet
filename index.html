@@ -668,7 +668,7 @@
   @media print{
     body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
     html, body, #app, #main, #projectView, #settingsView{height:auto !important;overflow:visible !important;}
-    #sidebar, #projectHeader, #reportActions, #toast, .report-sections-row{display:none !important;}
+    #sidebar, #projectHeader, #reportActions, #toast, .report-sections-row, .stat-strip, #mobileMenuBtn{display:none !important;}
     #tabContent{padding:0;overflow:visible !important;height:auto !important;}
     #reportPreview{border:none;padding:0;max-width:100%;}
     .partie, .fiche-section, .checklist-toolbar, .options-panel{display:none !important;}
@@ -746,7 +746,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.1'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.2.2'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
