@@ -350,7 +350,10 @@
   .seance-add-row input:focus{outline:2px solid var(--amber);outline-offset:-1px;}
   .seance-list{display:flex;flex-direction:column;gap:8px;}
   .seance-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
-  .seance-item-top{display:flex;align-items:center;gap:10px;}
+  .seance-item-top{display:flex;align-items:flex-start;gap:10px;}
+  .seance-item-top .seance-check{margin-top:3px;}
+  .seance-item-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-left:27px;}
+  .seance-item-badges .item-badge{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 8px;font-size:11px;}
   .seance-item.done{opacity:.42;}
   .seance-item.urgent{border-color:var(--danger);border-width:2px;background:#fff4f3;}
   body.theme-dark .seance-item.urgent{background:#3a1f1d;}
@@ -362,7 +365,8 @@
 
   .cc-list{display:flex;flex-direction:column;gap:8px;}
   .cc-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;}
-  .cc-item-top{display:flex;align-items:center;gap:10px;}
+  .cc-item-top{display:flex;align-items:flex-start;gap:10px;}
+  .cc-item-top .cc-check{margin-top:3px;}
   .cc-item .cc-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .cc-item .cc-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
   .cc-item.done .cc-text{color:var(--ok);}
@@ -746,7 +750,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.7'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.2.9'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -767,29 +771,48 @@ const DEFAULT_AIRMASTER_ITEMS = [
 ];
 function fixMissingTodoOrigins(){
   let changed = false;
-  todoList.forEach(it => {
-    if(!it.linkId) return;
-    if(it.origin && it.origin !== 'todo') return; // already correctly tagged
+  let changedCommander = false;
+
+  function resolveOrigin(it){
+    if(!it.linkId) return false;
+    let did = false;
+    if(it.origin && it.origin !== 'todo'){
+      // already tagged — just keep the project name in sync with the client field
+      if(it.origin === 'project' && it.originProjectId){
+        const p = projects.find(x => x.id === it.originProjectId);
+        if(p){
+          const nm = p.client || p.name;
+          if(it.originProjectName !== nm){ it.originProjectName = nm; did = true; }
+        }
+      }
+      return did;
+    }
     if(seanceMatin.discuter.some(x => x.linkId === it.linkId) || seanceMatin.faire.some(x => x.linkId === it.linkId)){
-      it.origin = 'matin'; changed = true;
+      it.origin = 'matin'; did = true;
     } else if(seanceOpeBoard.staging.some(x => x.linkId === it.linkId) || seanceOpeBoard.derniere.some(x => x.linkId === it.linkId) || seanceOpeBoard.jour.some(x => x.linkId === it.linkId)){
-      it.origin = 'ope'; changed = true;
+      it.origin = 'ope'; did = true;
     } else if(seance1a1.some(x => x.linkId === it.linkId)){
-      it.origin = '1a1'; changed = true;
+      it.origin = '1a1'; did = true;
     } else {
       for(const p of projects){
         const data = loadAnyProjectData(p.id);
         if(data && data.customChecklist && data.customChecklist.some(x => x.linkId === it.linkId)){
           it.origin = 'project';
           it.originProjectId = p.id;
-          it.originProjectName = p.name;
-          changed = true;
+          it.originProjectName = p.client || p.name;
+          did = true;
           break;
         }
       }
     }
-  });
+    return did;
+  }
+
+  todoList.forEach(it => { if(resolveOrigin(it)) changed = true; });
+  seanceCommander.forEach(it => { if(resolveOrigin(it)) changedCommander = true; });
+
   if(changed) saveSeance('todo');
+  if(changedCommander) saveSeance('commander');
 }
 
 function ensureAirmasterOption(force){
@@ -2197,18 +2220,21 @@ async function renderSeanceView(id){
         const expanded = expandedItemIds.has(it.id);
         const originTag = ((id === 'todo' || id === 'commander') && it.origin && it.origin !== 'todo')
           ? `<span class="item-badge origin-badge" title="Origine">${it.origin==='project' ? '📁 ' + escapeHtml(it.originProjectName||'Projet') : originLabels[it.origin]}</span>` : '';
+        const badgesRow = [
+          hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
+          it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':'',
+          (id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">🔥</span>':'',
+          originTag
+        ].filter(Boolean).join('');
         return `
         <div class="seance-item ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
             <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-            ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
-            ${it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':''}
-            ${(id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">🔥</span>':''}
-            ${originTag}
             <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
           </div>
+          ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
           ${expanded ? `
             ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
             ${id === 'todo' ? `
@@ -2321,16 +2347,19 @@ async function renderSeanceView(id){
 function opeItemCardHtml(it, listName){
   const hasNote = !!(it.note && it.note.trim());
   const expanded = expandedItemIds.has(it.id);
+  const badgesRow = [
+    hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
+    it.linkId?'<span class="item-badge" title="Lié à la To do list">🔗</span>':''
+  ].filter(Boolean).join('');
   return `
     <div class="ope-card ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
       <div class="ope-card-top">
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
         <span class="ope-text" data-id="${it.id}" data-list="${listName}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-        ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
-        ${it.linkId?'<span class="item-badge" title="Lié à la To do list">🔗</span>':''}
         <button class="ope-expand" data-id="${it.id}" data-list="${listName}" title="Note">${expanded?'▾':'▸'}</button>
         <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
       </div>
+      ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
       ${expanded ? noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`) : ''}
     </div>
   `;
@@ -4785,17 +4814,20 @@ function renderNotesTab(){
             const expanded = expandedItemIds.has(it.id);
             const rowClass = it.ignored ? 'ignored' : (it.checked ? 'done' : '');
             const inCommander = !!(it.linkId && seanceCommander.some(x => x.linkId === it.linkId));
+            const ccBadgesRow = [
+              hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
+              it.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':'',
+              inCommander?'<span class="item-badge" title="Dans À commander">🛒</span>':''
+            ].filter(Boolean).join('');
             return `
             <div class="cc-item ${rowClass}" data-id="${it.id}">
               <div class="cc-item-top">
                 <input type="checkbox" class="cc-check" data-id="${it.id}" ${it.checked?'checked':''}>
                 <span class="cc-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-                ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
-                ${it.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':''}
-                ${inCommander?'<span class="item-badge" title="Dans À commander">🛒</span>':''}
                 <button class="cc-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
                 <button class="cc-del" data-id="${it.id}" title="Supprimer">×</button>
               </div>
+              ${ccBadgesRow ? `<div class="seance-item-badges">${ccBadgesRow}</div>` : ''}
               ${expanded ? `
                 ${noteBlockHtml(it.id, it.note, 'cc-note', `data-id="${it.id}"`)}
                 <label class="item-ignore-row">
@@ -4827,7 +4859,7 @@ function renderNotesTab(){
     if(appSettings.linkSeanceTodo){
       const linkId = uid();
       currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false, linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? p.name : '' });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
       scheduleSaveSeance('todo');
     } else {
       currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false });
@@ -4858,7 +4890,7 @@ function renderNotesTab(){
     if(!it) return;
     if(!it.linkId) it.linkId = uid();
     const p = projects.find(x => x.id === currentProjectId);
-    seanceCommander.unshift({ id: uid(), text: it.text, checked: it.checked, note: it.note || '', linkId: it.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? p.name : '' });
+    seanceCommander.unshift({ id: uid(), text: it.text, checked: it.checked, note: it.note || '', linkId: it.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
     scheduleSaveProjectData();
     scheduleSaveSeance('commander');
     showToast('Ajouté à « À commander »');
