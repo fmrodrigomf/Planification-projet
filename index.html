@@ -54,7 +54,7 @@
     --ok-tint:#1c2e22;
   }
   *{box-sizing:border-box;}
-  html,body{height:100%;touch-action:manipulation;}
+  html,body{height:100%;touch-action:manipulation;overflow-x:hidden;max-width:100%;}
   body{
     margin:0;
     font-family:var(--font-body);
@@ -434,7 +434,7 @@
   .opt-count{font-family:var(--font-mono);font-size:11px;color:var(--steel);}
   #checklistSearch{flex:1;min-width:200px;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13.5px;background:var(--paper-2);color:var(--graphite);}
   #checklistSearch:focus{outline:2px solid var(--amber);outline-offset:-1px;}
-  .filter-pills{display:flex;gap:6px;}
+  .filter-pills{display:flex;gap:6px;flex-wrap:wrap;}
   .pill{border:1px solid var(--line);background:var(--paper-2);color:var(--steel);padding:7px 14px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;}
   .pill.active{background:var(--amber);border-color:var(--amber);color:#1c1305;}
   .no-results{padding:30px;text-align:center;color:var(--steel);font-size:13.5px;}
@@ -669,7 +669,7 @@
     body{--paper:#fff !important;--paper-2:#fff !important;--graphite:#232a31 !important;--graphite-2:#2e3740 !important;--line:#dcd8d0 !important;--steel:#5b6b78 !important;--steel-light:#8a97a3 !important;background:#fff;}
     html, body, #app, #main, #projectView, #settingsView{height:auto !important;overflow:visible !important;}
     #sidebar, #projectHeader, #reportActions, #toast, .report-sections-row, .stat-strip, #mobileMenuBtn{display:none !important;}
-    #tabContent{padding:0;overflow:visible !important;height:auto !important;}
+    #tabContent, #settingsView{padding:0 !important;overflow:visible !important;height:auto !important;}
     #reportPreview{border:none;padding:0;max-width:100%;}
     .partie, .fiche-section, .checklist-toolbar, .options-panel{display:none !important;}
     .fiche-section.report-host-section{display:block !important;border:none !important;margin:0 !important;padding:0 !important;background:none !important;}
@@ -746,7 +746,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.2'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.2.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1464,7 +1464,7 @@ function flushPendingSaveSilent(){
 async function flushAllPending(){
   flushPendingSaveSilent();
   flushSeanceMatin();
-  flushSeanceSaveSilent('todo');
+  Object.keys(seanceSaveTimers).forEach(id => flushSeanceSaveSilent(id));
   flushSeanceOpeSilent();
 }
 
@@ -1979,10 +1979,11 @@ let todoList = [];
 let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
 let seance1a1 = [];
-function getSimpleList(id){ return id === '1a1' ? seance1a1 : todoList; }
-function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else todoList = arr; }
-function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; return 'seance_ope'; }
-function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; return 'Séance OPE'; }
+let seanceCommander = [];
+function getSimpleList(id){ if(id === '1a1') return seance1a1; if(id === 'commander') return seanceCommander; return todoList; }
+function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else if(id === 'commander') seanceCommander = arr; else todoList = arr; }
+function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; if(id === 'commander') return 'seance_commander'; return 'seance_ope'; }
+function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; if(id === 'commander') return 'À commander'; return 'Séance OPE'; }
 
 function loadSeanceMatin(){
   const v = lsGet('seance_matin');
@@ -2038,7 +2039,7 @@ function deleteLinkedProjectItem(projectId, linkId){
 
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
-  [seanceMatin.discuter, seanceMatin.faire, todoList, seance1a1, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
+  [seanceMatin.discuter, seanceMatin.faire, todoList, seance1a1, seanceCommander, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
   const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
@@ -2052,6 +2053,7 @@ function deleteLinkedItems(linkId){
   seanceMatin.faire = seanceMatin.faire.filter(it => it.linkId !== linkId);
   todoList = todoList.filter(it => it.linkId !== linkId);
   seance1a1 = seance1a1.filter(it => it.linkId !== linkId);
+  seanceCommander = seanceCommander.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
   seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
   seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
@@ -2060,9 +2062,10 @@ function saveAllLinkedLists(){
   saveSeanceMatin();
   saveSeance('todo');
   saveSeance('1a1');
+  saveSeance('commander');
   saveSeanceOpeBoard();
 }
-function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; return '🛠'; }
+function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; if(id === 'commander') return '🛒'; return '🛠'; }
 
 function allOpeItems(){
   return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour];
@@ -2090,7 +2093,7 @@ function seancePct(id){
 }
 
 function buildSeanceSummaryHtml(){
-  const cards = ['matin', 'ope', 'todo', '1a1'].map(id => {
+  const cards = ['matin', 'ope', 'todo', '1a1', 'commander'].map(id => {
     const { total, checked, pct } = seancePct(id);
     const label = total === 0 ? 'Rien à cocher — 100%' : `${checked}/${total} points · ${pct}%`;
     return `
@@ -2171,10 +2174,10 @@ async function renderSeanceView(id){
     ? filtered.filter(it => !it.checked && it.urgent).concat(filtered.filter(it => !it.checked && !it.urgent)).concat(filtered.filter(it => it.checked))
     : filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
 
-  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', project:'📁 Projet' };
+  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
   const filterBarHtml = (id === 'todo') ? `
     <div class="filter-pills" style="margin-bottom:16px;">
-      ${['all','todo','matin','ope','1a1','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
+      ${['all','todo','matin','ope','1a1','commander','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
     </div>
   ` : '';
 
@@ -2244,6 +2247,12 @@ async function renderSeanceView(id){
       getSimpleList('1a1').unshift({ id: uid(), text, checked:false, note:'', linkId });
       todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'1a1' });
       scheduleSaveSeance('1a1');
+      scheduleSaveSeance('todo');
+    } else if(id === 'commander' && appSettings.linkSeanceTodo){
+      const linkId = uid();
+      getSimpleList('commander').unshift({ id: uid(), text, checked:false, note:'', linkId });
+      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'commander' });
+      scheduleSaveSeance('commander');
       scheduleSaveSeance('todo');
     } else {
       getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
@@ -2334,6 +2343,7 @@ function seanceSubNavHtml(active){
       <button class="hub-pill ${active==='matin'?'active':''}" data-seance-tab="matin">🌅 Séance du matin</button>
       <button class="hub-pill ${active==='ope'?'active':''}" data-seance-tab="ope">🛠 Séance OPE</button>
       <button class="hub-pill ${active==='1a1'?'active':''}" data-seance-tab="1a1">1️⃣ 1 à 1</button>
+      <button class="hub-pill ${active==='commander'?'active':''}" data-seance-tab="commander">🛒 À commander</button>
     </div>
   `;
 }
@@ -3212,7 +3222,7 @@ function computeIgnoredStats(){
   })).sort((a,b) => b.ignoredCount - a.ignoredCount);
 }
 
-let tasksReportSections = { matin:true, ope:true, todo:true, projects:false, ccDetail:false };
+let tasksReportSections = { matin:true, ope:true, todo:true, un1a1:true, commander:true, projects:false, ccDetail:false };
 
 function loadAnyProjectData(id){
   if(id === currentProjectId && currentData) return currentData;
@@ -3255,11 +3265,12 @@ async function buildAllProjectsSummaryHtml(){
 }
 
 async function buildTasksReportHtmlFragment(){
-  function itemsBlock(items){
-    if(!items.length) return '<p style="color:var(--steel);font-style:italic;">Aucun point.</p>';
+  function itemsBlock(itemsIn){
+    const items = itemsIn.filter(it => !it.checked);
+    if(!items.length) return '<p style="color:var(--steel);font-style:italic;">Aucun point en attente.</p>';
     return items.map(it => `
-      <div class="rp-item ${it.checked?'done':'pending'}">
-        <div class="mark">${it.checked?'✓':'○'}</div>
+      <div class="rp-item pending">
+        <div class="mark">○</div>
         <div>
           <div>${escapeHtml(it.text)}</div>
           ${it.note ? `<div class="note">${escapeHtml(it.note)}</div>` : ''}
@@ -3288,6 +3299,12 @@ async function buildTasksReportHtmlFragment(){
     ${tasksReportSections.todo ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">✅ TO DO LIST</h3>
     ${itemsBlock(todoList)}` : ''}
+    ${tasksReportSections.un1a1 ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">1️⃣ SÉANCE 1 À 1</h3>
+    ${itemsBlock(seance1a1)}` : ''}
+    ${tasksReportSections.commander ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">🛒 À COMMANDER</h3>
+    ${itemsBlock(seanceCommander)}` : ''}
     ${tasksReportSections.projects ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">📁 RÉSUMÉ DE TOUS LES PROJETS</h3>
     ${await buildAllProjectsSummaryHtml()}` : ''}
@@ -3379,6 +3396,8 @@ async function renderSettingsView(){
           <label class="choice-chip"><input type="checkbox" id="trSecMatin" ${tasksReportSections.matin?'checked':''}> Séance du matin</label>
           <label class="choice-chip"><input type="checkbox" id="trSecOpe" ${tasksReportSections.ope?'checked':''}> Séance OPE</label>
           <label class="choice-chip"><input type="checkbox" id="trSecTodo" ${tasksReportSections.todo?'checked':''}> To do list complète</label>
+          <label class="choice-chip"><input type="checkbox" id="trSec1a1" ${tasksReportSections.un1a1?'checked':''}> Séance 1 à 1</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecCommander" ${tasksReportSections.commander?'checked':''}> À commander</label>
           <label class="choice-chip"><input type="checkbox" id="trSecProjects" ${tasksReportSections.projects?'checked':''}> Résumé de tous les projets</label>
           <label class="choice-chip"><input type="checkbox" id="trSecCcDetail" ${tasksReportSections.ccDetail?'checked':''}> Points en cours par projet</label>
         </div>
@@ -3595,6 +3614,8 @@ async function renderSettingsView(){
   $('#trSecMatin').addEventListener('change', e => { tasksReportSections.matin = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecOpe').addEventListener('change', e => { tasksReportSections.ope = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecTodo').addEventListener('change', e => { tasksReportSections.todo = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSec1a1').addEventListener('change', e => { tasksReportSections.un1a1 = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecCommander').addEventListener('change', e => { tasksReportSections.commander = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecProjects').addEventListener('change', e => { tasksReportSections.projects = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecCcDetail').addEventListener('change', e => { tasksReportSections.ccDetail = e.target.checked; refreshTasksReportPreview(); });
   $('#downloadTasksReportBtn').addEventListener('click', downloadTasksReport);
@@ -4882,19 +4903,21 @@ function buildReportHtmlFragment(){
       const items = sec.items.map((label, idx) => {
         const k = itemKey(sec.id, idx);
         const st = currentData.checklist[k] || { checked:false, note:'', photos:[], ignored:false };
+        if(st.checked && !st.ignored) return ''; // hide items marked done (green check) — keep pending and ignored (red)
         const photosHtml = (st.photos && st.photos.length) ? `<div class="rp-photos">${st.photos.map(ph=>`<img src="${ph}" class="rp-photo">`).join('')}</div>` : '';
-        const rpClass = st.ignored ? 'ignored' : (st.checked ? 'done' : 'pending');
-        const rpMark = st.ignored ? '⊘' : (st.checked ? '✓' : '○');
+        const rpClass = st.ignored ? 'ignored' : 'pending';
+        const rpMark = st.ignored ? '⊘' : '○';
         return `<div class="rp-item ${rpClass}">
           <div class="mark">${rpMark}</div>
           <div><div>${escapeHtml(label)}</div>${st.note?`<div class="note">${escapeHtml(st.note)}</div>`:''}</div>
           ${photosHtml}
         </div>`;
       }).join('');
-      return `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}`;
+      return items ? `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}` : '';
     }).join('');
-    return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
+    return secs ? `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}` : '';
   }).join('') : `<p style="color:var(--steel);font-style:italic;">Aucune checklist de planification disponible pour le flux « ${escapeHtml(flux || '—')} ».</p>`;
+  const checklistAllDoneHtml = (total && checked === total) ? '<p style="color:var(--ok);font-style:italic;">Tous les points de la checklist sont terminés.</p>' : '';
 
   function formatFicheFieldForReport(f, val){
     if(f.type === 'choices'){
@@ -4931,15 +4954,16 @@ function buildReportHtmlFragment(){
     </div>` : '';
 
   const genNotes = (currentData.generalNotes || '').trim();
-  const ccItems = currentData.customChecklist || [];
-  const notesHtml = (genNotes || ccItems.length) ? `
+  const ccItemsAll = currentData.customChecklist || [];
+  const ccItems = ccItemsAll.filter(it => !(it.checked && !it.ignored));
+  const notesHtml = (genNotes || ccItemsAll.length) ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">NOTES GÉNÉRALES</h3>
     ${genNotes ? `<p style="white-space:pre-wrap;font-size:13px;color:var(--graphite);">${escapeHtml(genNotes)}</p>` : ''}
     ${ccItems.length ? `<h4 class="rp-h4">Points complémentaires</h4>${ccItems.map(it => `
-      <div class="rp-item ${it.ignored ? 'ignored' : (it.checked?'done':'pending')}">
-        <div class="mark">${it.ignored ? '⊘' : (it.checked?'✓':'○')}</div>
+      <div class="rp-item ${it.ignored ? 'ignored' : 'pending'}">
+        <div class="mark">${it.ignored ? '⊘' : '○'}</div>
         <div><div>${escapeHtml(it.text)}</div>${it.note?`<div class="note">${escapeHtml(it.note)}</div>`:''}</div>
-      </div>`).join('')}` : ''}` : '';
+      </div>`).join('')}` : (ccItemsAll.length ? '<p style="color:var(--ok);font-style:italic;">Tous les points complémentaires sont terminés.</p>' : '')}` : '';
 
   return `
     <h2 class="rp-title">${escapeHtml(p.client || p.name || 'Client')}</h2>
@@ -4953,7 +4977,7 @@ function buildReportHtmlFragment(){
     </div>
     ${reportSections.checklist ? `
       <h3 class="rp-h3" style="background:var(--amber-dark)">CHECKLIST DE PLANIFICATION</h3>
-      ${checklistHtml}
+      ${checklistHtml}${checklistAllDoneHtml}
     ` : ''}
     ${reportSections.fiche ? `
       <h3 class="rp-h3" style="background:var(--amber-dark)">FICHE DE VISITE DE CHANTIER</h3>
@@ -5076,6 +5100,7 @@ async function exportAllData(){
     seanceMatin,
     todoList,
     seance1a1,
+    seanceCommander,
     seanceOpeBoard,
     appOptions,
     checklistTemplates,
@@ -5121,6 +5146,7 @@ async function importAllData(file){
     }
     if(payload.todoList){ todoList = payload.todoList; saveSeance('todo'); }
     if(payload.seance1a1){ seance1a1 = payload.seance1a1; saveSeance('1a1'); }
+    if(payload.seanceCommander){ seanceCommander = payload.seanceCommander; saveSeance('commander'); }
     if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
     if(payload.appOptions){
       appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [], customFlux: payload.appOptions.customFlux || [] };
@@ -5172,6 +5198,7 @@ async function init(){
   seanceMatin = loadSeanceMatin();
   todoList = loadSeance('todo_list');
   seance1a1 = loadSeance('seance_1a1');
+  seanceCommander = loadSeance('seance_commander');
   seanceOpeBoard = loadSeanceOpeBoard();
   morningRoutineItems = loadMorningRoutineItems();
   if(!lsGet('morningRoutineV2Seeded')){
