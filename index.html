@@ -746,7 +746,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.2.7'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2195,7 +2195,7 @@ async function renderSeanceView(id){
       ${ordered.length ? ordered.map(it => {
         const hasNote = !!(it.note && it.note.trim());
         const expanded = expandedItemIds.has(it.id);
-        const originTag = (id === 'todo' && it.origin && it.origin !== 'todo')
+        const originTag = ((id === 'todo' || id === 'commander') && it.origin && it.origin !== 'todo')
           ? `<span class="item-badge origin-badge" title="Origine">${it.origin==='project' ? '📁 ' + escapeHtml(it.originProjectName||'Projet') : originLabels[it.origin]}</span>` : '';
         return `
         <div class="seance-item ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
@@ -4784,6 +4784,7 @@ function renderNotesTab(){
             const hasNote = !!(it.note && it.note.trim());
             const expanded = expandedItemIds.has(it.id);
             const rowClass = it.ignored ? 'ignored' : (it.checked ? 'done' : '');
+            const inCommander = !!(it.linkId && seanceCommander.some(x => x.linkId === it.linkId));
             return `
             <div class="cc-item ${rowClass}" data-id="${it.id}">
               <div class="cc-item-top">
@@ -4791,6 +4792,7 @@ function renderNotesTab(){
                 <span class="cc-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
                 ${hasNote?'<span class="item-badge" title="A une note">🗒</span>':''}
                 ${it.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':''}
+                ${inCommander?'<span class="item-badge" title="Dans À commander">🛒</span>':''}
                 <button class="cc-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
                 <button class="cc-del" data-id="${it.id}" title="Supprimer">×</button>
               </div>
@@ -4800,6 +4802,9 @@ function renderNotesTab(){
                   <input type="checkbox" class="cc-ignore" data-id="${it.id}" ${it.ignored?'checked':''}>
                   🚫 Ignorer ce point (compté comme fait, affiché en rouge)
                 </label>
+                ${inCommander
+                  ? '<div class="item-ignore-row" style="cursor:default;">🛒 Déjà dans « À commander » (lié — coché ici, il l’est là-bas aussi)</div>'
+                  : `<button class="btn btn-ghost btn-sm cc-to-commander" data-id="${it.id}" style="margin-top:8px;">🛒 Ajouter à « À commander »</button>`}
               ` : ''}
             </div>
           `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
@@ -4846,6 +4851,17 @@ function renderNotesTab(){
       if(cb.checked) it.checked = true;
     }
     scheduleSaveProjectData();
+    renderNotesTab();
+  }));
+  container.querySelectorAll('.cc-to-commander').forEach(btn => btn.addEventListener('click', () => {
+    const it = (currentData.customChecklist || []).find(x => x.id === btn.dataset.id);
+    if(!it) return;
+    if(!it.linkId) it.linkId = uid();
+    const p = projects.find(x => x.id === currentProjectId);
+    seanceCommander.unshift({ id: uid(), text: it.text, checked: it.checked, note: it.note || '', linkId: it.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? p.name : '' });
+    scheduleSaveProjectData();
+    scheduleSaveSeance('commander');
+    showToast('Ajouté à « À commander »');
     renderNotesTab();
   }));
   container.querySelectorAll('.cc-check').forEach(cb => cb.addEventListener('change', () => {
