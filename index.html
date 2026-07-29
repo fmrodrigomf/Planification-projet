@@ -750,7 +750,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.3.0'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.3.1'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -3653,7 +3653,10 @@ async function renderSettingsView(){
   $('#trSecProjects').addEventListener('change', e => { tasksReportSections.projects = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecCcDetail').addEventListener('change', e => { tasksReportSections.ccDetail = e.target.checked; refreshTasksReportPreview(); });
   $('#downloadTasksReportBtn').addEventListener('click', downloadTasksReport);
-  $('#printTasksReportBtn').addEventListener('click', () => window.print());
+  $('#printTasksReportBtn').addEventListener('click', async () => {
+    $('#reportPreview').innerHTML = await buildTasksReportHtmlFragment();
+    window.print();
+  });
   renderIgnoredStats();
 
   let secIdx = 0;
@@ -5084,7 +5087,10 @@ function renderRapportTab(){
   $('#repSecFiche').addEventListener('change', e => { reportSections.fiche = e.target.checked; $('#reportPreview').innerHTML = buildReportHtmlFragment(); });
   $('#repSecNotes').addEventListener('change', e => { reportSections.notes = e.target.checked; $('#reportPreview').innerHTML = buildReportHtmlFragment(); });
   $('#downloadReportBtn').addEventListener('click', downloadReport);
-  $('#printReportBtn').addEventListener('click', () => window.print());
+  $('#printReportBtn').addEventListener('click', () => {
+    $('#reportPreview').innerHTML = buildReportHtmlFragment();
+    window.print();
+  });
 }
 
 function downloadReport(){
