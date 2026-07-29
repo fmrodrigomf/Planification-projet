@@ -750,7 +750,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.3.1'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.3.2'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -4959,21 +4959,20 @@ function buildReportHtmlFragment(){
       const items = sec.items.map((label, idx) => {
         const k = itemKey(sec.id, idx);
         const st = currentData.checklist[k] || { checked:false, note:'', photos:[], ignored:false };
-        if(st.checked && !st.ignored) return ''; // hide items marked done (green check) — keep pending and ignored (red)
         const photosHtml = (st.photos && st.photos.length) ? `<div class="rp-photos">${st.photos.map(ph=>`<img src="${ph}" class="rp-photo">`).join('')}</div>` : '';
-        const rpClass = st.ignored ? 'ignored' : 'pending';
-        const rpMark = st.ignored ? '⊘' : '○';
+        const rpClass = st.ignored ? 'ignored' : (st.checked ? 'done' : 'pending');
+        const rpMark = st.ignored ? '⊘' : (st.checked ? '✓' : '○');
         return `<div class="rp-item ${rpClass}">
           <div class="mark">${rpMark}</div>
           <div><div>${escapeHtml(label)}</div>${st.note?`<div class="note">${escapeHtml(st.note)}</div>`:''}</div>
           ${photosHtml}
         </div>`;
       }).join('');
-      return items ? `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}` : '';
+      return `<h4 class="rp-h4">${escapeHtml(sec.title)}</h4>${items}`;
     }).join('');
-    return secs ? `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}` : '';
+    return `<h3 class="rp-h3">${escapeHtml(partie.title)}</h3>${secs}`;
   }).join('') : `<p style="color:var(--steel);font-style:italic;">Aucune checklist de planification disponible pour le flux « ${escapeHtml(flux || '—')} ».</p>`;
-  const checklistAllDoneHtml = (total && checked === total) ? '<p style="color:var(--ok);font-style:italic;">Tous les points de la checklist sont terminés.</p>' : '';
+  const checklistAllDoneHtml = '';
 
   function formatFicheFieldForReport(f, val){
     if(f.type === 'choices'){
