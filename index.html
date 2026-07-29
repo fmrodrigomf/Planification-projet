@@ -750,7 +750,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.2.9'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.3.0'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -3251,7 +3251,7 @@ function computeIgnoredStats(){
   })).sort((a,b) => b.ignoredCount - a.ignoredCount);
 }
 
-let tasksReportSections = { matin:true, ope:true, todo:true, un1a1:true, commander:true, projects:false, ccDetail:false };
+let tasksReportSections = { matin:true, ope:true, todo:true, todoManual:false, un1a1:true, commander:true, projects:false, ccDetail:false };
 
 function loadAnyProjectData(id){
   if(id === currentProjectId && currentData) return currentData;
@@ -3328,6 +3328,9 @@ async function buildTasksReportHtmlFragment(){
     ${tasksReportSections.todo ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">✅ TO DO LIST</h3>
     ${itemsBlock(todoList)}` : ''}
+    ${tasksReportSections.todoManual ? `
+    <h3 class="rp-h3" style="background:var(--amber-dark)">📝 TO DO — MANUEL UNIQUEMENT</h3>
+    ${itemsBlock(todoList.filter(it => (it.origin||'todo') === 'todo'))}` : ''}
     ${tasksReportSections.un1a1 ? `
     <h3 class="rp-h3" style="background:var(--amber-dark)">1️⃣ SÉANCE 1 À 1</h3>
     ${itemsBlock(seance1a1)}` : ''}
@@ -3425,6 +3428,7 @@ async function renderSettingsView(){
           <label class="choice-chip"><input type="checkbox" id="trSecMatin" ${tasksReportSections.matin?'checked':''}> Séance du matin</label>
           <label class="choice-chip"><input type="checkbox" id="trSecOpe" ${tasksReportSections.ope?'checked':''}> Séance OPE</label>
           <label class="choice-chip"><input type="checkbox" id="trSecTodo" ${tasksReportSections.todo?'checked':''}> To do list complète</label>
+          <label class="choice-chip"><input type="checkbox" id="trSecTodoManual" ${tasksReportSections.todoManual?'checked':''}> To do — Manuel uniquement</label>
           <label class="choice-chip"><input type="checkbox" id="trSec1a1" ${tasksReportSections.un1a1?'checked':''}> Séance 1 à 1</label>
           <label class="choice-chip"><input type="checkbox" id="trSecCommander" ${tasksReportSections.commander?'checked':''}> À commander</label>
           <label class="choice-chip"><input type="checkbox" id="trSecProjects" ${tasksReportSections.projects?'checked':''}> Résumé de tous les projets</label>
@@ -3643,6 +3647,7 @@ async function renderSettingsView(){
   $('#trSecMatin').addEventListener('change', e => { tasksReportSections.matin = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecOpe').addEventListener('change', e => { tasksReportSections.ope = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecTodo').addEventListener('change', e => { tasksReportSections.todo = e.target.checked; refreshTasksReportPreview(); });
+  $('#trSecTodoManual').addEventListener('change', e => { tasksReportSections.todoManual = e.target.checked; refreshTasksReportPreview(); });
   $('#trSec1a1').addEventListener('change', e => { tasksReportSections.un1a1 = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecCommander').addEventListener('change', e => { tasksReportSections.commander = e.target.checked; refreshTasksReportPreview(); });
   $('#trSecProjects').addEventListener('change', e => { tasksReportSections.projects = e.target.checked; refreshTasksReportPreview(); });
