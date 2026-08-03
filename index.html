@@ -273,6 +273,8 @@
   .echeance-hint{font-size:11.5px;color:var(--steel);font-family:var(--font-mono);}
   .modal select{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);}
   .modal select:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
+  .modal textarea{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);resize:vertical;}
+  .modal textarea:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
   .modal-scroll{max-height:70vh;overflow-y:auto;padding-right:4px;}
   .manual-modal{width:560px;}
   .manual-scroll{max-height:65vh;}
@@ -305,6 +307,7 @@
   .settings-add-row{display:flex;gap:8px;}
   .settings-add-input{flex:1;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--graphite);}
   .settings-hint{font-size:12.5px;color:var(--steel);line-height:1.5;margin:0 0 12px;}
+  .pm-link-info{background:var(--amber-tint);border:1px solid var(--amber);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--graphite);line-height:1.5;margin:10px 0 0;}
   .cc-progress{font-family:var(--font-mono);font-size:11.5px;color:var(--steel);}
   .popt-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
   .popt-item{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:10px 12px;}
@@ -349,7 +352,8 @@
   .seance-add-row input{flex:1;border:1px solid var(--line);border-radius:4px;padding:9px 12px;font-size:13.5px;background:var(--paper-2);color:var(--graphite);}
   .seance-add-row input:focus{outline:2px solid var(--amber);outline-offset:-1px;}
   .seance-list{display:flex;flex-direction:column;gap:8px;}
-  .seance-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease;}
+  .seance-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;transition:opacity .3s ease,border-color .12s ease;cursor:pointer;}
+  .seance-item:hover{border-color:var(--amber);}
   .seance-item-top{display:flex;align-items:flex-start;gap:10px;}
   .seance-item-top .seance-check{margin-top:3px;}
   .seance-item-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-left:27px;}
@@ -364,7 +368,8 @@
   .seance-del:hover{color:var(--danger);}
 
   .cc-list{display:flex;flex-direction:column;gap:8px;}
-  .cc-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;}
+  .cc-item{display:flex;flex-direction:column;gap:6px;background:var(--paper-2);border:1px solid var(--line);border-radius:5px;padding:11px 14px;cursor:pointer;transition:border-color .12s ease;}
+  .cc-item:hover{border-color:var(--amber);}
   .cc-item-top{display:flex;align-items:flex-start;gap:10px;}
   .cc-item-top .cc-check{margin-top:3px;}
   .cc-item .cc-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
@@ -750,7 +755,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.3.2'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.3.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1356,6 +1361,142 @@ function customPrompt(title, placeholder){
       if(e.key === 'Enter') close(input.value.trim() || null);
       if(e.key === 'Escape') close(null);
     });
+  });
+}
+
+const POINT_CATEGORIES = [
+  { id:'todo', label:'✅ To do list', getArr: () => todoList, save: () => scheduleSaveSeance('todo') },
+  { id:'matin_discuter', label:'🌅 Séance du matin — À discuter', getArr: () => seanceMatin.discuter, save: () => scheduleSaveSeanceMatin() },
+  { id:'matin_faire', label:'🌅 Séance du matin — À faire', getArr: () => seanceMatin.faire, save: () => scheduleSaveSeanceMatin() },
+  { id:'ope_staging', label:'🛠 Séance OPE — Non triés', getArr: () => seanceOpeBoard.staging, save: () => scheduleSaveSeanceOpe() },
+  { id:'ope_derniere', label:'🛠 Séance OPE — Dernière séance', getArr: () => seanceOpeBoard.derniere, save: () => scheduleSaveSeanceOpe() },
+  { id:'ope_jour', label:'🛠 Séance OPE — Séance du jour', getArr: () => seanceOpeBoard.jour, save: () => scheduleSaveSeanceOpe() },
+  { id:'1a1', label:'1️⃣ Séance 1 à 1', getArr: () => seance1a1, save: () => scheduleSaveSeance('1a1') },
+  { id:'commander', label:'🛒 À commander', getArr: () => seanceCommander, save: () => scheduleSaveSeance('commander') }
+];
+function pointCategoryOf(id){ return POINT_CATEGORIES.find(c => c.id === id); }
+
+// Universal add/edit popup used by To do list, Séance du matin, Séance OPE, 1 à 1 and À commander.
+// opts: { mode:'add'|'edit', categoryId, item (for edit), onDone }
+// Asks for confirmation before actually marking a point as done, to avoid accidental taps.
+// Reverts the checkbox visually if the user says "Non". Unchecking never asks.
+async function confirmDoneCheck(cb){
+  if(!cb.checked) return true;
+  const ok = await customConfirm('Le point a-t-il été effectivement traité ?', { okText:'Oui', cancelText:'Non', danger:false });
+  if(!ok) cb.checked = false;
+  return ok;
+}
+
+function openPointModal(opts){
+  const { mode, item } = opts;
+  let categoryId = opts.categoryId;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  const originLabelsPm = { todo:'📝 Manuel', matin:'🌅 Séance du matin', ope:'🛠 Séance OPE', '1a1':'1️⃣ Séance 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
+  const linkInfoHtml = (mode === 'edit' && item && item.linkId) ? `
+    <div class="pm-link-info">
+      🔗 Ce point est lié — le modifier ou le supprimer agit aussi sur ses copies dans les autres listes.
+      ${item.origin && item.origin !== 'todo' ? `<br>Origine : <b>${item.origin==='project' ? '📁 ' + escapeHtml(item.originProjectName||'Projet') : originLabelsPm[item.origin]}</b>` : ''}
+    </div>
+  ` : '';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>${mode === 'add' ? 'Nouveau point' : 'Modifier le point'}</h3>
+      ${linkInfoHtml}
+      <div class="modal-scroll">
+        <label>Titre</label>
+        <input type="text" id="pmTitle" placeholder="Titre du point">
+        <label>Liste</label>
+        <select id="pmCategory">
+          ${POINT_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===categoryId?'selected':''}>${c.label}</option>`).join('')}
+        </select>
+        <label>Note (optionnel)</label>
+        <textarea id="pmNote" rows="3" placeholder="Note…"></textarea>
+        <div id="pmUrgentWrap" style="display:none;margin-top:6px;">
+          <label class="choice-chip"><input type="checkbox" id="pmUrgent"> 🔥 Urgent (remonte tout en haut de la To do list)</label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        ${mode === 'edit' ? '<button class="btn-text" id="pmDelete" style="color:var(--danger);">Supprimer</button>' : ''}
+        <button class="btn-text" id="pmCancel">Annuler</button>
+        <button class="btn btn-primary" id="pmSave">${mode === 'add' ? '+ Ajouter' : 'Enregistrer'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const titleInput = $('#pmTitle');
+  const noteInput = $('#pmNote');
+  const catSelect = $('#pmCategory');
+  const urgentWrap = $('#pmUrgentWrap');
+  const urgentCb = $('#pmUrgent');
+  if(item){
+    titleInput.value = item.text || '';
+    noteInput.value = item.note || '';
+    urgentCb.checked = !!item.urgent;
+  }
+  function updateUrgentVisibility(){ urgentWrap.style.display = catSelect.value === 'todo' ? 'block' : 'none'; }
+  updateUrgentVisibility();
+  catSelect.addEventListener('change', updateUrgentVisibility);
+  titleInput.focus();
+
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  $('#pmCancel').addEventListener('click', close);
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  const deleteBtn = $('#pmDelete');
+  if(deleteBtn){
+    deleteBtn.addEventListener('click', async () => {
+      const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Il est lié : ses copies dans les autres listes seront supprimées aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+      if(!ok) return;
+      if(item.linkId){
+        deleteLinkedItems(item.linkId);
+        saveAllLinkedLists();
+      } else {
+        const cat = pointCategoryOf(categoryId);
+        const arr = cat.getArr();
+        const idx = arr.findIndex(x => x.id === item.id);
+        if(idx >= 0) arr.splice(idx, 1);
+        cat.save();
+      }
+      close();
+      if(opts.onDone) opts.onDone();
+    });
+  }
+
+  $('#pmSave').addEventListener('click', () => {
+    const text = titleInput.value.trim();
+    if(!text){ showToast('Le titre ne peut pas être vide'); return; }
+    const note = noteInput.value;
+    const newCategoryId = catSelect.value;
+    const urgent = urgentCb.checked;
+
+    if(mode === 'add'){
+      const cat = pointCategoryOf(newCategoryId);
+      cat.getArr().unshift({ id: uid(), text, note, checked:false, urgent: newCategoryId==='todo' ? urgent : undefined });
+      cat.save();
+    } else {
+      item.text = text;
+      item.note = note;
+      if(newCategoryId === 'todo') item.urgent = urgent;
+      if(item.linkId) syncLinkedItems(item.linkId, { text, note });
+      if(newCategoryId !== categoryId){
+        const oldCat = pointCategoryOf(categoryId);
+        const newCat = pointCategoryOf(newCategoryId);
+        const oldArr = oldCat.getArr();
+        const idx = oldArr.findIndex(x => x.id === item.id);
+        if(idx >= 0) oldArr.splice(idx, 1);
+        newCat.getArr().unshift(item);
+        oldCat.save();
+        newCat.save();
+      } else {
+        pointCategoryOf(categoryId).save();
+      }
+      if(item.linkId) saveAllLinkedLists();
+    }
+    close();
+    showToast(mode === 'add' ? 'Point ajouté' : 'Point mis à jour');
+    if(opts.onDone) opts.onDone();
   });
 }
 
@@ -2189,6 +2330,7 @@ async function renderSeanceView(id){
   if(id === 'ope'){ renderSeanceOpeView(); return; }
   if(id === 'matin'){ renderSeanceMatinBoard(); return; }
 
+  const catIdFor = id === 'todo' ? 'todo' : (id === '1a1' ? '1a1' : 'commander');
   const items = getSimpleList(id);
   const filtered = (id === 'todo' && todoOriginFilter !== 'all')
     ? items.filter(it => (it.origin || 'todo') === todoOriginFilter)
@@ -2197,7 +2339,7 @@ async function renderSeanceView(id){
     ? filtered.filter(it => !it.checked && it.urgent).concat(filtered.filter(it => !it.checked && !it.urgent)).concat(filtered.filter(it => it.checked))
     : filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
 
-  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
+  const originLabels = { todo:'\ud83d\udcdd Manuel', matin:'\ud83c\udf05 Matin', ope:'\ud83d\udee0 OPE', '1a1':'1\ufe0f\u20e3 1 \u00e0 1', commander:'\ud83d\uded2 \u00c0 commander', project:'\ud83d\udcc1 Projet' };
   const filterBarHtml = (id === 'todo') ? `
     <div class="filter-pills" style="margin-bottom:16px;">
       ${['all','todo','matin','ope','1a1','commander','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
@@ -2207,43 +2349,25 @@ async function renderSeanceView(id){
   container.innerHTML = seanceSubNavHtml(id) + `
     <div class="dashboard-header">
       <h2>${seanceTitleFor(id)}</h2>
-      <p>Coche un point pour le faire descendre en bas de liste, en transparence. Rien n'est supprimé, sauf si tu cliques sur ×.</p>
+      <p>Coche un point pour le faire descendre en bas de liste, en transparence. Touche un point pour l'ouvrir et le modifier.</p>
     </div>
-    <div class="seance-add-row">
-      <input type="text" id="seanceNewItem" placeholder="Ajouter un point…">
-      <button class="btn btn-primary" id="seanceAddBtn">+ Ajouter</button>
-    </div>
+    <button class="btn btn-primary" id="seanceAddBtn" style="margin-bottom:16px;">+ Ajouter un point</button>
     ${filterBarHtml}
     <div class="seance-list">
       ${ordered.length ? ordered.map(it => {
         const hasNote = !!(it.note && it.note.trim());
-        const expanded = expandedItemIds.has(it.id);
-        const originTag = ((id === 'todo' || id === 'commander') && it.origin && it.origin !== 'todo')
-          ? `<span class="item-badge origin-badge" title="Origine">${it.origin==='project' ? '📁 ' + escapeHtml(it.originProjectName||'Projet') : originLabels[it.origin]}</span>` : '';
         const badgesRow = [
-          hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
-          it.linkId?'<span class="item-badge" title="Lié à une autre liste">🔗</span>':'',
-          (id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">🔥</span>':'',
-          originTag
+          hasNote?'<span class="item-badge" title="A une note">\ud83d\udde2</span>':'',
+          (id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">\ud83d\udd25</span>':''
         ].filter(Boolean).join('');
         return `
         <div class="seance-item ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
-            <span class="seance-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-            <button class="seance-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
-            <button class="seance-del" data-id="${it.id}" title="Supprimer">×</button>
+            <span class="seance-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
+            <button class="seance-del" data-id="${it.id}" title="Supprimer">\u00d7</button>
           </div>
           ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
-          ${expanded ? `
-            ${noteBlockHtml(it.id, it.note, 'seance-note', `data-id="${it.id}"`)}
-            ${id === 'todo' ? `
-              <label class="item-ignore-row">
-                <input type="checkbox" class="todo-urgent" data-id="${it.id}" ${it.urgent?'checked':''}>
-                🔥 Urgent (remonte tout en haut de la liste)
-              </label>
-            ` : ''}
-          ` : ''}
         </div>
       `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
@@ -2253,44 +2377,14 @@ async function renderSeanceView(id){
       todoOriginFilter = btn.dataset.originFilter;
       renderSeanceView('todo');
     }));
-    container.querySelectorAll('.todo-urgent').forEach(cb => cb.addEventListener('change', () => {
-      const it = todoList.find(x => x.id === cb.dataset.id);
-      if(it) it.urgent = cb.checked;
-      scheduleSaveSeance('todo');
-      renderSeanceView('todo');
-    }));
   }
 
-  function addItem(){
-    const input = $('#seanceNewItem');
-    const text = input.value.trim();
-    if(!text) return;
-    if(id === 'todo'){
-      getSimpleList('todo').unshift({ id: uid(), text, checked:false, note:'', origin:'todo' });
-      scheduleSaveSeance('todo');
-    } else if(id === '1a1' && appSettings.linkSeanceTodo){
-      const linkId = uid();
-      getSimpleList('1a1').unshift({ id: uid(), text, checked:false, note:'', linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'1a1' });
-      scheduleSaveSeance('1a1');
-      scheduleSaveSeance('todo');
-    } else if(id === 'commander' && appSettings.linkSeanceTodo){
-      const linkId = uid();
-      getSimpleList('commander').unshift({ id: uid(), text, checked:false, note:'', linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'commander' });
-      scheduleSaveSeance('commander');
-      scheduleSaveSeance('todo');
-    } else {
-      getSimpleList(id).unshift({ id: uid(), text, checked:false, note:'' });
-      scheduleSaveSeance(id);
-    }
-    input.value = '';
-    renderSeanceView(id);
-  }
-  $('#seanceAddBtn').addEventListener('click', addItem);
-  $('#seanceNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
+  $('#seanceAddBtn').addEventListener('click', () => {
+    openPointModal({ mode:'add', categoryId: catIdFor, onDone: () => renderSeanceView(id) });
+  });
 
-  container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', () => {
+  container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', async () => {
+    if(!(await confirmDoneCheck(cb))) return;
     const it = getSimpleList(id).find(x => x.id === cb.dataset.id);
     if(it){
       it.checked = cb.checked;
@@ -2303,9 +2397,10 @@ async function renderSeanceView(id){
     }
     renderSeanceView(id);
   }));
-  container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async () => {
+  container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const it = getSimpleList(id).find(x => x.id === btn.dataset.id);
-    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
@@ -2316,29 +2411,12 @@ async function renderSeanceView(id){
     }
     renderSeanceView(id);
   }));
-  container.querySelectorAll('.seance-text').forEach(span => span.addEventListener('blur', () => {
-    const it = getSimpleList(id).find(x => x.id === span.dataset.id);
-    const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){
-      it.text = newText;
-      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
-      else { saveSeance(id); }
-    }
+  container.querySelectorAll('.seance-item').forEach(row => row.addEventListener('click', (e) => {
+    if(e.target.closest('.seance-check') || e.target.closest('.seance-del')) return;
+    const it = getSimpleList(id).find(x => x.id === row.dataset.id);
+    if(!it) return;
+    openPointModal({ mode:'edit', categoryId: catIdFor, item: it, onDone: () => renderSeanceView(id) });
   }));
-  container.querySelectorAll('.seance-note').forEach(ta => ta.addEventListener('input', () => {
-    const it = getSimpleList(id).find(x => x.id === ta.dataset.id);
-    if(it){
-      it.note = ta.value;
-      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
-      else { scheduleSaveSeance(id); }
-    }
-  }));
-  container.querySelectorAll('.seance-expand').forEach(btn => btn.addEventListener('click', () => {
-    const itemId = btn.dataset.id;
-    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
-    renderSeanceView(id);
-  }));
-  wireNoteToggles(container, () => renderSeanceView(id));
   wireSeanceSubNav(container);
 }
 
@@ -2346,21 +2424,17 @@ async function renderSeanceView(id){
 
 function opeItemCardHtml(it, listName){
   const hasNote = !!(it.note && it.note.trim());
-  const expanded = expandedItemIds.has(it.id);
   const badgesRow = [
-    hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
-    it.linkId?'<span class="item-badge" title="Lié à la To do list">🔗</span>':''
+    hasNote?'<span class="item-badge" title="A une note">🗒</span>':''
   ].filter(Boolean).join('');
   return `
     <div class="ope-card ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
       <div class="ope-card-top">
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
-        <span class="ope-text" data-id="${it.id}" data-list="${listName}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-        <button class="ope-expand" data-id="${it.id}" data-list="${listName}" title="Note">${expanded?'▾':'▸'}</button>
+        <span class="ope-text" data-id="${it.id}" data-list="${listName}">${escapeHtml(it.text)}</span>
         <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
       </div>
       ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
-      ${expanded ? noteBlockHtml(it.id, it.note, 'ope-note', `data-id="${it.id}" data-list="${listName}"`) : ''}
     </div>
   `;
 }
@@ -2386,45 +2460,30 @@ function renderSeanceMatinBoard(){
 
   container.innerHTML = seanceSubNavHtml('matin') + `
     <div class="dashboard-header">
-      <h2>Séance du matin</h2>
-      <p>Deux colonnes : « À discuter » pour préparer la séance, « À faire » pour les actions concrètes. Glisse un point de l'une à l'autre si besoin.</p>
+      <h2>S\u00e9ance du matin</h2>
+      <p>Deux colonnes : \u00ab \u00c0 discuter \u00bb pour pr\u00e9parer la s\u00e9ance, \u00ab \u00c0 faire \u00bb pour les actions concr\u00e8tes. Touche un point pour l'ouvrir, glisse-le pour changer de colonne.</p>
     </div>
     <div class="ope-board">
       <div class="ope-column" data-list="discuter">
-        <div class="ope-column-head"><h4>🗣 À discuter</h4><span class="opt-count">${m.discuter.length} pt(s)</span></div>
-        <div class="ope-column-add"><input type="text" class="matin-col-add-input" data-list="discuter" placeholder="Ajouter un point à discuter…"></div>
+        <div class="ope-column-head"><h4>\ud83d\udde3 \u00c0 discuter</h4><span class="opt-count">${m.discuter.length} pt(s)</span></div>
+        <button class="btn btn-ghost btn-sm matin-add-btn" data-list="discuter" style="margin:8px 0;">+ Ajouter</button>
         <div class="ope-column-body">${m.discuter.length ? m.discuter.map(it => opeItemCardHtml(it,'discuter')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
       </div>
       <div class="ope-column" data-list="faire">
-        <div class="ope-column-head"><h4>✅ À faire</h4><span class="opt-count">${m.faire.length} pt(s)</span></div>
-        <div class="ope-column-add"><input type="text" class="matin-col-add-input" data-list="faire" placeholder="Ajouter un point à faire…"></div>
+        <div class="ope-column-head"><h4>\u2705 \u00c0 faire</h4><span class="opt-count">${m.faire.length} pt(s)</span></div>
+        <button class="btn btn-ghost btn-sm matin-add-btn" data-list="faire" style="margin:8px 0;">+ Ajouter</button>
         <div class="ope-column-body">${m.faire.length ? m.faire.map(it => opeItemCardHtml(it,'faire')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
       </div>
     </div>
   `;
 
-  function makeMatinItem(text){
-    if(appSettings.linkSeanceTodo){
-      const linkId = uid();
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'matin' });
-      scheduleSaveSeance('todo');
-      return { id: uid(), text, note:'', checked:false, linkId };
-    }
-    return { id: uid(), text, note:'', checked:false };
-  }
+  container.querySelectorAll('.matin-add-btn').forEach(btn => btn.addEventListener('click', () => {
+    const catId = btn.dataset.list === 'discuter' ? 'matin_discuter' : 'matin_faire';
+    openPointModal({ mode:'add', categoryId: catId, onDone: renderSeanceMatinBoard });
+  }));
 
-  container.querySelectorAll('.matin-col-add-input').forEach(inp => {
-    inp.addEventListener('keydown', e => {
-      if(e.key !== 'Enter') return;
-      const text = inp.value.trim();
-      if(!text) return;
-      m[inp.dataset.list].unshift(makeMatinItem(text));
-      scheduleSaveSeanceMatin();
-      renderSeanceMatinBoard();
-    });
-  });
-
-  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', () => {
+  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', async () => {
+    if(!(await confirmDoneCheck(cb))) return;
     const it = m[cb.dataset.list].find(x => x.id === cb.dataset.id);
     if(it){
       it.checked = cb.checked;
@@ -2438,9 +2497,10 @@ function renderSeanceMatinBoard(){
     renderSeanceMatinBoard();
   }));
 
-  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async () => {
+  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const it = m[btn.dataset.list].find(x => x.id === btn.dataset.id);
-    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
@@ -2452,25 +2512,15 @@ function renderSeanceMatinBoard(){
     renderSeanceMatinBoard();
   }));
 
-  container.querySelectorAll('.ope-text').forEach(span => span.addEventListener('blur', () => {
-    const it = m[span.dataset.list].find(x => x.id === span.dataset.id);
-    const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){
-      it.text = newText;
-      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
-      else { scheduleSaveSeanceMatin(); }
-    }
-  }));
-  container.querySelectorAll('.ope-note').forEach(ta => ta.addEventListener('input', () => {
-    const it = m[ta.dataset.list].find(x => x.id === ta.dataset.id);
-    if(it){
-      it.note = ta.value;
-      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
-      else { scheduleSaveSeanceMatin(); }
-    }
-  }));
-
   container.querySelectorAll('.ope-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if(e.target.closest('.ope-check') || e.target.closest('.ope-del')) return;
+      const listName = card.dataset.from;
+      const it = m[listName].find(x => x.id === card.dataset.id);
+      if(!it) return;
+      const catId = listName === 'discuter' ? 'matin_discuter' : 'matin_faire';
+      openPointModal({ mode:'edit', categoryId: catId, item: it, onDone: renderSeanceMatinBoard });
+    });
     card.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', JSON.stringify({ id: card.dataset.id, from: card.dataset.from }));
       card.classList.add('dragging');
@@ -2497,13 +2547,6 @@ function renderSeanceMatinBoard(){
     });
   });
 
-  container.querySelectorAll('.ope-expand').forEach(btn => btn.addEventListener('click', e => {
-    e.stopPropagation();
-    const itemId = btn.dataset.id;
-    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
-    renderSeanceMatinBoard();
-  }));
-  wireNoteToggles(container, renderSeanceMatinBoard);
   wireSeanceSubNav(container);
 }
 
@@ -2513,68 +2556,42 @@ function renderSeanceOpeView(){
 
   container.innerHTML = seanceSubNavHtml('ope') + `
     <div class="dashboard-header">
-      <h2>Séance OPE</h2>
-      <p>Ajoute un point, puis glisse-le dans la colonne voulue — ou écris directement dans la colonne visée.</p>
+      <h2>S\u00e9ance OPE</h2>
+      <p>Ajoute un point, glisse-le dans la colonne voulue, ou touche-le pour l'ouvrir et le modifier.</p>
     </div>
-    <div class="seance-add-row">
-      <input type="text" id="opeNewItem" placeholder="Ajouter un point…">
-      <button class="btn btn-primary" id="opeAddBtn">+ Ajouter</button>
-    </div>
+    <button class="btn btn-primary" id="opeAddBtn" style="margin-bottom:16px;">+ Ajouter un point</button>
     <div class="ope-staging" id="opeStagingZone" data-list="staging">
-      ${b.staging.length ? b.staging.map(it => opeItemCardHtml(it,'staging')).join('') : '<div class="ope-staging-empty">Les nouveaux points non triés apparaissent ici — glisse-les dans une colonne.</div>'}
+      ${b.staging.length ? b.staging.map(it => opeItemCardHtml(it,'staging')).join('') : '<div class="ope-staging-empty">Les nouveaux points non tri\u00e9s apparaissent ici \u2014 glisse-les dans une colonne.</div>'}
     </div>
     <div class="ope-board">
       <div class="ope-column" data-list="derniere">
-        <div class="ope-column-head"><h4>Dernière séance</h4><span class="opt-count">${b.derniere.length} pt(s)</span></div>
-        <div class="ope-column-add"><input type="text" class="ope-col-add-input" data-list="derniere" placeholder="Ajouter directement ici…"></div>
+        <div class="ope-column-head"><h4>Derni\u00e8re s\u00e9ance</h4><span class="opt-count">${b.derniere.length} pt(s)</span></div>
+        <button class="btn btn-ghost btn-sm ope-col-add-btn" data-list="derniere" style="margin:8px 0;">+ Ajouter</button>
         <div class="ope-column-body">${b.derniere.length ? b.derniere.map(it => opeItemCardHtml(it,'derniere')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
       </div>
       <div class="ope-column" data-list="jour">
-        <div class="ope-column-head"><h4>Séance du jour</h4><span class="opt-count">${b.jour.length} pt(s)</span></div>
-        <div class="ope-column-add"><input type="text" class="ope-col-add-input" data-list="jour" placeholder="Ajouter directement ici…"></div>
+        <div class="ope-column-head"><h4>S\u00e9ance du jour</h4><span class="opt-count">${b.jour.length} pt(s)</span></div>
+        <button class="btn btn-ghost btn-sm ope-col-add-btn" data-list="jour" style="margin:8px 0;">+ Ajouter</button>
         <div class="ope-column-body">${b.jour.length ? b.jour.map(it => opeItemCardHtml(it,'jour')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
       </div>
     </div>
     <div class="ope-actions">
-      <button class="btn btn-ghost" id="opeArchiveBtn">🔁 Déplacer « Séance du jour » vers « Dernière séance »</button>
-      <button class="btn btn-ghost" id="opeClearCheckedBtn">🗑 Supprimer les points cochés</button>
+      <button class="btn btn-ghost" id="opeArchiveBtn">\ud83d\udd01 D\u00e9placer \u00ab S\u00e9ance du jour \u00bb vers \u00ab Derni\u00e8re s\u00e9ance \u00bb</button>
+      <button class="btn btn-ghost" id="opeClearCheckedBtn">\ud83d\uddd1 Supprimer les points coch\u00e9s</button>
     </div>
   `;
 
-  function makeOpeItem(text){
-    if(appSettings.linkSeanceTodo){
-      const linkId = uid();
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'ope' });
-      scheduleSaveSeance('todo');
-      return { id: uid(), text, note:'', checked:false, linkId };
-    }
-    return { id: uid(), text, note:'', checked:false };
-  }
+  function opeCatId(listName){ return listName === 'staging' ? 'ope_staging' : (listName === 'derniere' ? 'ope_derniere' : 'ope_jour'); }
 
-  function addToStaging(){
-    const input = $('#opeNewItem');
-    const text = input.value.trim();
-    if(!text) return;
-    b.staging.unshift(makeOpeItem(text));
-    input.value = '';
-    scheduleSaveSeanceOpe();
-    renderSeanceOpeView();
-  }
-  $('#opeAddBtn').addEventListener('click', addToStaging);
-  $('#opeNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addToStaging(); });
-
-  container.querySelectorAll('.ope-col-add-input').forEach(inp => {
-    inp.addEventListener('keydown', e => {
-      if(e.key !== 'Enter') return;
-      const text = inp.value.trim();
-      if(!text) return;
-      b[inp.dataset.list].unshift(makeOpeItem(text));
-      scheduleSaveSeanceOpe();
-      renderSeanceOpeView();
-    });
+  $('#opeAddBtn').addEventListener('click', () => {
+    openPointModal({ mode:'add', categoryId:'ope_staging', onDone: renderSeanceOpeView });
   });
+  container.querySelectorAll('.ope-col-add-btn').forEach(btn => btn.addEventListener('click', () => {
+    openPointModal({ mode:'add', categoryId: opeCatId(btn.dataset.list), onDone: renderSeanceOpeView });
+  }));
 
-  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', () => {
+  container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', async () => {
+    if(!(await confirmDoneCheck(cb))) return;
     const it = b[cb.dataset.list].find(x => x.id === cb.dataset.id);
     if(it){
       it.checked = cb.checked;
@@ -2588,9 +2605,10 @@ function renderSeanceOpeView(){
     renderSeanceOpeView();
   }));
 
-  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async () => {
+  container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const it = b[btn.dataset.list].find(x => x.id === btn.dataset.id);
-    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est lié : sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
@@ -2602,25 +2620,14 @@ function renderSeanceOpeView(){
     renderSeanceOpeView();
   }));
 
-  container.querySelectorAll('.ope-text').forEach(span => span.addEventListener('blur', () => {
-    const it = b[span.dataset.list].find(x => x.id === span.dataset.id);
-    const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){
-      it.text = newText;
-      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
-      else { scheduleSaveSeanceOpe(); }
-    }
-  }));
-  container.querySelectorAll('.ope-note').forEach(ta => ta.addEventListener('input', () => {
-    const it = b[ta.dataset.list].find(x => x.id === ta.dataset.id);
-    if(it){
-      it.note = ta.value;
-      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
-      else { scheduleSaveSeanceOpe(); }
-    }
-  }));
-
   container.querySelectorAll('.ope-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if(e.target.closest('.ope-check') || e.target.closest('.ope-del')) return;
+      const listName = card.dataset.from;
+      const it = b[listName].find(x => x.id === card.dataset.id);
+      if(!it) return;
+      openPointModal({ mode:'edit', categoryId: opeCatId(listName), item: it, onDone: renderSeanceOpeView });
+    });
     card.addEventListener('dragstart', e => {
       e.dataTransfer.setData('text/plain', JSON.stringify({ id: card.dataset.id, from: card.dataset.from }));
       card.classList.add('dragging');
@@ -2649,20 +2656,20 @@ function renderSeanceOpeView(){
   });
 
   $('#opeArchiveBtn').addEventListener('click', async () => {
-    if(b.jour.length === 0){ showToast('Aucun point dans « Séance du jour »'); return; }
-    const ok = await customConfirm("Déplacer tous les points de « Séance du jour » vers « Dernière séance » ? Ils s'ajouteront à ce qui s'y trouve déjà.", { okText:'Déplacer', danger:false });
+    if(b.jour.length === 0){ showToast('Aucun point dans \u00ab S\u00e9ance du jour \u00bb'); return; }
+    const ok = await customConfirm("D\u00e9placer tous les points de \u00ab S\u00e9ance du jour \u00bb vers \u00ab Derni\u00e8re s\u00e9ance \u00bb ? Ils s'ajouteront \u00e0 ce qui s'y trouve d\u00e9j\u00e0.", { okText:'D\u00e9placer', danger:false });
     if(!ok) return;
     b.derniere = b.jour.concat(b.derniere);
     b.jour = [];
     scheduleSaveSeanceOpe();
     renderSeanceOpeView();
-    showToast('Séance déplacée');
+    showToast('S\u00e9ance d\u00e9plac\u00e9e');
   });
 
   $('#opeClearCheckedBtn').addEventListener('click', async () => {
     const totalChecked = allOpeItems().filter(it => it.checked).length;
-    if(totalChecked === 0){ showToast('Aucun point coché'); return; }
-    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coché(s) ? Les points liés seront aussi supprimés de leurs autres listes.`, { okText:'Supprimer' });
+    if(totalChecked === 0){ showToast('Aucun point coch\u00e9'); return; }
+    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coch\u00e9(s) ? Les points li\u00e9s seront aussi supprim\u00e9s de leurs autres listes.`, { okText:'Supprimer' });
     if(!ok) return;
     const linkIdsToDelete = new Set();
     ['staging','derniere','jour'].forEach(l => {
@@ -2673,13 +2680,6 @@ function renderSeanceOpeView(){
     saveAllLinkedLists();
     renderSeanceOpeView();
   });
-  container.querySelectorAll('.ope-expand').forEach(btn => btn.addEventListener('click', e => {
-    e.stopPropagation();
-    const itemId = btn.dataset.id;
-    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
-    renderSeanceOpeView();
-  }));
-  wireNoteToggles(container, renderSeanceOpeView);
   wireSeanceSubNav(container);
 }
 
@@ -2766,7 +2766,7 @@ function collectUpcomingVisits(daysAhead){
 }
 
 function canNotify(){
-  return typeof Notification !== 'undefined' && Notification.permission === 'granted';
+  return typeof Notification !== 'undefined' && Notification.permission === 'granted' && !appSettings.notifDisabled;
 }
 function fireSystemNotification(title, body){
   if(!canNotify()) return;
@@ -2875,6 +2875,100 @@ function openAddVisitModal(dateStr, onDone){
     close();
     showToast('RDV ajouté');
     if(onDone) onDone();
+  });
+}
+
+// Popup for a Points complémentaires item — title, note, "ignorer" and a shortcut to À commander.
+function openCcPointModal(opts){
+  const { mode, item } = opts;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  const inCommander = !!(item && item.linkId && seanceCommander.some(x => x.linkId === item.linkId));
+  const linkInfoHtml = (mode === 'edit' && item && item.linkId) ? `
+    <div class="pm-link-info">🔗 Ce point est lié à la To do list${inCommander ? ' et à « À commander »' : ''} — le modifier ou le supprimer agit aussi sur ces copies.</div>
+  ` : '';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>${mode === 'add' ? 'Nouveau point complémentaire' : 'Modifier le point'}</h3>
+      ${linkInfoHtml}
+      <div class="modal-scroll">
+        <label>Titre</label>
+        <input type="text" id="ccmTitle" placeholder="Titre du point">
+        <label>Note (optionnel)</label>
+        <textarea id="ccmNote" rows="3" placeholder="Note…"></textarea>
+        <label class="choice-chip" style="margin-top:10px;">
+          <input type="checkbox" id="ccmIgnore"> 🚫 Ignorer (compté comme fait, affiché en rouge)
+        </label>
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap;">
+        ${mode === 'edit' ? '<button class="btn-text" id="ccmDelete" style="color:var(--danger);">Supprimer</button>' : ''}
+        ${mode === 'edit' && !inCommander ? '<button class="btn-text" id="ccmToCommander">🛒 À commander</button>' : ''}
+        <button class="btn-text" id="ccmCancel">Annuler</button>
+        <button class="btn btn-primary" id="ccmSave">${mode === 'add' ? '+ Ajouter' : 'Enregistrer'}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const titleInput = $('#ccmTitle');
+  const noteInput = $('#ccmNote');
+  const ignoreCb = $('#ccmIgnore');
+  if(item){
+    titleInput.value = item.text || '';
+    noteInput.value = item.note || '';
+    ignoreCb.checked = !!item.ignored;
+  }
+  titleInput.focus();
+
+  function close(){ document.body.removeChild(backdrop); }
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+  $('#ccmCancel').addEventListener('click', close);
+  backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
+
+  const delBtn = $('#ccmDelete');
+  if(delBtn) delBtn.addEventListener('click', async () => {
+    const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    if(!ok) return;
+    if(item.linkId){
+      deleteLinkedItems(item.linkId);
+      saveAllLinkedLists();
+    }
+    currentData.customChecklist = (currentData.customChecklist || []).filter(x => x.id !== item.id);
+    scheduleSaveProjectData();
+    close();
+    if(opts.onDone) opts.onDone();
+  });
+
+  const cmdBtn = $('#ccmToCommander');
+  if(cmdBtn) cmdBtn.addEventListener('click', () => {
+    if(!item.linkId) item.linkId = uid();
+    const p = projects.find(x => x.id === currentProjectId);
+    seanceCommander.unshift({ id: uid(), text: item.text, checked: item.checked, note: item.note || '', linkId: item.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
+    scheduleSaveProjectData();
+    scheduleSaveSeance('commander');
+    showToast('Ajouté à « À commander »');
+    close();
+    if(opts.onDone) opts.onDone();
+  });
+
+  $('#ccmSave').addEventListener('click', () => {
+    const text = titleInput.value.trim();
+    if(!text){ showToast('Le titre ne peut pas être vide'); return; }
+    const note = noteInput.value;
+    const ignored = ignoreCb.checked;
+    if(mode === 'add'){
+      if(!currentData.customChecklist) currentData.customChecklist = [];
+      currentData.customChecklist.unshift({ id: uid(), text, note, checked:false, ignored });
+    } else {
+      item.text = text;
+      item.note = note;
+      item.ignored = ignored;
+      if(ignored) item.checked = true;
+      if(item.linkId){ syncLinkedItems(item.linkId, { text, note }); saveAllLinkedLists(); }
+    }
+    scheduleSaveProjectData();
+    close();
+    showToast(mode === 'add' ? 'Point ajouté' : 'Point mis à jour');
+    if(opts.onDone) opts.onDone();
   });
 }
 
@@ -3445,7 +3539,10 @@ async function renderSettingsView(){
       <div class="fiche-section-head"><h4>🔔 Notifications</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
         <p class="settings-hint">Pour recevoir de vraies notifications système (routine du matin, RDV à venir) : 1) sur iPhone, ajoute d'abord cette page à ton écran d'accueil depuis Safari (icône Partager → « Sur l'écran d'accueil ») — depuis un simple onglet, iOS bloque les notifications. 2) Active-les ci-dessous. Elles ne se déclenchent que tant que l'appli est ouverte ou récemment active — pas si le téléphone est verrouillé depuis longtemps.</p>
-        <button class="btn btn-primary" id="enableNotifBtn" style="align-self:flex-start;">🔔 Activer les notifications</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-primary" id="enableNotifBtn">🔔 Activer les notifications</button>
+          <button class="btn btn-ghost" id="disableNotifBtn">🔕 Désactiver les notifications</button>
+        </div>
         <p class="settings-hint" id="notifStatusText" style="margin-top:10px;margin-bottom:0;"></p>
       </div>
     </div>
@@ -3627,14 +3724,24 @@ async function renderSettingsView(){
     const el = $('#notifStatusText');
     if(!el) return;
     if(typeof Notification === 'undefined'){ el.textContent = "Non supporté par ce navigateur/appareil."; return; }
-    if(Notification.permission === 'granted') el.textContent = '✅ Notifications activées.';
+    if(Notification.permission === 'granted'){
+      el.textContent = appSettings.notifDisabled ? '🔕 Désactivées dans l\u2019appli (autorisation navigateur toujours accordée).' : '✅ Notifications activées.';
+    }
     else if(Notification.permission === 'denied') el.textContent = '🚫 Notifications refusées — réactive-les dans les réglages de Safari/du navigateur pour ce site.';
     else el.textContent = 'Pas encore activées.';
   }
   updateNotifStatusText();
+  $('#disableNotifBtn').addEventListener('click', () => {
+    appSettings.notifDisabled = true;
+    saveSettings();
+    updateNotifStatusText();
+    showToast('Notifications désactivées');
+  });
   $('#enableNotifBtn').addEventListener('click', async () => {
     if(typeof Notification === 'undefined'){ showToast('Non supporté sur cet appareil'); return; }
     const perm = await Notification.requestPermission();
+    appSettings.notifDisabled = false;
+    saveSettings();
     updateNotifStatusText();
     if(perm === 'granted') showToast('Notifications activées !');
   });
@@ -4800,52 +4907,37 @@ function renderNotesTab(){
 
   container.innerHTML = `
     <div class="fiche-section">
-      <div class="fiche-section-head"><h4>📝 Notes générales</h4></div>
+      <div class="fiche-section-head"><h4>\ud83d\udcdd Notes g\u00e9n\u00e9rales</h4></div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
-        <textarea id="projNotesTextarea" class="notes-textarea" placeholder="Notes générales sur ce projet…">${escapeHtml(notes)}</textarea>
+        <textarea id="projNotesTextarea" class="notes-textarea" placeholder="Notes g\u00e9n\u00e9rales sur ce projet\u2026">${escapeHtml(notes)}</textarea>
       </div>
     </div>
     <div class="fiche-section">
       <div class="fiche-section-head" style="display:flex;justify-content:space-between;align-items:center;">
-        <h4>☑ Points complémentaires</h4>
-        <span class="cc-progress">${ccChecked}/${ccTotal} points · ${ccPct}%</span>
+        <h4>\u2611 Points compl\u00e9mentaires</h4>
+        <span class="cc-progress">${ccChecked}/${ccTotal} points \u00b7 ${ccPct}%</span>
       </div>
       <div class="fiche-fields" style="grid-template-columns:1fr;">
-        <p class="settings-hint">Ajoute ici tout point spécifique à ce projet qui ne fait pas partie de la checklist standard. Coche-le une fois fait : il descend en bas de liste, en transparence, sans être supprimé.</p>
-        <div class="seance-add-row">
-          <input type="text" id="customChecklistNewItem" placeholder="Ajouter un point…">
-          <button class="btn btn-primary" id="customChecklistAddBtn">+ Ajouter</button>
-        </div>
-        <div class="cc-list">
+        <p class="settings-hint">Ajoute ici tout point sp\u00e9cifique \u00e0 ce projet qui ne fait pas partie de la checklist standard. Touche un point pour l'ouvrir et le modifier ; coche-le pour le marquer fait.</p>
+        <button class="btn btn-primary" id="customChecklistAddBtn" style="align-self:flex-start;">+ Ajouter un point</button>
+        <div class="cc-list" style="margin-top:14px;">
           ${ordered.length ? ordered.map(it => {
             const hasNote = !!(it.note && it.note.trim());
-            const expanded = expandedItemIds.has(it.id);
             const rowClass = it.ignored ? 'ignored' : (it.checked ? 'done' : '');
             const inCommander = !!(it.linkId && seanceCommander.some(x => x.linkId === it.linkId));
             const ccBadgesRow = [
-              hasNote?'<span class="item-badge" title="A une note">🗒</span>':'',
-              it.ignored?'<span class="item-badge" title="Point ignoré">🚫</span>':'',
-              inCommander?'<span class="item-badge" title="Dans À commander">🛒</span>':''
+              hasNote?'<span class="item-badge" title="A une note">\ud83d\udde2</span>':'',
+              it.ignored?'<span class="item-badge" title="Point ignor\u00e9">\ud83d\udeab</span>':'',
+              inCommander?'<span class="item-badge" title="Dans \u00c0 commander">\ud83d\uded2</span>':''
             ].filter(Boolean).join('');
             return `
             <div class="cc-item ${rowClass}" data-id="${it.id}">
               <div class="cc-item-top">
                 <input type="checkbox" class="cc-check" data-id="${it.id}" ${it.checked?'checked':''}>
-                <span class="cc-text" data-id="${it.id}" contenteditable="true" spellcheck="false">${escapeHtml(it.text)}</span>
-                <button class="cc-expand" data-id="${it.id}" title="Note">${expanded?'▾':'▸'}</button>
-                <button class="cc-del" data-id="${it.id}" title="Supprimer">×</button>
+                <span class="cc-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
+                <button class="cc-del" data-id="${it.id}" title="Supprimer">\u00d7</button>
               </div>
               ${ccBadgesRow ? `<div class="seance-item-badges">${ccBadgesRow}</div>` : ''}
-              ${expanded ? `
-                ${noteBlockHtml(it.id, it.note, 'cc-note', `data-id="${it.id}"`)}
-                <label class="item-ignore-row">
-                  <input type="checkbox" class="cc-ignore" data-id="${it.id}" ${it.ignored?'checked':''}>
-                  🚫 Ignorer ce point (compté comme fait, affiché en rouge)
-                </label>
-                ${inCommander
-                  ? '<div class="item-ignore-row" style="cursor:default;">🛒 Déjà dans « À commander » (lié — coché ici, il l’est là-bas aussi)</div>'
-                  : `<button class="btn btn-ghost btn-sm cc-to-commander" data-id="${it.id}" style="margin-top:8px;">🛒 Ajouter à « À commander »</button>`}
-              ` : ''}
             </div>
           `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant.</div>'}
         </div>
@@ -4858,53 +4950,12 @@ function renderNotesTab(){
     scheduleSaveProjectData();
   });
 
-  function addItem(){
-    const input = $('#customChecklistNewItem');
-    const text = input.value.trim();
-    if(!text) return;
-    if(!currentData.customChecklist) currentData.customChecklist = [];
-    const p = projects.find(x => x.id === currentProjectId);
-    if(appSettings.linkSeanceTodo){
-      const linkId = uid();
-      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false, linkId });
-      todoList.unshift({ id: uid(), text, checked:false, note:'', linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
-      scheduleSaveSeance('todo');
-    } else {
-      currentData.customChecklist.unshift({ id: uid(), text, checked:false, note:'', ignored:false });
-    }
-    input.value = '';
-    scheduleSaveProjectData();
-    renderNotesTab();
-  }
-  $('#customChecklistAddBtn').addEventListener('click', addItem);
-  $('#customChecklistNewItem').addEventListener('keydown', e => { if(e.key === 'Enter') addItem(); });
+  $('#customChecklistAddBtn').addEventListener('click', () => {
+    openCcPointModal({ mode:'add', onDone: renderNotesTab });
+  });
 
-  container.querySelectorAll('.cc-expand').forEach(btn => btn.addEventListener('click', () => {
-    const itemId = btn.dataset.id;
-    if(expandedItemIds.has(itemId)) expandedItemIds.delete(itemId); else expandedItemIds.add(itemId);
-    renderNotesTab();
-  }));
-  container.querySelectorAll('.cc-ignore').forEach(cb => cb.addEventListener('change', () => {
-    const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
-    if(it){
-      it.ignored = cb.checked;
-      if(cb.checked) it.checked = true;
-    }
-    scheduleSaveProjectData();
-    renderNotesTab();
-  }));
-  container.querySelectorAll('.cc-to-commander').forEach(btn => btn.addEventListener('click', () => {
-    const it = (currentData.customChecklist || []).find(x => x.id === btn.dataset.id);
-    if(!it) return;
-    if(!it.linkId) it.linkId = uid();
-    const p = projects.find(x => x.id === currentProjectId);
-    seanceCommander.unshift({ id: uid(), text: it.text, checked: it.checked, note: it.note || '', linkId: it.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
-    scheduleSaveProjectData();
-    scheduleSaveSeance('commander');
-    showToast('Ajouté à « À commander »');
-    renderNotesTab();
-  }));
-  container.querySelectorAll('.cc-check').forEach(cb => cb.addEventListener('change', () => {
+  container.querySelectorAll('.cc-check').forEach(cb => cb.addEventListener('change', async () => {
+    if(!(await confirmDoneCheck(cb))) return;
     const it = (currentData.customChecklist || []).find(x => x.id === cb.dataset.id);
     if(it){
       it.checked = cb.checked;
@@ -4913,9 +4964,10 @@ function renderNotesTab(){
     scheduleSaveProjectData();
     renderNotesTab();
   }));
-  container.querySelectorAll('.cc-del').forEach(btn => btn.addEventListener('click', async () => {
+  container.querySelectorAll('.cc-del').forEach(btn => btn.addEventListener('click', async (e) => {
+    e.stopPropagation();
     const it = (currentData.customChecklist || []).find(x => x.id === btn.dataset.id);
-    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Sa copie dans la To do list sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Sa copie dans la To do list sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
@@ -4925,24 +4977,12 @@ function renderNotesTab(){
     scheduleSaveProjectData();
     renderNotesTab();
   }));
-  container.querySelectorAll('.cc-text').forEach(span => span.addEventListener('blur', () => {
-    const it = (currentData.customChecklist || []).find(x => x.id === span.dataset.id);
-    const newText = span.textContent.trim();
-    if(it && newText && it.text !== newText){
-      it.text = newText;
-      if(it.linkId){ syncLinkedItems(it.linkId, { text: newText }); saveAllLinkedLists(); }
-      scheduleSaveProjectData();
-    }
+  container.querySelectorAll('.cc-item').forEach(row => row.addEventListener('click', (e) => {
+    if(e.target.closest('.cc-check') || e.target.closest('.cc-del')) return;
+    const it = (currentData.customChecklist || []).find(x => x.id === row.dataset.id);
+    if(!it) return;
+    openCcPointModal({ mode:'edit', item: it, onDone: renderNotesTab });
   }));
-  container.querySelectorAll('.cc-note').forEach(ta => ta.addEventListener('input', () => {
-    const it = (currentData.customChecklist || []).find(x => x.id === ta.dataset.id);
-    if(it){
-      it.note = ta.value;
-      if(it.linkId){ syncLinkedItems(it.linkId, { note: ta.value }); saveAllLinkedLists(); }
-      scheduleSaveProjectData();
-    }
-  }));
-  wireNoteToggles(container, renderNotesTab);
 }
 
 let reportSections = { checklist:true, fiche:true, notes:true };
