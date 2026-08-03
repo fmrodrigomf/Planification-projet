@@ -359,8 +359,8 @@
   .seance-item-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-left:27px;}
   .seance-item-badges .item-badge{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 8px;font-size:11px;}
   .seance-item.done{opacity:.42;}
-  .seance-item.urgent{border-color:var(--danger);border-width:2px;background:#fff4f3;}
-  body.theme-dark .seance-item.urgent{background:#3a1f1d;}
+  .seance-item.urgent .seance-text{color:var(--danger);font-weight:700;}
+  .seance-item.has-note, .ope-card.has-note, .cc-item.has-note{border-style:dashed;border-color:var(--amber);}
   .seance-item .seance-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .seance-item .seance-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
   .seance-item.done .seance-text{text-decoration:line-through;}
@@ -755,7 +755,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.3.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.3.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1437,7 +1437,6 @@ function openPointModal(opts){
   function updateUrgentVisibility(){ urgentWrap.style.display = catSelect.value === 'todo' ? 'block' : 'none'; }
   updateUrgentVisibility();
   catSelect.addEventListener('change', updateUrgentVisibility);
-  titleInput.focus();
 
   function close(){ document.body.removeChild(backdrop); }
   backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
@@ -2356,18 +2355,13 @@ async function renderSeanceView(id){
     <div class="seance-list">
       ${ordered.length ? ordered.map(it => {
         const hasNote = !!(it.note && it.note.trim());
-        const badgesRow = [
-          hasNote?'<span class="item-badge" title="A une note">\ud83d\udde2</span>':'',
-          (id==='todo' && it.urgent)?'<span class="item-badge" title="Urgent">\ud83d\udd25</span>':''
-        ].filter(Boolean).join('');
         return `
-        <div class="seance-item ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
+        <div class="seance-item ${hasNote?'has-note':''} ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
             <span class="seance-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
             <button class="seance-del" data-id="${it.id}" title="Supprimer">\u00d7</button>
           </div>
-          ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
         </div>
       `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
@@ -2424,17 +2418,13 @@ async function renderSeanceView(id){
 
 function opeItemCardHtml(it, listName){
   const hasNote = !!(it.note && it.note.trim());
-  const badgesRow = [
-    hasNote?'<span class="item-badge" title="A une note">🗒</span>':''
-  ].filter(Boolean).join('');
   return `
-    <div class="ope-card ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
+    <div class="ope-card ${hasNote?'has-note':''} ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
       <div class="ope-card-top">
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
         <span class="ope-text" data-id="${it.id}" data-list="${listName}">${escapeHtml(it.text)}</span>
         <button class="ope-del" data-id="${it.id}" data-list="${listName}" title="Supprimer">×</button>
       </div>
-      ${badgesRow ? `<div class="seance-item-badges">${badgesRow}</div>` : ''}
     </div>
   `;
 }
@@ -2917,7 +2907,6 @@ function openCcPointModal(opts){
     noteInput.value = item.note || '';
     ignoreCb.checked = !!item.ignored;
   }
-  titleInput.focus();
 
   function close(){ document.body.removeChild(backdrop); }
   backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
@@ -4926,12 +4915,11 @@ function renderNotesTab(){
             const rowClass = it.ignored ? 'ignored' : (it.checked ? 'done' : '');
             const inCommander = !!(it.linkId && seanceCommander.some(x => x.linkId === it.linkId));
             const ccBadgesRow = [
-              hasNote?'<span class="item-badge" title="A une note">\ud83d\udde2</span>':'',
               it.ignored?'<span class="item-badge" title="Point ignor\u00e9">\ud83d\udeab</span>':'',
               inCommander?'<span class="item-badge" title="Dans \u00c0 commander">\ud83d\uded2</span>':''
             ].filter(Boolean).join('');
             return `
-            <div class="cc-item ${rowClass}" data-id="${it.id}">
+            <div class="cc-item ${hasNote?'has-note':''} ${rowClass}" data-id="${it.id}">
               <div class="cc-item-top">
                 <input type="checkbox" class="cc-check" data-id="${it.id}" ${it.checked?'checked':''}>
                 <span class="cc-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
