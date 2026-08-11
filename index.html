@@ -755,7 +755,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.3.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.4.0'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2143,18 +2143,23 @@ let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
 let seance1a1 = [];
 let seanceCommander = [];
+let todoHistorique = [];
+let seance1a1Historique = [];
+let seanceCommanderHistorique = [];
 function getSimpleList(id){ if(id === '1a1') return seance1a1; if(id === 'commander') return seanceCommander; return todoList; }
 function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else if(id === 'commander') seanceCommander = arr; else todoList = arr; }
+function getHistoriqueList(id){ if(id === '1a1') return seance1a1Historique; if(id === 'commander') return seanceCommanderHistorique; return todoHistorique; }
+function setHistoriqueList(id, arr){ if(id === '1a1') seance1a1Historique = arr; else if(id === 'commander') seanceCommanderHistorique = arr; else todoHistorique = arr; }
 function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; if(id === 'commander') return 'seance_commander'; return 'seance_ope'; }
 function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; if(id === 'commander') return 'À commander'; return 'Séance OPE'; }
 
 function loadSeanceMatin(){
   const v = lsGet('seance_matin');
-  if(!v) return { discuter:[], faire:[] };
+  if(!v) return { discuter:[], faire:[], historique:[] };
   const parsed = JSON.parse(v);
   // Migrate old flat-list format (before the "À discuter / À faire" split) into "faire".
-  if(Array.isArray(parsed)) return { discuter:[], faire:parsed };
-  return { discuter: parsed.discuter||[], faire: parsed.faire||[] };
+  if(Array.isArray(parsed)) return { discuter:[], faire:parsed, historique:[] };
+  return { discuter: parsed.discuter||[], faire: parsed.faire||[], historique: parsed.historique||[] };
 }
 function saveSeanceMatin(){
   flashSaveStatus(lsSet('seance_matin', JSON.stringify(seanceMatin)));
@@ -2168,7 +2173,7 @@ function flushSeanceMatin(){
   if(matinSaveTimer){ clearTimeout(matinSaveTimer); matinSaveTimer = null; saveSeanceMatin(); }
 }
 function allMatinItems(){
-  return [...seanceMatin.discuter, ...seanceMatin.faire];
+  return [...seanceMatin.discuter, ...seanceMatin.faire, ...seanceMatin.historique];
 }
 
 // When "link" is enabled, an item created in Séance du matin/OPE gets a shared linkId
@@ -2202,24 +2207,29 @@ function deleteLinkedProjectItem(projectId, linkId){
 
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
-  [seanceMatin.discuter, seanceMatin.faire, todoList, seance1a1, seanceCommander, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour].forEach(arr => {
+  [seanceMatin.discuter, seanceMatin.faire, seanceMatin.historique, todoList, todoHistorique, seance1a1, seance1a1Historique, seanceCommander, seanceCommanderHistorique, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour, seanceOpeBoard.historique].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
-  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
+  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project') || todoHistorique.find(it => it.linkId === linkId && it.origin === 'project');
   if(todoItem && todoItem.originProjectId) syncLinkedProjectItem(todoItem.originProjectId, linkId, patch);
 }
 function deleteLinkedItems(linkId){
   if(!linkId) return;
-  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project');
+  const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project') || todoHistorique.find(it => it.linkId === linkId && it.origin === 'project');
   if(todoItem && todoItem.originProjectId) deleteLinkedProjectItem(todoItem.originProjectId, linkId);
   seanceMatin.discuter = seanceMatin.discuter.filter(it => it.linkId !== linkId);
   seanceMatin.faire = seanceMatin.faire.filter(it => it.linkId !== linkId);
+  seanceMatin.historique = seanceMatin.historique.filter(it => it.linkId !== linkId);
   todoList = todoList.filter(it => it.linkId !== linkId);
+  todoHistorique = todoHistorique.filter(it => it.linkId !== linkId);
   seance1a1 = seance1a1.filter(it => it.linkId !== linkId);
+  seance1a1Historique = seance1a1Historique.filter(it => it.linkId !== linkId);
   seanceCommander = seanceCommander.filter(it => it.linkId !== linkId);
+  seanceCommanderHistorique = seanceCommanderHistorique.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
   seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
   seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
+  seanceOpeBoard.historique = seanceOpeBoard.historique.filter(it => it.linkId !== linkId);
 }
 function saveAllLinkedLists(){
   saveSeanceMatin();
@@ -2231,7 +2241,7 @@ function saveAllLinkedLists(){
 function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; if(id === 'commander') return '🛒'; return '🛠'; }
 
 function allOpeItems(){
-  return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour];
+  return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour, ...seanceOpeBoard.historique];
 }
 function opePct(){
   const items = allOpeItems();
@@ -2248,7 +2258,7 @@ function seancePct(id){
     const checked = items.filter(it => it.checked).length;
     return { total, checked, pct: total === 0 ? 100 : Math.round((checked/total)*100) };
   }
-  const items = getSimpleList(id);
+  const items = getSimpleList(id).concat(getHistoriqueList(id));
   const total = items.length;
   const checked = items.filter(it => it.checked).length;
   const pct = total === 0 ? 100 : Math.round((checked / total) * 100);
@@ -2279,20 +2289,24 @@ function wireSeanceSummaryClicks(container){
 
 function loadSeance(key){
   const v = lsGet(key);
-  return v ? JSON.parse(v) : [];
+  if(!v) return { items:[], historique:[] };
+  const parsed = JSON.parse(v);
+  if(Array.isArray(parsed)) return { items: parsed, historique:[] };
+  return { items: parsed.items||[], historique: parsed.historique||[] };
 }
 function saveSeance(id){
-  flashSaveStatus(lsSet(seanceStorageKey(id), JSON.stringify(getSimpleList(id))));
+  const payload = { items: getSimpleList(id), historique: getHistoriqueList(id) };
+  flashSaveStatus(lsSet(seanceStorageKey(id), JSON.stringify(payload)));
 }
 function loadSeanceOpeBoard(){
   const v = lsGet('seance_ope');
-  if(!v) return { staging:[], derniere:[], jour:[] };
+  if(!v) return { staging:[], derniere:[], jour:[], historique:[] };
   const parsed = JSON.parse(v);
   if(Array.isArray(parsed)){
     // migrate from the old flat-list format: keep existing points as today's session
-    return { staging:[], derniere:[], jour: parsed.map(it => ({ id: it.id, text: it.text, note:'', checked: !!it.checked })) };
+    return { staging:[], derniere:[], jour: parsed.map(it => ({ id: it.id, text: it.text, note:'', checked: !!it.checked })), historique:[] };
   }
-  return { staging: parsed.staging || [], derniere: parsed.derniere || [], jour: parsed.jour || [] };
+  return { staging: parsed.staging || [], derniere: parsed.derniere || [], jour: parsed.jour || [], historique: parsed.historique || [] };
 }
 function saveSeanceOpeBoard(){
   flashSaveStatus(lsSet('seance_ope', JSON.stringify(seanceOpeBoard)));
@@ -2330,40 +2344,67 @@ async function renderSeanceView(id){
   if(id === 'matin'){ renderSeanceMatinBoard(); return; }
 
   const catIdFor = id === 'todo' ? 'todo' : (id === '1a1' ? '1a1' : 'commander');
+
+  // Catch up: anything checked that's still sitting in the active list (e.g. via a
+  // link sync from elsewhere) gets moved into this list's own historique.
+  {
+    const mainArr = getSimpleList(id);
+    const histArr = getHistoriqueList(id);
+    const stillActive = [];
+    let moved = false;
+    mainArr.forEach(it => {
+      if(it.checked){ histArr.unshift(it); moved = true; }
+      else stillActive.push(it);
+    });
+    if(moved){ setSimpleList(id, stillActive); scheduleSaveSeance(id); }
+  }
+
   const items = getSimpleList(id);
+  const historique = getHistoriqueList(id);
   const filtered = (id === 'todo' && todoOriginFilter !== 'all')
     ? items.filter(it => (it.origin || 'todo') === todoOriginFilter)
     : items;
   const ordered = id === 'todo'
-    ? filtered.filter(it => !it.checked && it.urgent).concat(filtered.filter(it => !it.checked && !it.urgent)).concat(filtered.filter(it => it.checked))
-    : filtered.filter(it => !it.checked).concat(filtered.filter(it => it.checked));
+    ? filtered.filter(it => it.urgent).concat(filtered.filter(it => !it.urgent))
+    : filtered;
 
-  const originLabels = { todo:'\ud83d\udcdd Manuel', matin:'\ud83c\udf05 Matin', ope:'\ud83d\udee0 OPE', '1a1':'1\ufe0f\u20e3 1 \u00e0 1', commander:'\ud83d\uded2 \u00c0 commander', project:'\ud83d\udcc1 Projet' };
+  const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
   const filterBarHtml = (id === 'todo') ? `
     <div class="filter-pills" style="margin-bottom:16px;">
       ${['all','todo','matin','ope','1a1','commander','project'].map(f => `<button class="pill ${todoOriginFilter===f?'active':''}" data-origin-filter="${f}">${f==='all'?'Tous':originLabels[f]}</button>`).join('')}
     </div>
   ` : '';
 
+  function itemCardHtml(it, zone){
+    const hasNote = !!(it.note && it.note.trim());
+    return `
+        <div class="seance-item ${hasNote?'has-note':''} ${zone==='historique'?'done':''} ${id==='todo' && it.urgent && zone!=='historique' ?'urgent':''}" data-id="${it.id}" data-zone="${zone}">
+          <div class="seance-item-top">
+            <input type="checkbox" class="seance-check" data-id="${it.id}" data-zone="${zone}" ${zone==='historique'?'checked':''}>
+            <span class="seance-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
+            <button class="seance-del" data-id="${it.id}" data-zone="${zone}" title="Supprimer">×</button>
+          </div>
+        </div>
+      `;
+  }
+
   container.innerHTML = seanceSubNavHtml(id) + `
     <div class="dashboard-header">
       <h2>${seanceTitleFor(id)}</h2>
-      <p>Coche un point pour le faire descendre en bas de liste, en transparence. Touche un point pour l'ouvrir et le modifier.</p>
+      <p>Coche un point pour l'envoyer dans l'historique, en bas. Touche un point pour l'ouvrir et le modifier.</p>
     </div>
     <button class="btn btn-primary" id="seanceAddBtn" style="margin-bottom:16px;">+ Ajouter un point</button>
     ${filterBarHtml}
     <div class="seance-list">
-      ${ordered.length ? ordered.map(it => {
-        const hasNote = !!(it.note && it.note.trim());
-        return `
-        <div class="seance-item ${hasNote?'has-note':''} ${it.checked?'done':''} ${id==='todo' && it.urgent && !it.checked ?'urgent':''}" data-id="${it.id}">
-          <div class="seance-item-top">
-            <input type="checkbox" class="seance-check" data-id="${it.id}" ${it.checked?'checked':''}>
-            <span class="seance-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
-            <button class="seance-del" data-id="${it.id}" title="Supprimer">\u00d7</button>
-          </div>
-        </div>
-      `; }).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
+      ${ordered.length ? ordered.map(it => itemCardHtml(it, 'active')).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
+    </div>
+    <div class="fiche-section" style="margin-top:24px;">
+      <div class="fiche-section-head"><h4>🗄 Historique <span class="opt-count">${historique.length} pt(s)</span></h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Les points cochés comme terminés arrivent ici, dans l'ordre. Décoche un point pour le remettre dans la liste principale.</p>
+        <button class="btn btn-ghost btn-sm" id="seanceClearHistoBtn" style="margin-bottom:10px;">🗑 Vider l'historique</button>
+        <div class="seance-list">${historique.length ? historique.map(it => itemCardHtml(it, 'historique')).join('') : '<div class="settings-empty">Aucun point terminé pour l\u2019instant.</div>'}</div>
+      </div>
     </div>
   `;
   if(id === 'todo'){
@@ -2379,38 +2420,67 @@ async function renderSeanceView(id){
 
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', async () => {
     if(!(await confirmDoneCheck(cb))) return;
-    const it = getSimpleList(id).find(x => x.id === cb.dataset.id);
-    if(it){
-      it.checked = cb.checked;
-      if(it.linkId){
-        syncLinkedItems(it.linkId, { checked: it.checked });
-        saveAllLinkedLists();
-      } else {
-        scheduleSaveSeance(id);
+    const zone = cb.dataset.zone;
+    if(zone === 'historique'){
+      const histArr = getHistoriqueList(id);
+      const idx = histArr.findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = histArr.splice(idx, 1);
+        it.checked = false;
+        getSimpleList(id).unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:false }); saveAllLinkedLists(); }
+        else scheduleSaveSeance(id);
+      }
+    } else {
+      const mainArr = getSimpleList(id);
+      const idx = mainArr.findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = mainArr.splice(idx, 1);
+        it.checked = true;
+        getHistoriqueList(id).unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:true }); saveAllLinkedLists(); }
+        else scheduleSaveSeance(id);
       }
     }
     renderSeanceView(id);
   }));
   container.querySelectorAll('.seance-del').forEach(btn => btn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const it = getSimpleList(id).find(x => x.id === btn.dataset.id);
+    const zone = btn.dataset.zone;
+    const arr = zone === 'historique' ? getHistoriqueList(id) : getSimpleList(id);
+    const it = arr.find(x => x.id === btn.dataset.id);
     const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
       saveAllLinkedLists();
+    } else if(zone === 'historique'){
+      setHistoriqueList(id, arr.filter(x => x.id !== btn.dataset.id));
+      saveSeance(id);
     } else {
-      setSimpleList(id, getSimpleList(id).filter(x => x.id !== btn.dataset.id));
+      setSimpleList(id, arr.filter(x => x.id !== btn.dataset.id));
       saveSeance(id);
     }
     renderSeanceView(id);
   }));
-  container.querySelectorAll('.seance-item').forEach(row => row.addEventListener('click', (e) => {
+  container.querySelectorAll('.seance-item[data-zone="active"]').forEach(row => row.addEventListener('click', (e) => {
     if(e.target.closest('.seance-check') || e.target.closest('.seance-del')) return;
     const it = getSimpleList(id).find(x => x.id === row.dataset.id);
     if(!it) return;
     openPointModal({ mode:'edit', categoryId: catIdFor, item: it, onDone: () => renderSeanceView(id) });
   }));
+  $('#seanceClearHistoBtn').addEventListener('click', async () => {
+    const histArr = getHistoriqueList(id);
+    if(histArr.length === 0){ showToast('Historique d\u00e9j\u00e0 vide'); return; }
+    const ok = await customConfirm(`Vider l'historique (${histArr.length} point(s)) ? Les points li\u00e9s seront aussi supprim\u00e9s de leurs autres listes.`, { okText:'Vider' });
+    if(!ok) return;
+    const linkIds = new Set(histArr.filter(it => it.linkId).map(it => it.linkId));
+    linkIds.forEach(lid => deleteLinkedItems(lid));
+    setHistoriqueList(id, []);
+    saveAllLinkedLists();
+    saveSeance(id);
+    renderSeanceView(id);
+  });
   wireSeanceSubNav(container);
 }
 
@@ -2418,8 +2488,9 @@ async function renderSeanceView(id){
 
 function opeItemCardHtml(it, listName){
   const hasNote = !!(it.note && it.note.trim());
+  const draggable = listName === 'historique' ? 'false' : 'true';
   return `
-    <div class="ope-card ${hasNote?'has-note':''} ${it.checked?'done':''}" draggable="true" data-id="${it.id}" data-from="${listName}">
+    <div class="ope-card ${hasNote?'has-note':''} ${it.checked?'done':''}" draggable="${draggable}" data-id="${it.id}" data-from="${listName}">
       <div class="ope-card-top">
         <input type="checkbox" class="ope-check" data-id="${it.id}" data-list="${listName}" ${it.checked?'checked':''}>
         <span class="ope-text" data-id="${it.id}" data-list="${listName}">${escapeHtml(it.text)}</span>
@@ -2444,14 +2515,37 @@ function wireSeanceSubNav(container){
   container.querySelectorAll('[data-seance-tab]').forEach(btn => btn.addEventListener('click', () => renderSeanceView(btn.dataset.seanceTab)));
 }
 
+// One-time-per-load catch-up: any item that was already checked before the
+// Historique system existed (or got checked without going through the normal
+// flow) gets moved into historique too, so nothing checked stays stuck up top.
+function migrateCheckedToHistorique(board, listNames){
+  let moved = false;
+  listNames.forEach(listName => {
+    const remaining = [];
+    board[listName].forEach(it => {
+      if(it.checked){
+        it._fromList = listName;
+        board.historique.unshift(it);
+        moved = true;
+      } else {
+        remaining.push(it);
+      }
+    });
+    board[listName] = remaining;
+  });
+  return moved;
+}
+
 function renderSeanceMatinBoard(){
   const container = $('#seanceView');
   const m = seanceMatin;
+  if(!m.historique) m.historique = [];
+  if(migrateCheckedToHistorique(m, ['discuter','faire'])) scheduleSaveSeanceMatin();
 
   container.innerHTML = seanceSubNavHtml('matin') + `
     <div class="dashboard-header">
       <h2>S\u00e9ance du matin</h2>
-      <p>Deux colonnes : \u00ab \u00c0 discuter \u00bb pour pr\u00e9parer la s\u00e9ance, \u00ab \u00c0 faire \u00bb pour les actions concr\u00e8tes. Touche un point pour l'ouvrir, glisse-le pour changer de colonne.</p>
+      <p>Deux colonnes : \u00ab \u00c0 discuter \u00bb pour pr\u00e9parer la s\u00e9ance, \u00ab \u00c0 faire \u00bb pour les actions concr\u00e8tes. Coche un point pour l'envoyer dans l'historique, en bas.</p>
     </div>
     <div class="ope-board">
       <div class="ope-column" data-list="discuter">
@@ -2465,6 +2559,14 @@ function renderSeanceMatinBoard(){
         <div class="ope-column-body">${m.faire.length ? m.faire.map(it => opeItemCardHtml(it,'faire')).join('') : '<div class="settings-empty">Vide.</div>'}</div>
       </div>
     </div>
+    <div class="fiche-section" style="margin-top:24px;">
+      <div class="fiche-section-head"><h4>\ud83d\uddc4 Historique <span class="opt-count">${m.historique.length} pt(s)</span></h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Les points coch\u00e9s comme termin\u00e9s arrivent ici, dans l'ordre. D\u00e9coche un point pour le remettre dans sa colonne d'origine.</p>
+        <button class="btn btn-ghost btn-sm" id="matinClearHistoBtn" style="margin-bottom:10px;">\ud83d\uddd1 Vider l'historique</button>
+        <div class="seance-list">${m.historique.length ? m.historique.map(it => opeItemCardHtml(it,'historique')).join('') : '<div class="settings-empty">Aucun point termin\u00e9 pour l\u2019instant.</div>'}</div>
+      </div>
+    </div>
   `;
 
   container.querySelectorAll('.matin-add-btn').forEach(btn => btn.addEventListener('click', () => {
@@ -2474,14 +2576,26 @@ function renderSeanceMatinBoard(){
 
   container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', async () => {
     if(!(await confirmDoneCheck(cb))) return;
-    const it = m[cb.dataset.list].find(x => x.id === cb.dataset.id);
-    if(it){
-      it.checked = cb.checked;
-      if(it.linkId){
-        syncLinkedItems(it.linkId, { checked: it.checked });
-        saveAllLinkedLists();
-      } else {
-        scheduleSaveSeanceMatin();
+    const listName = cb.dataset.list;
+    if(listName === 'historique'){
+      const idx = m.historique.findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = m.historique.splice(idx, 1);
+        it.checked = false;
+        const target = (it._fromList && m[it._fromList]) ? it._fromList : 'faire';
+        m[target].unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:false }); saveAllLinkedLists(); }
+        else scheduleSaveSeanceMatin();
+      }
+    } else {
+      const idx = m[listName].findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = m[listName].splice(idx, 1);
+        it.checked = true;
+        it._fromList = listName;
+        m.historique.unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:true }); saveAllLinkedLists(); }
+        else scheduleSaveSeanceMatin();
       }
     }
     renderSeanceMatinBoard();
@@ -2489,23 +2603,25 @@ function renderSeanceMatinBoard(){
 
   container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const it = m[btn.dataset.list].find(x => x.id === btn.dataset.id);
+    const listName = btn.dataset.list;
+    const it = m[listName].find(x => x.id === btn.dataset.id);
     const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
       saveAllLinkedLists();
     } else {
-      m[btn.dataset.list] = m[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
+      m[listName] = m[listName].filter(x => x.id !== btn.dataset.id);
       scheduleSaveSeanceMatin();
     }
     renderSeanceMatinBoard();
   }));
 
   container.querySelectorAll('.ope-card').forEach(card => {
+    const listName = card.dataset.from;
+    if(listName === 'historique') return; // historique cards are check/delete only, no edit popup
     card.addEventListener('click', e => {
       if(e.target.closest('.ope-check') || e.target.closest('.ope-del')) return;
-      const listName = card.dataset.from;
       const it = m[listName].find(x => x.id === card.dataset.id);
       if(!it) return;
       const catId = listName === 'discuter' ? 'matin_discuter' : 'matin_faire';
@@ -2527,7 +2643,7 @@ function renderSeanceMatinBoard(){
       let data;
       try{ data = JSON.parse(e.dataTransfer.getData('text/plain')); }catch(err){ return; }
       const toList = zone.dataset.list;
-      if(!data || data.from === toList) return;
+      if(!data || data.from === toList || data.from === 'historique') return;
       const idx = m[data.from].findIndex(x => x.id === data.id);
       if(idx < 0) return;
       const [item] = m[data.from].splice(idx, 1);
@@ -2537,17 +2653,31 @@ function renderSeanceMatinBoard(){
     });
   });
 
+  $('#matinClearHistoBtn').addEventListener('click', async () => {
+    if(m.historique.length === 0){ showToast('Historique déjà vide'); return; }
+    const ok = await customConfirm(`Vider l'historique (${m.historique.length} point(s)) ? Les points liés seront aussi supprimés de leurs autres listes.`, { okText:'Vider' });
+    if(!ok) return;
+    const linkIds = new Set(m.historique.filter(it => it.linkId).map(it => it.linkId));
+    linkIds.forEach(lid => deleteLinkedItems(lid));
+    m.historique = [];
+    saveAllLinkedLists();
+    scheduleSaveSeanceMatin();
+    renderSeanceMatinBoard();
+  });
+
   wireSeanceSubNav(container);
 }
 
 function renderSeanceOpeView(){
   const container = $('#seanceView');
   const b = seanceOpeBoard;
+  if(!b.historique) b.historique = [];
+  if(migrateCheckedToHistorique(b, ['staging','derniere','jour'])) scheduleSaveSeanceOpe();
 
   container.innerHTML = seanceSubNavHtml('ope') + `
     <div class="dashboard-header">
       <h2>S\u00e9ance OPE</h2>
-      <p>Ajoute un point, glisse-le dans la colonne voulue, ou touche-le pour l'ouvrir et le modifier.</p>
+      <p>Ajoute un point, glisse-le dans la colonne voulue, ou touche-le pour l'ouvrir. Coche-le pour l'envoyer dans l'historique, en bas.</p>
     </div>
     <button class="btn btn-primary" id="opeAddBtn" style="margin-bottom:16px;">+ Ajouter un point</button>
     <div class="ope-staging" id="opeStagingZone" data-list="staging">
@@ -2567,7 +2697,14 @@ function renderSeanceOpeView(){
     </div>
     <div class="ope-actions">
       <button class="btn btn-ghost" id="opeArchiveBtn">\ud83d\udd01 D\u00e9placer \u00ab S\u00e9ance du jour \u00bb vers \u00ab Derni\u00e8re s\u00e9ance \u00bb</button>
-      <button class="btn btn-ghost" id="opeClearCheckedBtn">\ud83d\uddd1 Supprimer les points coch\u00e9s</button>
+    </div>
+    <div class="fiche-section" style="margin-top:24px;">
+      <div class="fiche-section-head"><h4>\ud83d\uddc4 Historique <span class="opt-count">${b.historique.length} pt(s)</span></h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Les points coch\u00e9s comme termin\u00e9s arrivent ici, dans l'ordre. D\u00e9coche un point pour le remettre dans sa colonne d'origine.</p>
+        <button class="btn btn-ghost btn-sm" id="opeClearHistoBtn" style="margin-bottom:10px;">\ud83d\uddd1 Vider l'historique</button>
+        <div class="seance-list">${b.historique.length ? b.historique.map(it => opeItemCardHtml(it,'historique')).join('') : '<div class="settings-empty">Aucun point termin\u00e9 pour l\u2019instant.</div>'}</div>
+      </div>
     </div>
   `;
 
@@ -2582,14 +2719,26 @@ function renderSeanceOpeView(){
 
   container.querySelectorAll('.ope-check').forEach(cb => cb.addEventListener('change', async () => {
     if(!(await confirmDoneCheck(cb))) return;
-    const it = b[cb.dataset.list].find(x => x.id === cb.dataset.id);
-    if(it){
-      it.checked = cb.checked;
-      if(it.linkId){
-        syncLinkedItems(it.linkId, { checked: it.checked });
-        saveAllLinkedLists();
-      } else {
-        scheduleSaveSeanceOpe();
+    const listName = cb.dataset.list;
+    if(listName === 'historique'){
+      const idx = b.historique.findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = b.historique.splice(idx, 1);
+        it.checked = false;
+        const target = (it._fromList && b[it._fromList]) ? it._fromList : 'jour';
+        b[target].unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:false }); saveAllLinkedLists(); }
+        else scheduleSaveSeanceOpe();
+      }
+    } else {
+      const idx = b[listName].findIndex(x => x.id === cb.dataset.id);
+      if(idx >= 0){
+        const [it] = b[listName].splice(idx, 1);
+        it.checked = true;
+        it._fromList = listName;
+        b.historique.unshift(it);
+        if(it.linkId){ syncLinkedItems(it.linkId, { checked:true }); saveAllLinkedLists(); }
+        else scheduleSaveSeanceOpe();
       }
     }
     renderSeanceOpeView();
@@ -2597,23 +2746,25 @@ function renderSeanceOpeView(){
 
   container.querySelectorAll('.ope-del').forEach(btn => btn.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const it = b[btn.dataset.list].find(x => x.id === btn.dataset.id);
+    const listName = btn.dataset.list;
+    const it = b[listName].find(x => x.id === btn.dataset.id);
     const ok = await customConfirm(it && it.linkId ? 'Supprimer ce point ? Il est li\u00e9 : sa copie dans les autres listes sera supprim\u00e9e aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(it && it.linkId){
       deleteLinkedItems(it.linkId);
       saveAllLinkedLists();
     } else {
-      b[btn.dataset.list] = b[btn.dataset.list].filter(x => x.id !== btn.dataset.id);
+      b[listName] = b[listName].filter(x => x.id !== btn.dataset.id);
       scheduleSaveSeanceOpe();
     }
     renderSeanceOpeView();
   }));
 
   container.querySelectorAll('.ope-card').forEach(card => {
+    const listName = card.dataset.from;
+    if(listName === 'historique') return;
     card.addEventListener('click', e => {
       if(e.target.closest('.ope-check') || e.target.closest('.ope-del')) return;
-      const listName = card.dataset.from;
       const it = b[listName].find(x => x.id === card.dataset.id);
       if(!it) return;
       openPointModal({ mode:'edit', categoryId: opeCatId(listName), item: it, onDone: renderSeanceOpeView });
@@ -2635,7 +2786,7 @@ function renderSeanceOpeView(){
       let data;
       try{ data = JSON.parse(e.dataTransfer.getData('text/plain')); }catch(err){ return; }
       const toList = zone.dataset.list;
-      if(!data || data.from === toList) return;
+      if(!data || data.from === toList || data.from === 'historique') return;
       const idx = b[data.from].findIndex(x => x.id === data.id);
       if(idx < 0) return;
       const [item] = b[data.from].splice(idx, 1);
@@ -2656,20 +2807,18 @@ function renderSeanceOpeView(){
     showToast('S\u00e9ance d\u00e9plac\u00e9e');
   });
 
-  $('#opeClearCheckedBtn').addEventListener('click', async () => {
-    const totalChecked = allOpeItems().filter(it => it.checked).length;
-    if(totalChecked === 0){ showToast('Aucun point coch\u00e9'); return; }
-    const ok = await customConfirm(`Supprimer les ${totalChecked} point(s) coch\u00e9(s) ? Les points li\u00e9s seront aussi supprim\u00e9s de leurs autres listes.`, { okText:'Supprimer' });
+  $('#opeClearHistoBtn').addEventListener('click', async () => {
+    if(b.historique.length === 0){ showToast('Historique d\u00e9j\u00e0 vide'); return; }
+    const ok = await customConfirm(`Vider l'historique (${b.historique.length} point(s)) ? Les points li\u00e9s seront aussi supprim\u00e9s de leurs autres listes.`, { okText:'Vider' });
     if(!ok) return;
-    const linkIdsToDelete = new Set();
-    ['staging','derniere','jour'].forEach(l => {
-      b[l].filter(it => it.checked && it.linkId).forEach(it => linkIdsToDelete.add(it.linkId));
-    });
-    linkIdsToDelete.forEach(lid => deleteLinkedItems(lid));
-    ['staging','derniere','jour'].forEach(l => { b[l] = b[l].filter(it => !it.checked); });
+    const linkIds = new Set(b.historique.filter(it => it.linkId).map(it => it.linkId));
+    linkIds.forEach(lid => deleteLinkedItems(lid));
+    b.historique = [];
     saveAllLinkedLists();
+    scheduleSaveSeanceOpe();
     renderSeanceOpeView();
   });
+
   wireSeanceSubNav(container);
 }
 
@@ -5185,8 +5334,11 @@ async function exportAllData(){
     projectData: {},
     seanceMatin,
     todoList,
+    todoHistorique,
     seance1a1,
+    seance1a1Historique,
     seanceCommander,
+    seanceCommanderHistorique,
     seanceOpeBoard,
     appOptions,
     checklistTemplates,
@@ -5230,9 +5382,9 @@ async function importAllData(file){
       seanceMatin = Array.isArray(payload.seanceMatin) ? { discuter:[], faire: payload.seanceMatin } : { discuter: payload.seanceMatin.discuter||[], faire: payload.seanceMatin.faire||[] };
       saveSeanceMatin();
     }
-    if(payload.todoList){ todoList = payload.todoList; saveSeance('todo'); }
-    if(payload.seance1a1){ seance1a1 = payload.seance1a1; saveSeance('1a1'); }
-    if(payload.seanceCommander){ seanceCommander = payload.seanceCommander; saveSeance('commander'); }
+    if(payload.todoList){ todoList = payload.todoList; if(payload.todoHistorique) todoHistorique = payload.todoHistorique; saveSeance('todo'); }
+    if(payload.seance1a1){ seance1a1 = payload.seance1a1; if(payload.seance1a1Historique) seance1a1Historique = payload.seance1a1Historique; saveSeance('1a1'); }
+    if(payload.seanceCommander){ seanceCommander = payload.seanceCommander; if(payload.seanceCommanderHistorique) seanceCommanderHistorique = payload.seanceCommanderHistorique; saveSeance('commander'); }
     if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
     if(payload.appOptions){
       appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [], customFlux: payload.appOptions.customFlux || [] };
@@ -5282,9 +5434,9 @@ async function init(){
   }
   notesText = loadNotes();
   seanceMatin = loadSeanceMatin();
-  todoList = loadSeance('todo_list');
-  seance1a1 = loadSeance('seance_1a1');
-  seanceCommander = loadSeance('seance_commander');
+  { const d = loadSeance('todo_list'); todoList = d.items; todoHistorique = d.historique; }
+  { const d = loadSeance('seance_1a1'); seance1a1 = d.items; seance1a1Historique = d.historique; }
+  { const d = loadSeance('seance_commander'); seanceCommander = d.items; seanceCommanderHistorique = d.historique; }
   seanceOpeBoard = loadSeanceOpeBoard();
   morningRoutineItems = loadMorningRoutineItems();
   if(!lsGet('morningRoutineV2Seeded')){
