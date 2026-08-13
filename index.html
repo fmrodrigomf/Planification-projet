@@ -758,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.5.4'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2061,26 +2061,37 @@ function wireAgendaEcheancesSubNav(container){
 function collectDueDateItems(){
   const todayStr = new Date().toISOString().slice(0,10);
   const results = [];
-  function consider(it, label){
+  function consider(it, label, save, nav){
     if(!it.dueDate || it.checked) return;
-    results.push({ item: it, label, overdue: it.dueDate < todayStr });
+    results.push({ item: it, label, overdue: it.dueDate < todayStr, save, nav });
   }
-  todoList.forEach(it => consider(it, '✅ To do'));
-  seanceMatin.discuter.forEach(it => consider(it, '🌅 Matin — À discuter'));
-  seanceMatin.faire.forEach(it => consider(it, '🌅 Matin — À faire'));
-  seanceOpeBoard.staging.forEach(it => consider(it, '🛠 OPE — Non triés'));
-  seanceOpeBoard.derniere.forEach(it => consider(it, '🛠 OPE — Dernière séance'));
-  seanceOpeBoard.jour.forEach(it => consider(it, '🛠 OPE — Séance du jour'));
-  seance1a1.forEach(it => consider(it, '1️⃣ 1 à 1'));
-  seanceCommander.forEach(it => consider(it, '🛒 À commander'));
+  todoList.forEach(it => consider(it, '✅ To do', () => scheduleSaveSeance('todo'), { type:'category', categoryId:'todo' }));
+  seanceMatin.discuter.forEach(it => consider(it, '🌅 Matin — À discuter', () => scheduleSaveSeanceMatin(), { type:'category', categoryId:'matin_discuter' }));
+  seanceMatin.faire.forEach(it => consider(it, '🌅 Matin — À faire', () => scheduleSaveSeanceMatin(), { type:'category', categoryId:'matin_faire' }));
+  seanceOpeBoard.staging.forEach(it => consider(it, '🛠 OPE — Non triés', () => scheduleSaveSeanceOpe(), { type:'category', categoryId:'ope_staging' }));
+  seanceOpeBoard.derniere.forEach(it => consider(it, '🛠 OPE — Dernière séance', () => scheduleSaveSeanceOpe(), { type:'category', categoryId:'ope_derniere' }));
+  seanceOpeBoard.jour.forEach(it => consider(it, '🛠 OPE — Séance du jour', () => scheduleSaveSeanceOpe(), { type:'category', categoryId:'ope_jour' }));
+  seance1a1.forEach(it => consider(it, '1️⃣ 1 à 1', () => scheduleSaveSeance('1a1'), { type:'category', categoryId:'1a1' }));
+  seanceCommander.forEach(it => consider(it, '🛒 À commander', () => scheduleSaveSeance('commander'), { type:'category', categoryId:'commander' }));
   projects.forEach(p => {
     if(p.archived || p.finished) return;
     const data = loadAnyProjectData(p.id);
     if(!data || !data.customChecklist) return;
-    data.customChecklist.forEach(it => consider(it, '📁 ' + (p.client || p.name)));
+    const isOpen = p.id === currentProjectId;
+    data.customChecklist.forEach(it => consider(it, '📁 ' + (p.client || p.name),
+      () => { if(isOpen) scheduleSaveProjectData(); else lsSet('project:' + p.id, JSON.stringify(data)); },
+      { type:'project', projectId: p.id }));
   });
   results.sort((a,b) => (a.item.dueDate||'') < (b.item.dueDate||'') ? -1 : 1);
   return results;
+}
+
+// Items with a due date of today or earlier, not already explicitly copied into
+// "Agenda du jour" — these show up there automatically as things to handle today.
+function collectPlannedForToday(){
+  const todayStr = new Date().toISOString().slice(0,10);
+  const alreadyLinked = new Set(agendaItems.concat(agendaItemsHistorique).map(it => it.linkId).filter(Boolean));
+  return collectDueDateItems().filter(e => e.item.dueDate <= todayStr && !(e.item.linkId && alreadyLinked.has(e.item.linkId)));
 }
 
 async function renderEcheancesView(){
@@ -2598,6 +2609,30 @@ async function renderSeanceView(id){
       `;
   }
 
+  const plannedToday = id === 'agenda' ? collectPlannedForToday() : [];
+  const plannedTodayHtml = id === 'agenda' && plannedToday.length ? `
+    <div class="fiche-section" style="margin-bottom:20px;">
+      <div class="fiche-section-head"><h4>📌 Planifiés pour aujourd'hui <span class="opt-count">${plannedToday.length} pt(s)</span></h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        <p class="settings-hint">Points avec une échéance arrivée à terme, ailleurs dans l'appli — coche-les ici pour les traiter, ou touche pour aller à leur source.</p>
+        <div class="seance-list">
+          ${plannedToday.map((e, i) => `
+            <div class="seance-item ${e.overdue?'overdue-agenda':''}" data-planned-idx="${i}">
+              <div class="seance-item-top">
+                <input type="checkbox" class="planned-check" data-planned-idx="${i}">
+                <span class="seance-text">${escapeHtml(e.item.text)}</span>
+              </div>
+              <div class="seance-item-badges">
+                <span class="item-badge">${e.label}</span>
+                ${e.overdue ? `<span class="item-badge" style="background:var(--danger);color:#fff;border-color:var(--danger);">⚠ En retard depuis le ${new Date(e.item.dueDate).toLocaleDateString('fr-FR')}</span>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  ` : '';
+
   container.innerHTML = seanceSubNavHtml(id) + `
     <div class="dashboard-header">
       <h2>${seanceTitleFor(id)}</h2>
@@ -2605,6 +2640,7 @@ async function renderSeanceView(id){
     </div>
     <button class="btn btn-primary" id="seanceAddBtn" style="margin-bottom:16px;">+ Ajouter un point</button>
     ${filterBarHtml}
+    ${plannedTodayHtml}
     <div class="seance-list">
       ${ordered.length ? ordered.map(it => itemCardHtml(it, 'active')).join('') : '<div class="settings-empty">Aucun point pour l\u2019instant. Ajoute ton premier point ci-dessus.</div>'}
     </div>
@@ -2627,6 +2663,23 @@ async function renderSeanceView(id){
   $('#seanceAddBtn').addEventListener('click', () => {
     openPointModal({ mode:'add', categoryId: catIdFor, onDone: () => renderSeanceView(id) });
   });
+
+  container.querySelectorAll('.planned-check').forEach(cb => cb.addEventListener('change', async (e) => {
+    e.stopPropagation();
+    if(!(await confirmDoneCheck(cb))) return;
+    const entry = plannedToday[Number(cb.dataset.plannedIdx)];
+    if(entry){
+      entry.item.checked = true;
+      if(entry.item.linkId){ syncLinkedItems(entry.item.linkId, { checked:true }); saveAllLinkedLists(); }
+      else if(entry.save) entry.save();
+    }
+    renderSeanceView(id);
+  }));
+  container.querySelectorAll('[data-planned-idx]').forEach(row => row.addEventListener('click', async (e) => {
+    if(e.target.closest('.planned-check')) return;
+    const entry = plannedToday[Number(row.dataset.plannedIdx)];
+    if(entry && entry.nav) await goToLinkedSource(entry.nav);
+  }));
 
   container.querySelectorAll('.seance-check').forEach(cb => cb.addEventListener('change', async () => {
     if(!(await confirmDoneCheck(cb))) return;
