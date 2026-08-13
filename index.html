@@ -758,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.5.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.4'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1507,8 +1507,9 @@ function openPointModal(opts){
     toAgendaBtn.addEventListener('click', () => {
       if(!item.linkId) item.linkId = uid();
       const todayStr = new Date().toISOString().slice(0,10);
-      agendaItems.unshift({ id: uid(), text: item.text, note: item.note || '', checked:false, linkId: item.linkId, scheduledDate: todayStr });
-      if(item.linkId) syncLinkedItems(item.linkId, {});
+      const dd = dueDateInput.value || item.dueDate || null;
+      agendaItems.unshift({ id: uid(), text: item.text, note: item.note || '', checked:false, linkId: item.linkId, scheduledDate: todayStr, dueDate: dd });
+      if(item.linkId) syncLinkedItems(item.linkId, { dueDate: dd });
       scheduleSaveSeance('agenda');
       pointCategoryOf(categoryId).save();
       showToast('Ajout\u00e9 \u00e0 l\u2019agenda du jour');
@@ -3316,7 +3317,8 @@ function openCcPointModal(opts){
     if(!item.linkId) item.linkId = uid();
     const p = projects.find(x => x.id === currentProjectId);
     const todayStr = new Date().toISOString().slice(0,10);
-    agendaItems.unshift({ id: uid(), text: item.text, checked: item.checked, note: item.note || '', linkId: item.linkId, scheduledDate: todayStr, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
+    const ccDd = dueDateInput.value || item.dueDate || null;
+    agendaItems.unshift({ id: uid(), text: item.text, checked: item.checked, note: item.note || '', linkId: item.linkId, scheduledDate: todayStr, dueDate: ccDd, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
     scheduleSaveProjectData();
     scheduleSaveSeance('agenda');
     showToast('Ajout\u00e9 \u00e0 l\u2019agenda du jour');
