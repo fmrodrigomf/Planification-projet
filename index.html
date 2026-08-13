@@ -197,7 +197,8 @@
 
   .agenda-nav{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
   .agenda-month-label{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--graphite);text-transform:capitalize;min-width:150px;text-align:center;}
-  .agenda-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:24px;}
+  .agenda-grid{display:grid;grid-template-columns:32px repeat(7,1fr);gap:6px;margin-bottom:24px;}
+  .agenda-week-label{display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--steel-light);font-family:var(--font-mono);}
   .agenda-dow{text-align:center;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--steel-light);padding-bottom:4px;}
   .agenda-day{min-height:56px;border:1px solid var(--line);border-radius:6px;padding:6px;background:var(--paper-2);cursor:pointer;transition:border-color .12s;}
   .agenda-day.empty{border:none;background:none;cursor:default;}
@@ -210,6 +211,7 @@
   .agenda-dot.status-a_confirmer{background:var(--amber);}
   .agenda-dot.status-confirme{background:var(--ok);}
   .agenda-dot.status-annule{background:var(--danger);}
+  .agenda-dot-task{background:#4f8ecb !important;}
   .agenda-detail h3{font-family:var(--font-display);font-size:15px;color:var(--graphite);margin-bottom:12px;text-transform:capitalize;}
   @media(max-width:700px){
     .agenda-day{min-height:44px;padding:4px;}
@@ -360,6 +362,7 @@
   .seance-item-badges .item-badge{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:2px 8px;font-size:11px;}
   .seance-item.done{opacity:.42;}
   .seance-item.urgent .seance-text{color:var(--danger);font-weight:700;}
+  .seance-item.overdue-agenda{border-color:var(--danger);border-width:2px;}
   .seance-item.has-note, .ope-card.has-note, .cc-item.has-note{border-style:dashed;border-color:var(--amber);}
   .seance-item .seance-check{width:17px;height:17px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .seance-item .seance-text{flex:1;font-size:13.5px;color:var(--graphite);outline:none;line-height:1.4;}
@@ -755,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.4.0'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1372,7 +1375,8 @@ const POINT_CATEGORIES = [
   { id:'ope_derniere', label:'🛠 Séance OPE — Dernière séance', getArr: () => seanceOpeBoard.derniere, save: () => scheduleSaveSeanceOpe() },
   { id:'ope_jour', label:'🛠 Séance OPE — Séance du jour', getArr: () => seanceOpeBoard.jour, save: () => scheduleSaveSeanceOpe() },
   { id:'1a1', label:'1️⃣ Séance 1 à 1', getArr: () => seance1a1, save: () => scheduleSaveSeance('1a1') },
-  { id:'commander', label:'🛒 À commander', getArr: () => seanceCommander, save: () => scheduleSaveSeance('commander') }
+  { id:'commander', label:'🛒 À commander', getArr: () => seanceCommander, save: () => scheduleSaveSeance('commander') },
+  { id:'agenda', label:'📅 Agenda du jour', getArr: () => agendaItems, save: () => scheduleSaveSeance('agenda') }
 ];
 function pointCategoryOf(id){ return POINT_CATEGORIES.find(c => c.id === id); }
 
@@ -1387,18 +1391,54 @@ async function confirmDoneCheck(cb){
   return ok;
 }
 
+function findLinkedSourceInfo(linkId, excludeCategoryId){
+  for(const cat of POINT_CATEGORIES){
+    if(cat.id === excludeCategoryId) continue;
+    if(cat.getArr().some(x => x.linkId === linkId)) return { type:'category', categoryId: cat.id };
+  }
+  for(const id of ['todo','1a1','commander','agenda']){
+    if(id === excludeCategoryId) continue;
+    if(getHistoriqueList(id).some(x => x.linkId === linkId)) return { type:'category', categoryId: id };
+  }
+  if(excludeCategoryId !== 'matin_discuter' && excludeCategoryId !== 'matin_faire' && seanceMatin.historique.some(x => x.linkId === linkId)) return { type:'category', categoryId:'matin_faire' };
+  if((!excludeCategoryId || !excludeCategoryId.startsWith('ope_')) && seanceOpeBoard.historique.some(x => x.linkId === linkId)) return { type:'category', categoryId:'ope_jour' };
+  for(const p of projects){
+    const data = loadAnyProjectData(p.id);
+    if(data && data.customChecklist && data.customChecklist.some(x => x.linkId === linkId)) return { type:'project', projectId: p.id };
+  }
+  return null;
+}
+
+async function goToLinkedSource(info){
+  if(!info) return;
+  if(info.type === 'project'){
+    await openProject(info.projectId);
+    currentTab = 'notes';
+    renderTabs();
+    return;
+  }
+  const catId = info.categoryId;
+  if(catId === 'todo') renderSeanceView('todo');
+  else if(catId === 'matin_discuter' || catId === 'matin_faire') renderSeanceView('matin');
+  else if(catId && catId.startsWith('ope_')) renderSeanceView('ope');
+  else if(catId === '1a1') renderSeanceView('1a1');
+  else if(catId === 'commander') renderSeanceView('commander');
+  else if(catId === 'agenda') renderSeanceView('agenda');
+}
+
 function openPointModal(opts){
   const { mode, item } = opts;
   let categoryId = opts.categoryId;
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
-  const originLabelsPm = { todo:'📝 Manuel', matin:'🌅 Séance du matin', ope:'🛠 Séance OPE', '1a1':'1️⃣ Séance 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
+  const originLabelsPm = { todo:'\ud83d\udcdd Manuel', matin:'\ud83c\udf05 S\u00e9ance du matin', ope:'\ud83d\udee0 S\u00e9ance OPE', '1a1':'1\ufe0f\u20e3 S\u00e9ance 1 \u00e0 1', commander:'\ud83d\uded2 \u00c0 commander', project:'\ud83d\udcc1 Projet' };
   const linkInfoHtml = (mode === 'edit' && item && item.linkId) ? `
     <div class="pm-link-info">
-      🔗 Ce point est lié — le modifier ou le supprimer agit aussi sur ses copies dans les autres listes.
-      ${item.origin && item.origin !== 'todo' ? `<br>Origine : <b>${item.origin==='project' ? '📁 ' + escapeHtml(item.originProjectName||'Projet') : originLabelsPm[item.origin]}</b>` : ''}
+      \ud83d\udd17 Ce point est li\u00e9 \u2014 le modifier ou le supprimer agit aussi sur ses copies dans les autres listes.
+      ${item.origin && item.origin !== 'todo' ? `<br>Origine : <b>${item.origin==='project' ? '\ud83d\udcc1 ' + escapeHtml(item.originProjectName||'Projet') : (originLabelsPm[item.origin]||'')}</b>` : ''}
     </div>
   ` : '';
+  const inAgendaAlready = !!(mode === 'edit' && item && item.linkId && agendaItems.concat(agendaItemsHistorique).some(x => x.linkId === item.linkId));
   backdrop.innerHTML = `
     <div class="modal">
       <h3>${mode === 'add' ? 'Nouveau point' : 'Modifier le point'}</h3>
@@ -1411,10 +1451,25 @@ function openPointModal(opts){
           ${POINT_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===categoryId?'selected':''}>${c.label}</option>`).join('')}
         </select>
         <label>Note (optionnel)</label>
-        <textarea id="pmNote" rows="3" placeholder="Note…"></textarea>
+        <textarea id="pmNote" rows="3" placeholder="Note\u2026"></textarea>
         <div id="pmUrgentWrap" style="display:none;margin-top:6px;">
-          <label class="choice-chip"><input type="checkbox" id="pmUrgent"> 🔥 Urgent (remonte tout en haut de la To do list)</label>
+          <label class="choice-chip"><input type="checkbox" id="pmUrgent"> \ud83d\udd25 Urgent (remonte tout en haut de la To do list)</label>
         </div>
+        <label>\u00c9ch\u00e9ance (optionnel)</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="pmDueDate" style="flex:1;min-width:140px;">
+          <button type="button" class="btn-text" id="pmDueToday">Aujourd'hui</button>
+          <button type="button" class="btn-text" id="pmDueClear">Effacer</button>
+        </div>
+        ${mode === 'edit' && categoryId !== 'agenda' ? `
+          <button type="button" class="btn btn-ghost btn-sm" id="pmToAgenda" style="margin-top:12px;">${inAgendaAlready ? '\ud83d\udcc5 D\u00e9j\u00e0 dans l\u2019agenda du jour' : '\ud83d\udcc5 Ajouter \u00e0 l\u2019agenda du jour'}</button>
+        ` : ''}
+        ${mode === 'edit' && categoryId === 'agenda' ? `
+          <button type="button" class="btn btn-ghost btn-sm" id="pmRemoveFromAgenda" style="margin-top:12px;">\ud83d\udcc5\u2796 Retirer de l'agenda du jour</button>
+        ` : ''}
+        ${mode === 'edit' && item && item.linkId ? `
+          <button type="button" class="btn btn-ghost btn-sm" id="pmGoToSource" style="margin-top:8px;">\ud83d\udd17 Aller \u00e0 la source</button>
+        ` : ''}
       </div>
       <div class="modal-actions">
         ${mode === 'edit' ? '<button class="btn-text" id="pmDelete" style="color:var(--danger);">Supprimer</button>' : ''}
@@ -1429,24 +1484,61 @@ function openPointModal(opts){
   const catSelect = $('#pmCategory');
   const urgentWrap = $('#pmUrgentWrap');
   const urgentCb = $('#pmUrgent');
+  const dueDateInput = $('#pmDueDate');
   if(item){
     titleInput.value = item.text || '';
     noteInput.value = item.note || '';
     urgentCb.checked = !!item.urgent;
+    dueDateInput.value = item.dueDate || '';
   }
   function updateUrgentVisibility(){ urgentWrap.style.display = catSelect.value === 'todo' ? 'block' : 'none'; }
   updateUrgentVisibility();
   catSelect.addEventListener('change', updateUrgentVisibility);
+  $('#pmDueToday').addEventListener('click', () => { dueDateInput.value = new Date().toISOString().slice(0,10); });
+  $('#pmDueClear').addEventListener('click', () => { dueDateInput.value = ''; });
 
   function close(){ document.body.removeChild(backdrop); }
   backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
   $('#pmCancel').addEventListener('click', close);
   backdrop.addEventListener('keydown', e => { if(e.key === 'Escape') close(); });
 
+  const toAgendaBtn = $('#pmToAgenda');
+  if(toAgendaBtn && !inAgendaAlready){
+    toAgendaBtn.addEventListener('click', () => {
+      if(!item.linkId) item.linkId = uid();
+      const todayStr = new Date().toISOString().slice(0,10);
+      agendaItems.unshift({ id: uid(), text: item.text, note: item.note || '', checked:false, linkId: item.linkId, scheduledDate: todayStr });
+      if(item.linkId) syncLinkedItems(item.linkId, {});
+      scheduleSaveSeance('agenda');
+      pointCategoryOf(categoryId).save();
+      showToast('Ajout\u00e9 \u00e0 l\u2019agenda du jour');
+      close();
+      if(opts.onDone) opts.onDone();
+    });
+  }
+  const removeFromAgendaBtn = $('#pmRemoveFromAgenda');
+  if(removeFromAgendaBtn){
+    removeFromAgendaBtn.addEventListener('click', () => {
+      removeFromAgendaOnly(item.id);
+      showToast('Retir\u00e9 de l\u2019agenda du jour');
+      close();
+      if(opts.onDone) opts.onDone();
+    });
+  }
+  const goToSourceBtn = $('#pmGoToSource');
+  if(goToSourceBtn){
+    goToSourceBtn.addEventListener('click', async () => {
+      const info = findLinkedSourceInfo(item.linkId, categoryId);
+      if(!info){ showToast('Source introuvable (peut-\u00eatre supprim\u00e9e)'); return; }
+      close();
+      await goToLinkedSource(info);
+    });
+  }
+
   const deleteBtn = $('#pmDelete');
   if(deleteBtn){
     deleteBtn.addEventListener('click', async () => {
-      const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Il est lié : ses copies dans les autres listes seront supprimées aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+      const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Il est li\u00e9 : ses copies dans les autres listes seront supprim\u00e9es aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
       if(!ok) return;
       if(item.linkId){
         deleteLinkedItems(item.linkId);
@@ -1465,18 +1557,28 @@ function openPointModal(opts){
 
   $('#pmSave').addEventListener('click', () => {
     const text = titleInput.value.trim();
-    if(!text){ showToast('Le titre ne peut pas être vide'); return; }
+    if(!text){ showToast('Le titre ne peut pas \u00eatre vide'); return; }
     const note = noteInput.value;
     const newCategoryId = catSelect.value;
     const urgent = urgentCb.checked;
+    const dueDate = dueDateInput.value || null;
 
     if(mode === 'add'){
       const cat = pointCategoryOf(newCategoryId);
-      cat.getArr().unshift({ id: uid(), text, note, checked:false, urgent: newCategoryId==='todo' ? urgent : undefined });
+      const newItem = { id: uid(), text, note, checked:false, urgent: newCategoryId==='todo' ? urgent : undefined, dueDate };
+      if(newCategoryId === 'agenda' && !newItem.scheduledDate) newItem.scheduledDate = new Date().toISOString().slice(0,10);
+      const autoLinkOrigin = { matin_discuter:'matin', matin_faire:'matin', ope_staging:'ope', ope_derniere:'ope', ope_jour:'ope', '1a1':'1a1', commander:'commander' }[newCategoryId];
+      if(autoLinkOrigin && appSettings.linkSeanceTodo){
+        newItem.linkId = uid();
+        todoList.unshift({ id: uid(), text, note, checked:false, linkId: newItem.linkId, origin: autoLinkOrigin });
+        scheduleSaveSeance('todo');
+      }
+      cat.getArr().unshift(newItem);
       cat.save();
     } else {
       item.text = text;
       item.note = note;
+      item.dueDate = dueDate;
       if(newCategoryId === 'todo') item.urgent = urgent;
       if(item.linkId) syncLinkedItems(item.linkId, { text, note });
       if(newCategoryId !== categoryId){
@@ -1485,6 +1587,7 @@ function openPointModal(opts){
         const oldArr = oldCat.getArr();
         const idx = oldArr.findIndex(x => x.id === item.id);
         if(idx >= 0) oldArr.splice(idx, 1);
+        if(newCategoryId === 'agenda' && !item.scheduledDate) item.scheduledDate = new Date().toISOString().slice(0,10);
         newCat.getArr().unshift(item);
         oldCat.save();
         newCat.save();
@@ -1494,7 +1597,7 @@ function openPointModal(opts){
       if(item.linkId) saveAllLinkedLists();
     }
     close();
-    showToast(mode === 'add' ? 'Point ajouté' : 'Point mis à jour');
+    showToast(mode === 'add' ? 'Point ajout\u00e9' : 'Point mis \u00e0 jour');
     if(opts.onDone) opts.onDone();
   });
 }
@@ -1954,6 +2057,31 @@ function wireAgendaEcheancesSubNav(container){
   }));
 }
 
+function collectDueDateItems(){
+  const todayStr = new Date().toISOString().slice(0,10);
+  const results = [];
+  function consider(it, label){
+    if(!it.dueDate || it.checked) return;
+    results.push({ item: it, label, overdue: it.dueDate < todayStr });
+  }
+  todoList.forEach(it => consider(it, '✅ To do'));
+  seanceMatin.discuter.forEach(it => consider(it, '🌅 Matin — À discuter'));
+  seanceMatin.faire.forEach(it => consider(it, '🌅 Matin — À faire'));
+  seanceOpeBoard.staging.forEach(it => consider(it, '🛠 OPE — Non triés'));
+  seanceOpeBoard.derniere.forEach(it => consider(it, '🛠 OPE — Dernière séance'));
+  seanceOpeBoard.jour.forEach(it => consider(it, '🛠 OPE — Séance du jour'));
+  seance1a1.forEach(it => consider(it, '1️⃣ 1 à 1'));
+  seanceCommander.forEach(it => consider(it, '🛒 À commander'));
+  projects.forEach(p => {
+    if(p.archived || p.finished) return;
+    const data = loadAnyProjectData(p.id);
+    if(!data || !data.customChecklist) return;
+    data.customChecklist.forEach(it => consider(it, '📁 ' + (p.client || p.name)));
+  });
+  results.sort((a,b) => (a.item.dueDate||'') < (b.item.dueDate||'') ? -1 : 1);
+  return results;
+}
+
 async function renderEcheancesView(){
   await flushAllPending();
   const enteringFresh = currentView !== 'echeances';
@@ -2016,6 +2144,24 @@ async function renderEcheancesView(){
     `;
   }).join('') : '<div class="settings-empty">Aucun projet actif avec une échéance définie.</div>';
 
+  const dueItems = collectDueDateItems();
+  const dueItemsHtml = dueItems.length ? dueItems.map(({item, label, overdue}) => {
+    const days = Math.ceil((new Date(item.dueDate) - new Date(todayStr)) / 86400000);
+    const daysLabel = overdue ? `en retard de ${Math.abs(days)}j` : (days === 0 ? "aujourd'hui" : `dans ${days}j`);
+    return `
+      <div class="ech-row ${overdue?'overdue':''}">
+        <div class="ech-date">
+          <div class="ech-date-day">${new Date(item.dueDate).toLocaleDateString('fr-FR')}</div>
+          <div class="ech-date-rel">${daysLabel}</div>
+        </div>
+        <div class="ech-body">
+          <div class="ech-client">${escapeHtml(item.text)}</div>
+          <div class="ech-name">${label}</div>
+        </div>
+      </div>
+    `;
+  }).join('') : '<div class="settings-empty">Aucun point avec une échéance.</div>';
+
   ev.innerHTML = agendaEcheancesSubNavHtml('echeances') + `
     <div class="dashboard-header">
       <h2>Échéances</h2>
@@ -2024,6 +2170,10 @@ async function renderEcheancesView(){
     <div class="alert-section">
       <h3>🏁 Échéances des projets</h3>
       <div class="ech-list">${rowsHtml}</div>
+    </div>
+    <div class="alert-section">
+      <h3>📌 Points à échéance</h3>
+      <div class="ech-list">${dueItemsHtml}</div>
     </div>
   `;
   ev.querySelectorAll('[data-id]').forEach(el => el.addEventListener('click', () => openProject(el.dataset.id)));
@@ -2036,6 +2186,20 @@ let agendaCursor = new Date();
 agendaCursor.setDate(1);
 let agendaSelectedDate = null;
 
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const diff = d - firstThursday;
+  return 1 + Math.round(diff / (7*24*60*60*1000));
+}
+
+function collectAgendaEntriesForDate(dateStr){
+  const all = agendaItems.concat(agendaItemsHistorique);
+  return all.filter(it => it.scheduledDate === dateStr);
+}
+
 async function renderAgendaView(){
   await flushAllPending();
   const enteringFresh = currentView !== 'agenda';
@@ -2046,12 +2210,16 @@ async function renderAgendaView(){
   if(enteringFresh) resetViewScroll(av);
   await renderSidebar();
 
-  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PRÉ PROJET', autre:'Autre' };
-  const visitStatusLabels = { a_confirmer:'🟡 À confirmer', confirme:'🟢 Confirmé', annule:'🔴 Annulé' };
+  const visitTypeLabels = { commercial:'Commercial', technique:'Technique', sous_traitant:'Sous-traitant', prepa:'PREPA', liv:'LIV', inst:'INST', pre_projet:'PR\u00c9 PROJET', autre:'Autre' };
+  const visitStatusLabels = { a_confirmer:'\ud83d\udfe1 \u00c0 confirmer', confirme:'\ud83d\udfe2 Confirm\u00e9', annule:'\ud83d\udd34 Annul\u00e9' };
   const todayStr = new Date().toISOString().slice(0,10);
   const allVisits = collectAllVisits();
   const byDate = {};
   allVisits.forEach(u => { (byDate[u.visit.date] = byDate[u.visit.date] || []).push(u); });
+  const agendaByDate = {};
+  agendaItems.concat(agendaItemsHistorique).forEach(it => {
+    if(it.scheduledDate) (agendaByDate[it.scheduledDate] = agendaByDate[it.scheduledDate] || []).push(it);
+  });
 
   const year = agendaCursor.getFullYear(), month = agendaCursor.getMonth();
   const monthLabel = agendaCursor.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
@@ -2063,58 +2231,81 @@ async function renderAgendaView(){
   for(let d = 1; d <= daysInMonth; d++) cells.push(d);
   while(cells.length % 7 !== 0) cells.push(null);
 
-  const dowHtml = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => `<div class="agenda-dow">${d}</div>`).join('');
-  const cellsHtml = cells.map(d => {
-    if(d === null) return '<div class="agenda-day empty"></div>';
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayVisits = byDate[dateStr] || [];
-    const isToday = dateStr === todayStr;
-    const isSelected = dateStr === agendaSelectedDate;
-    return `
-      <div class="agenda-day ${isToday?'today':''} ${isSelected?'selected':''} ${dayVisits.length?'has-visits':''}" data-date="${dateStr}">
-        <div class="agenda-day-num">${d}</div>
-        <div class="agenda-day-dots">${dayVisits.slice(0,4).map(u => `<span class="agenda-dot status-${u.visit.status||'a_confirmer'}"></span>`).join('')}</div>
-      </div>
-    `;
+  const dowHtml = '<div class="agenda-week-label"></div>' + ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map(d => `<div class="agenda-dow">${d}</div>`).join('');
+  const weeks = [];
+  for(let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i+7));
+  const gridRowsHtml = weeks.map(week => {
+    const firstDay = week.find(d => d !== null);
+    const wn = firstDay ? getISOWeek(new Date(year, month, firstDay)) : '';
+    const daysHtml = week.map(d => {
+      if(d === null) return '<div class="agenda-day empty"></div>';
+      const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dayVisits = byDate[dateStr] || [];
+      const dayAgenda = agendaByDate[dateStr] || [];
+      const isToday = dateStr === todayStr;
+      const isSelected = dateStr === agendaSelectedDate;
+      const dots = dayVisits.slice(0,3).map(u => `<span class="agenda-dot status-${u.visit.status||'a_confirmer'}"></span>`).join('')
+        + (dayAgenda.length ? `<span class="agenda-dot agenda-dot-task"></span>` : '');
+      return `
+        <div class="agenda-day ${isToday?'today':''} ${isSelected?'selected':''} ${(dayVisits.length||dayAgenda.length)?'has-visits':''}" data-date="${dateStr}">
+          <div class="agenda-day-num">${d}</div>
+          <div class="agenda-day-dots">${dots}</div>
+        </div>
+      `;
+    }).join('');
+    return `<div class="agenda-week-label">S${wn}</div>${daysHtml}`;
   }).join('');
 
-  if(!agendaSelectedDate || !byDate[agendaSelectedDate]){
-    agendaSelectedDate = byDate[todayStr] ? todayStr : agendaSelectedDate;
+  if(!agendaSelectedDate || (!byDate[agendaSelectedDate] && !agendaByDate[agendaSelectedDate])){
+    agendaSelectedDate = (byDate[todayStr] || agendaByDate[todayStr]) ? todayStr : agendaSelectedDate;
   }
   const detailVisits = agendaSelectedDate ? (byDate[agendaSelectedDate] || []) : [];
+  const detailAgenda = agendaSelectedDate ? (agendaByDate[agendaSelectedDate] || []) : [];
   const detailHtml = agendaSelectedDate ? `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-      <h3 style="margin:0;">${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}</h3>
+      <h3 style="margin:0;">${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })} <span class="opt-count">S${getISOWeek(new Date(agendaSelectedDate))}</span></h3>
       <button class="btn btn-primary" id="agendaAddVisitBtn">+ Ajouter un RDV</button>
     </div>
+    ${detailAgenda.length ? `
+      <h4 class="rp-h4" style="margin-top:0;">Points de l'agenda du jour</h4>
+      <div class="seance-list" style="margin-bottom:18px;">
+        ${detailAgenda.map(it => `
+          <div class="seance-item ${it.checked?'done':''}">
+            <div class="seance-item-top">
+              <span class="seance-text">${escapeHtml(it.text)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
     <div class="ech-list">
       ${detailVisits.length ? detailVisits.map(({project, visit}) => `
         <div class="ech-row" data-id="${project.id}">
           <div class="ech-date">
-            <div class="ech-date-day">${visit.time || '—'}</div>
+            <div class="ech-date-day">${visit.time || '\u2014'}</div>
           </div>
           <div class="ech-body">
-            <div class="ech-client">${escapeHtml(project.client || 'Client non défini')}</div>
-            <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.label?' — '+escapeHtml(visit.label):''} · ${escapeHtml(project.name)}</div>
+            <div class="ech-client">${escapeHtml(project.client || 'Client non d\u00e9fini')}</div>
+            <div class="ech-name">${visitTypeLabels[visit.type]||'RDV'}${visit.type==='sous_traitant' && visit.subcontractor?' ('+escapeHtml(visit.subcontractor)+')':''}${visit.label?' \u2014 '+escapeHtml(visit.label):''} \u00b7 ${escapeHtml(project.name)}</div>
           </div>
           <div class="ech-progress">${visitStatusLabels[visit.status||'a_confirmer']}</div>
         </div>
-      `).join('') : '<div class="settings-empty">Aucun rendez-vous ce jour-là.</div>'}
+      `).join('') : (detailAgenda.length ? '' : '<div class="settings-empty">Rien de pr\u00e9vu ce jour-l\u00e0.</div>')}
     </div>
-  ` : '<div class="settings-empty">Sélectionne un jour du calendrier pour voir ses rendez-vous.</div>';
+  ` : '<div class="settings-empty">S\u00e9lectionne un jour du calendrier.</div>';
 
   av.innerHTML = agendaEcheancesSubNavHtml('agenda') + `
     <div class="dashboard-header">
       <h2>Agenda</h2>
-      <p>Tous les rendez-vous programmés dans tes projets, tous confondus.</p>
+      <p>Tous les rendez-vous et points programm\u00e9s, tous projets confondus. Clique un jour pass\u00e9 pour voir ce qui \u00e9tait pr\u00e9vu ce jour-l\u00e0.</p>
     </div>
     <div class="agenda-nav">
-      <button class="btn btn-ghost" id="agendaPrevBtn">‹</button>
+      <button class="btn btn-ghost" id="agendaPrevBtn">\u2039</button>
       <div class="agenda-month-label">${monthLabel}</div>
-      <button class="btn btn-ghost" id="agendaNextBtn">›</button>
+      <button class="btn btn-ghost" id="agendaNextBtn">\u203a</button>
       <button class="btn btn-ghost" id="agendaTodayBtn" style="margin-left:auto;">Aujourd'hui</button>
     </div>
-    <div class="agenda-grid">${dowHtml}${cellsHtml}</div>
+    <div class="agenda-grid">${dowHtml}${gridRowsHtml}</div>
     <div class="agenda-detail">${detailHtml}</div>
   `;
 
@@ -2143,15 +2334,17 @@ let seanceOpeBoard = { staging:[], derniere:[], jour:[] };
 
 let seance1a1 = [];
 let seanceCommander = [];
+let agendaItems = [];
 let todoHistorique = [];
 let seance1a1Historique = [];
 let seanceCommanderHistorique = [];
-function getSimpleList(id){ if(id === '1a1') return seance1a1; if(id === 'commander') return seanceCommander; return todoList; }
-function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else if(id === 'commander') seanceCommander = arr; else todoList = arr; }
-function getHistoriqueList(id){ if(id === '1a1') return seance1a1Historique; if(id === 'commander') return seanceCommanderHistorique; return todoHistorique; }
-function setHistoriqueList(id, arr){ if(id === '1a1') seance1a1Historique = arr; else if(id === 'commander') seanceCommanderHistorique = arr; else todoHistorique = arr; }
-function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; if(id === 'commander') return 'seance_commander'; return 'seance_ope'; }
-function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; if(id === 'commander') return 'À commander'; return 'Séance OPE'; }
+let agendaItemsHistorique = [];
+function getSimpleList(id){ if(id === '1a1') return seance1a1; if(id === 'commander') return seanceCommander; if(id === 'agenda') return agendaItems; return todoList; }
+function setSimpleList(id, arr){ if(id === '1a1') seance1a1 = arr; else if(id === 'commander') seanceCommander = arr; else if(id === 'agenda') agendaItems = arr; else todoList = arr; }
+function getHistoriqueList(id){ if(id === '1a1') return seance1a1Historique; if(id === 'commander') return seanceCommanderHistorique; if(id === 'agenda') return agendaItemsHistorique; return todoHistorique; }
+function setHistoriqueList(id, arr){ if(id === '1a1') seance1a1Historique = arr; else if(id === 'commander') seanceCommanderHistorique = arr; else if(id === 'agenda') agendaItemsHistorique = arr; else todoHistorique = arr; }
+function seanceStorageKey(id){ if(id === 'todo') return 'todo_list'; if(id === '1a1') return 'seance_1a1'; if(id === 'commander') return 'seance_commander'; if(id === 'agenda') return 'agenda_items'; return 'seance_ope'; }
+function seanceTitleFor(id){ if(id === 'matin') return 'Séance du matin'; if(id === 'todo') return 'To do list'; if(id === '1a1') return 'Séance 1 à 1'; if(id === 'commander') return 'À commander'; if(id === 'agenda') return 'Agenda du jour'; return 'Séance OPE'; }
 
 function loadSeanceMatin(){
   const v = lsGet('seance_matin');
@@ -2207,7 +2400,7 @@ function deleteLinkedProjectItem(projectId, linkId){
 
 function syncLinkedItems(linkId, patch){
   if(!linkId) return;
-  [seanceMatin.discuter, seanceMatin.faire, seanceMatin.historique, todoList, todoHistorique, seance1a1, seance1a1Historique, seanceCommander, seanceCommanderHistorique, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour, seanceOpeBoard.historique].forEach(arr => {
+  [seanceMatin.discuter, seanceMatin.faire, seanceMatin.historique, todoList, todoHistorique, seance1a1, seance1a1Historique, seanceCommander, seanceCommanderHistorique, agendaItems, agendaItemsHistorique, seanceOpeBoard.staging, seanceOpeBoard.derniere, seanceOpeBoard.jour, seanceOpeBoard.historique].forEach(arr => {
     arr.forEach(it => { if(it.linkId === linkId) Object.assign(it, patch); });
   });
   const todoItem = todoList.find(it => it.linkId === linkId && it.origin === 'project') || todoHistorique.find(it => it.linkId === linkId && it.origin === 'project');
@@ -2226,6 +2419,8 @@ function deleteLinkedItems(linkId){
   seance1a1Historique = seance1a1Historique.filter(it => it.linkId !== linkId);
   seanceCommander = seanceCommander.filter(it => it.linkId !== linkId);
   seanceCommanderHistorique = seanceCommanderHistorique.filter(it => it.linkId !== linkId);
+  agendaItems = agendaItems.filter(it => it.linkId !== linkId);
+  agendaItemsHistorique = agendaItemsHistorique.filter(it => it.linkId !== linkId);
   seanceOpeBoard.staging = seanceOpeBoard.staging.filter(it => it.linkId !== linkId);
   seanceOpeBoard.derniere = seanceOpeBoard.derniere.filter(it => it.linkId !== linkId);
   seanceOpeBoard.jour = seanceOpeBoard.jour.filter(it => it.linkId !== linkId);
@@ -2236,9 +2431,17 @@ function saveAllLinkedLists(){
   saveSeance('todo');
   saveSeance('1a1');
   saveSeance('commander');
+  saveSeance('agenda');
   saveSeanceOpeBoard();
 }
-function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; if(id === 'commander') return '🛒'; return '🛠'; }
+// Removes an item from "Agenda du jour" only (active or historique), leaving any
+// linked copy elsewhere (its true origin) untouched. Used by "Retirer de l'agenda".
+function removeFromAgendaOnly(itemId){
+  agendaItems = agendaItems.filter(x => x.id !== itemId);
+  agendaItemsHistorique = agendaItemsHistorique.filter(x => x.id !== itemId);
+  saveSeance('agenda');
+}
+function seanceIconFor(id){ if(id === 'matin') return '🌅'; if(id === 'todo') return '✅'; if(id === '1a1') return '1️⃣'; if(id === 'commander') return '🛒'; if(id === 'agenda') return '📅'; return '🛠'; }
 
 function allOpeItems(){
   return [...seanceOpeBoard.staging, ...seanceOpeBoard.derniere, ...seanceOpeBoard.jour, ...seanceOpeBoard.historique];
@@ -2266,7 +2469,7 @@ function seancePct(id){
 }
 
 function buildSeanceSummaryHtml(){
-  const cards = ['matin', 'ope', 'todo', '1a1', 'commander'].map(id => {
+  const cards = ['agenda', 'matin', 'ope', 'todo', '1a1', 'commander'].map(id => {
     const { total, checked, pct } = seancePct(id);
     const label = total === 0 ? 'Rien à cocher — 100%' : `${checked}/${total} points · ${pct}%`;
     return `
@@ -2343,7 +2546,7 @@ async function renderSeanceView(id){
   if(id === 'ope'){ renderSeanceOpeView(); return; }
   if(id === 'matin'){ renderSeanceMatinBoard(); return; }
 
-  const catIdFor = id === 'todo' ? 'todo' : (id === '1a1' ? '1a1' : 'commander');
+  const catIdFor = id === 'todo' ? 'todo' : (id === '1a1' ? '1a1' : (id === 'agenda' ? 'agenda' : 'commander'));
 
   // Catch up: anything checked that's still sitting in the active list (e.g. via a
   // link sync from elsewhere) gets moved into this list's own historique.
@@ -2364,9 +2567,12 @@ async function renderSeanceView(id){
   const filtered = (id === 'todo' && todoOriginFilter !== 'all')
     ? items.filter(it => (it.origin || 'todo') === todoOriginFilter)
     : items;
+  const todayStrForAgenda = new Date().toISOString().slice(0,10);
   const ordered = id === 'todo'
     ? filtered.filter(it => it.urgent).concat(filtered.filter(it => !it.urgent))
-    : filtered;
+    : (id === 'agenda'
+      ? filtered.filter(it => it.scheduledDate && it.scheduledDate < todayStrForAgenda).concat(filtered.filter(it => !(it.scheduledDate && it.scheduledDate < todayStrForAgenda)))
+      : filtered);
 
   const originLabels = { todo:'📝 Manuel', matin:'🌅 Matin', ope:'🛠 OPE', '1a1':'1️⃣ 1 à 1', commander:'🛒 À commander', project:'📁 Projet' };
   const filterBarHtml = (id === 'todo') ? `
@@ -2377,13 +2583,16 @@ async function renderSeanceView(id){
 
   function itemCardHtml(it, zone){
     const hasNote = !!(it.note && it.note.trim());
+    const isOverdue = id === 'agenda' && zone !== 'historique' && it.scheduledDate && it.scheduledDate < todayStrForAgenda;
+    const overdueBadge = isOverdue ? `<div class="seance-item-badges"><span class="item-badge" style="background:var(--danger);color:#fff;border-color:var(--danger);">⚠ En retard depuis le ${new Date(it.scheduledDate).toLocaleDateString('fr-FR')}</span></div>` : '';
     return `
-        <div class="seance-item ${hasNote?'has-note':''} ${zone==='historique'?'done':''} ${id==='todo' && it.urgent && zone!=='historique' ?'urgent':''}" data-id="${it.id}" data-zone="${zone}">
+        <div class="seance-item ${hasNote?'has-note':''} ${zone==='historique'?'done':''} ${isOverdue?'overdue-agenda':''} ${id==='todo' && it.urgent && zone!=='historique' ?'urgent':''}" data-id="${it.id}" data-zone="${zone}">
           <div class="seance-item-top">
             <input type="checkbox" class="seance-check" data-id="${it.id}" data-zone="${zone}" ${zone==='historique'?'checked':''}>
             <span class="seance-text" data-id="${it.id}">${escapeHtml(it.text)}</span>
             <button class="seance-del" data-id="${it.id}" data-zone="${zone}" title="Supprimer">×</button>
           </div>
+          ${overdueBadge}
         </div>
       `;
   }
@@ -2503,6 +2712,7 @@ function opeItemCardHtml(it, listName){
 function seanceSubNavHtml(active){
   return `
     <div class="hub-subnav">
+      <button class="hub-pill ${active==='agenda'?'active':''}" data-seance-tab="agenda">📅 Agenda du jour</button>
       <button class="hub-pill ${active==='todo'?'active':''}" data-seance-tab="todo">✅ To do list</button>
       <button class="hub-pill ${active==='matin'?'active':''}" data-seance-tab="matin">🌅 Séance du matin</button>
       <button class="hub-pill ${active==='ope'?'active':''}" data-seance-tab="ope">🛠 Séance OPE</button>
@@ -3022,26 +3232,35 @@ function openCcPointModal(opts){
   const { mode, item } = opts;
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
-  const inCommander = !!(item && item.linkId && seanceCommander.some(x => x.linkId === item.linkId));
+  const inCommander = !!(item && item.linkId && seanceCommander.concat(seanceCommanderHistorique).some(x => x.linkId === item.linkId));
+  const inAgenda = !!(item && item.linkId && agendaItems.concat(agendaItemsHistorique).some(x => x.linkId === item.linkId));
   const linkInfoHtml = (mode === 'edit' && item && item.linkId) ? `
-    <div class="pm-link-info">🔗 Ce point est lié à la To do list${inCommander ? ' et à « À commander »' : ''} — le modifier ou le supprimer agit aussi sur ces copies.</div>
+    <div class="pm-link-info">\ud83d\udd17 Ce point est li\u00e9${inCommander ? ' \u00e0 \u00ab\u00a0\u00c0 commander\u00a0\u00bb' : ''}${inAgenda ? ' et \u00e0 l\u2019agenda du jour' : ''} \u2014 le modifier ou le supprimer agit aussi sur ces copies.</div>
   ` : '';
   backdrop.innerHTML = `
     <div class="modal">
-      <h3>${mode === 'add' ? 'Nouveau point complémentaire' : 'Modifier le point'}</h3>
+      <h3>${mode === 'add' ? 'Nouveau point compl\u00e9mentaire' : 'Modifier le point'}</h3>
       ${linkInfoHtml}
       <div class="modal-scroll">
         <label>Titre</label>
         <input type="text" id="ccmTitle" placeholder="Titre du point">
         <label>Note (optionnel)</label>
-        <textarea id="ccmNote" rows="3" placeholder="Note…"></textarea>
+        <textarea id="ccmNote" rows="3" placeholder="Note\u2026"></textarea>
         <label class="choice-chip" style="margin-top:10px;">
-          <input type="checkbox" id="ccmIgnore"> 🚫 Ignorer (compté comme fait, affiché en rouge)
+          <input type="checkbox" id="ccmIgnore"> \ud83d\udeab Ignorer (compt\u00e9 comme fait, affich\u00e9 en rouge)
         </label>
+        <label>\u00c9ch\u00e9ance (optionnel)</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="ccmDueDate" style="flex:1;min-width:140px;">
+          <button type="button" class="btn-text" id="ccmDueToday">Aujourd'hui</button>
+          <button type="button" class="btn-text" id="ccmDueClear">Effacer</button>
+        </div>
       </div>
       <div class="modal-actions" style="flex-wrap:wrap;">
         ${mode === 'edit' ? '<button class="btn-text" id="ccmDelete" style="color:var(--danger);">Supprimer</button>' : ''}
-        ${mode === 'edit' && !inCommander ? '<button class="btn-text" id="ccmToCommander">🛒 À commander</button>' : ''}
+        ${mode === 'edit' && !inCommander ? '<button class="btn-text" id="ccmToCommander">\ud83d\uded2 \u00c0 commander</button>' : ''}
+        ${mode === 'edit' && !inAgenda ? '<button class="btn-text" id="ccmToAgenda">\ud83d\udcc5 \u00c0 l\u2019agenda du jour</button>' : ''}
+        ${mode === 'edit' && item && item.linkId ? '<button class="btn-text" id="ccmGoToSource">\ud83d\udd17 Aller \u00e0 la source</button>' : ''}
         <button class="btn-text" id="ccmCancel">Annuler</button>
         <button class="btn btn-primary" id="ccmSave">${mode === 'add' ? '+ Ajouter' : 'Enregistrer'}</button>
       </div>
@@ -3051,11 +3270,15 @@ function openCcPointModal(opts){
   const titleInput = $('#ccmTitle');
   const noteInput = $('#ccmNote');
   const ignoreCb = $('#ccmIgnore');
+  const dueDateInput = $('#ccmDueDate');
   if(item){
     titleInput.value = item.text || '';
     noteInput.value = item.note || '';
     ignoreCb.checked = !!item.ignored;
+    dueDateInput.value = item.dueDate || '';
   }
+  $('#ccmDueToday').addEventListener('click', () => { dueDateInput.value = new Date().toISOString().slice(0,10); });
+  $('#ccmDueClear').addEventListener('click', () => { dueDateInput.value = ''; });
 
   function close(){ document.body.removeChild(backdrop); }
   backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
@@ -3064,7 +3287,7 @@ function openCcPointModal(opts){
 
   const delBtn = $('#ccmDelete');
   if(delBtn) delBtn.addEventListener('click', async () => {
-    const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Sa copie dans les autres listes sera supprimée aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
+    const ok = await customConfirm(item.linkId ? 'Supprimer ce point ? Ses copies dans les autres listes seront supprim\u00e9es aussi.' : 'Supprimer ce point ?', { okText:'Supprimer' });
     if(!ok) return;
     if(item.linkId){
       deleteLinkedItems(item.linkId);
@@ -3083,29 +3306,52 @@ function openCcPointModal(opts){
     seanceCommander.unshift({ id: uid(), text: item.text, checked: item.checked, note: item.note || '', linkId: item.linkId, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
     scheduleSaveProjectData();
     scheduleSaveSeance('commander');
-    showToast('Ajouté à « À commander »');
+    showToast('Ajout\u00e9 \u00e0 \u00ab\u00a0\u00c0 commander\u00a0\u00bb');
     close();
     if(opts.onDone) opts.onDone();
   });
 
+  const agendaBtn = $('#ccmToAgenda');
+  if(agendaBtn) agendaBtn.addEventListener('click', () => {
+    if(!item.linkId) item.linkId = uid();
+    const p = projects.find(x => x.id === currentProjectId);
+    const todayStr = new Date().toISOString().slice(0,10);
+    agendaItems.unshift({ id: uid(), text: item.text, checked: item.checked, note: item.note || '', linkId: item.linkId, scheduledDate: todayStr, origin:'project', originProjectId: currentProjectId, originProjectName: p ? (p.client || p.name) : '' });
+    scheduleSaveProjectData();
+    scheduleSaveSeance('agenda');
+    showToast('Ajout\u00e9 \u00e0 l\u2019agenda du jour');
+    close();
+    if(opts.onDone) opts.onDone();
+  });
+
+  const goToSourceBtn = $('#ccmGoToSource');
+  if(goToSourceBtn) goToSourceBtn.addEventListener('click', async () => {
+    const info = findLinkedSourceInfo(item.linkId);
+    if(!info){ showToast('Source introuvable (peut-être supprimée)'); return; }
+    close();
+    await goToLinkedSource(info);
+  });
+
   $('#ccmSave').addEventListener('click', () => {
     const text = titleInput.value.trim();
-    if(!text){ showToast('Le titre ne peut pas être vide'); return; }
+    if(!text){ showToast('Le titre ne peut pas \u00eatre vide'); return; }
     const note = noteInput.value;
     const ignored = ignoreCb.checked;
+    const dueDate = dueDateInput.value || null;
     if(mode === 'add'){
       if(!currentData.customChecklist) currentData.customChecklist = [];
-      currentData.customChecklist.unshift({ id: uid(), text, note, checked:false, ignored });
+      currentData.customChecklist.unshift({ id: uid(), text, note, checked:false, ignored, dueDate });
     } else {
       item.text = text;
       item.note = note;
       item.ignored = ignored;
+      item.dueDate = dueDate;
       if(ignored) item.checked = true;
       if(item.linkId){ syncLinkedItems(item.linkId, { text, note }); saveAllLinkedLists(); }
     }
     scheduleSaveProjectData();
     close();
-    showToast(mode === 'add' ? 'Point ajouté' : 'Point mis à jour');
+    showToast(mode === 'add' ? 'Point ajout\u00e9' : 'Point mis \u00e0 jour');
     if(opts.onDone) opts.onDone();
   });
 }
@@ -5339,6 +5585,8 @@ async function exportAllData(){
     seance1a1Historique,
     seanceCommander,
     seanceCommanderHistorique,
+    agendaItems,
+    agendaItemsHistorique,
     seanceOpeBoard,
     appOptions,
     checklistTemplates,
@@ -5379,13 +5627,24 @@ async function importAllData(file){
     saveProjects();
 
     if(payload.seanceMatin){
-      seanceMatin = Array.isArray(payload.seanceMatin) ? { discuter:[], faire: payload.seanceMatin } : { discuter: payload.seanceMatin.discuter||[], faire: payload.seanceMatin.faire||[] };
+      seanceMatin = Array.isArray(payload.seanceMatin)
+        ? { discuter:[], faire: payload.seanceMatin, historique:[] }
+        : { discuter: payload.seanceMatin.discuter||[], faire: payload.seanceMatin.faire||[], historique: payload.seanceMatin.historique||[] };
       saveSeanceMatin();
     }
-    if(payload.todoList){ todoList = payload.todoList; if(payload.todoHistorique) todoHistorique = payload.todoHistorique; saveSeance('todo'); }
-    if(payload.seance1a1){ seance1a1 = payload.seance1a1; if(payload.seance1a1Historique) seance1a1Historique = payload.seance1a1Historique; saveSeance('1a1'); }
-    if(payload.seanceCommander){ seanceCommander = payload.seanceCommander; if(payload.seanceCommanderHistorique) seanceCommanderHistorique = payload.seanceCommanderHistorique; saveSeance('commander'); }
-    if(payload.seanceOpeBoard){ seanceOpeBoard = payload.seanceOpeBoard; saveSeanceOpeBoard(); }
+    if(payload.todoList){ todoList = payload.todoList; todoHistorique = payload.todoHistorique || []; saveSeance('todo'); }
+    if(payload.seance1a1){ seance1a1 = payload.seance1a1; seance1a1Historique = payload.seance1a1Historique || []; saveSeance('1a1'); }
+    if(payload.seanceCommander){ seanceCommander = payload.seanceCommander; seanceCommanderHistorique = payload.seanceCommanderHistorique || []; saveSeance('commander'); }
+    if(payload.agendaItems){ agendaItems = payload.agendaItems; agendaItemsHistorique = payload.agendaItemsHistorique || []; saveSeance('agenda'); }
+    if(payload.seanceOpeBoard){
+      seanceOpeBoard = {
+        staging: payload.seanceOpeBoard.staging || [],
+        derniere: payload.seanceOpeBoard.derniere || [],
+        jour: payload.seanceOpeBoard.jour || [],
+        historique: payload.seanceOpeBoard.historique || []
+      };
+      saveSeanceOpeBoard();
+    }
     if(payload.appOptions){
       appOptions = { coordinateurs: payload.appOptions.coordinateurs || [], flux: payload.appOptions.flux || [], projectOptions: payload.appOptions.projectOptions || [], customFlux: payload.appOptions.customFlux || [] };
       ensureAirmasterOption(false);
@@ -5437,6 +5696,27 @@ async function init(){
   { const d = loadSeance('todo_list'); todoList = d.items; todoHistorique = d.historique; }
   { const d = loadSeance('seance_1a1'); seance1a1 = d.items; seance1a1Historique = d.historique; }
   { const d = loadSeance('seance_commander'); seanceCommander = d.items; seanceCommanderHistorique = d.historique; }
+  { const d = loadSeance('agenda_items'); agendaItems = d.items; agendaItemsHistorique = d.historique; }
+
+  // Defensive normalization: guarantee every historique/sub-array actually exists,
+  // even if it got lost through an old export/import or a future edge case.
+  if(!seanceMatin || typeof seanceMatin !== 'object') seanceMatin = { discuter:[], faire:[], historique:[] };
+  if(!Array.isArray(seanceMatin.discuter)) seanceMatin.discuter = [];
+  if(!Array.isArray(seanceMatin.faire)) seanceMatin.faire = [];
+  if(!Array.isArray(seanceMatin.historique)) seanceMatin.historique = [];
+  if(!seanceOpeBoard || typeof seanceOpeBoard !== 'object') seanceOpeBoard = { staging:[], derniere:[], jour:[], historique:[] };
+  if(!Array.isArray(seanceOpeBoard.staging)) seanceOpeBoard.staging = [];
+  if(!Array.isArray(seanceOpeBoard.derniere)) seanceOpeBoard.derniere = [];
+  if(!Array.isArray(seanceOpeBoard.jour)) seanceOpeBoard.jour = [];
+  if(!Array.isArray(seanceOpeBoard.historique)) seanceOpeBoard.historique = [];
+  if(!Array.isArray(todoList)) todoList = [];
+  if(!Array.isArray(todoHistorique)) todoHistorique = [];
+  if(!Array.isArray(seance1a1)) seance1a1 = [];
+  if(!Array.isArray(seance1a1Historique)) seance1a1Historique = [];
+  if(!Array.isArray(seanceCommander)) seanceCommander = [];
+  if(!Array.isArray(seanceCommanderHistorique)) seanceCommanderHistorique = [];
+  if(!Array.isArray(agendaItems)) agendaItems = [];
+  if(!Array.isArray(agendaItemsHistorique)) agendaItemsHistorique = [];
   seanceOpeBoard = loadSeanceOpeBoard();
   morningRoutineItems = loadMorningRoutineItems();
   if(!lsGet('morningRoutineV2Seeded')){
