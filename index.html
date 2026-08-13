@@ -758,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.5.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.7'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1581,7 +1581,7 @@ function openPointModal(opts){
       item.note = note;
       item.dueDate = dueDate;
       if(newCategoryId === 'todo') item.urgent = urgent;
-      if(item.linkId) syncLinkedItems(item.linkId, { text, note });
+      if(item.linkId) syncLinkedItems(item.linkId, { text, note, dueDate });
       if(newCategoryId !== categoryId){
         const oldCat = pointCategoryOf(categoryId);
         const newCat = pointCategoryOf(newCategoryId);
@@ -3421,7 +3421,7 @@ function openCcPointModal(opts){
       item.ignored = ignored;
       item.dueDate = dueDate;
       if(ignored) item.checked = true;
-      if(item.linkId){ syncLinkedItems(item.linkId, { text, note }); saveAllLinkedLists(); }
+      if(item.linkId){ syncLinkedItems(item.linkId, { text, note, dueDate }); saveAllLinkedLists(); }
     }
     scheduleSaveProjectData();
     close();
