@@ -758,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.5.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2232,6 +2232,10 @@ async function renderAgendaView(){
   agendaItems.concat(agendaItemsHistorique).forEach(it => {
     if(it.scheduledDate) (agendaByDate[it.scheduledDate] = agendaByDate[it.scheduledDate] || []).push(it);
   });
+  const dueByDate = {};
+  collectDueDateItems().forEach(e => {
+    (dueByDate[e.item.dueDate] = dueByDate[e.item.dueDate] || []).push(e);
+  });
 
   const year = agendaCursor.getFullYear(), month = agendaCursor.getMonth();
   const monthLabel = agendaCursor.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
@@ -2254,12 +2258,13 @@ async function renderAgendaView(){
       const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const dayVisits = byDate[dateStr] || [];
       const dayAgenda = agendaByDate[dateStr] || [];
+      const dayDue = dueByDate[dateStr] || [];
       const isToday = dateStr === todayStr;
       const isSelected = dateStr === agendaSelectedDate;
       const dots = dayVisits.slice(0,3).map(u => `<span class="agenda-dot status-${u.visit.status||'a_confirmer'}"></span>`).join('')
-        + (dayAgenda.length ? `<span class="agenda-dot agenda-dot-task"></span>` : '');
+        + ((dayAgenda.length || dayDue.length) ? `<span class="agenda-dot agenda-dot-task"></span>` : '');
       return `
-        <div class="agenda-day ${isToday?'today':''} ${isSelected?'selected':''} ${(dayVisits.length||dayAgenda.length)?'has-visits':''}" data-date="${dateStr}">
+        <div class="agenda-day ${isToday?'today':''} ${isSelected?'selected':''} ${(dayVisits.length||dayAgenda.length||dayDue.length)?'has-visits':''}" data-date="${dateStr}">
           <div class="agenda-day-num">${d}</div>
           <div class="agenda-day-dots">${dots}</div>
         </div>
@@ -2268,11 +2273,12 @@ async function renderAgendaView(){
     return `<div class="agenda-week-label">S${wn}</div>${daysHtml}`;
   }).join('');
 
-  if(!agendaSelectedDate || (!byDate[agendaSelectedDate] && !agendaByDate[agendaSelectedDate])){
-    agendaSelectedDate = (byDate[todayStr] || agendaByDate[todayStr]) ? todayStr : agendaSelectedDate;
+  if(!agendaSelectedDate || (!byDate[agendaSelectedDate] && !agendaByDate[agendaSelectedDate] && !dueByDate[agendaSelectedDate])){
+    agendaSelectedDate = (byDate[todayStr] || agendaByDate[todayStr] || dueByDate[todayStr]) ? todayStr : agendaSelectedDate;
   }
   const detailVisits = agendaSelectedDate ? (byDate[agendaSelectedDate] || []) : [];
   const detailAgenda = agendaSelectedDate ? (agendaByDate[agendaSelectedDate] || []) : [];
+  const detailDue = agendaSelectedDate ? (dueByDate[agendaSelectedDate] || []) : [];
   const detailHtml = agendaSelectedDate ? `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
       <h3 style="margin:0;">${new Date(agendaSelectedDate).toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })} <span class="opt-count">S${getISOWeek(new Date(agendaSelectedDate))}</span></h3>
@@ -2290,6 +2296,19 @@ async function renderAgendaView(){
         `).join('')}
       </div>
     ` : ''}
+    ${detailDue.length ? `
+      <h4 class="rp-h4">Échéances de points</h4>
+      <div class="seance-list" style="margin-bottom:18px;">
+        ${detailDue.map(e => `
+          <div class="seance-item">
+            <div class="seance-item-top">
+              <span class="seance-text">${escapeHtml(e.item.text)}</span>
+            </div>
+            <div class="seance-item-badges"><span class="item-badge">${e.label}</span></div>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
     <div class="ech-list">
       ${detailVisits.length ? detailVisits.map(({project, visit}) => `
         <div class="ech-row" data-id="${project.id}">
@@ -2302,7 +2321,7 @@ async function renderAgendaView(){
           </div>
           <div class="ech-progress">${visitStatusLabels[visit.status||'a_confirmer']}</div>
         </div>
-      `).join('') : (detailAgenda.length ? '' : '<div class="settings-empty">Rien de pr\u00e9vu ce jour-l\u00e0.</div>')}
+      `).join('') : ((detailAgenda.length || detailDue.length) ? '' : '<div class="settings-empty">Rien de pr\u00e9vu ce jour-l\u00e0.</div>')}
     </div>
   ` : '<div class="settings-empty">S\u00e9lectionne un jour du calendrier.</div>';
 
