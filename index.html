@@ -758,7 +758,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.5.7'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.5.8'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2061,11 +2061,17 @@ function wireAgendaEcheancesSubNav(container){
 function collectDueDateItems(){
   const todayStr = new Date().toISOString().slice(0,10);
   const results = [];
+  const seenLinkIds = new Set();
   function consider(it, label, save, nav){
     if(!it.dueDate || it.checked) return;
+    if(it.linkId){
+      if(seenLinkIds.has(it.linkId)) return; // already represented via its true origin
+      seenLinkIds.add(it.linkId);
+    }
     results.push({ item: it, label, overdue: it.dueDate < todayStr, save, nav });
   }
-  todoList.forEach(it => consider(it, '✅ To do', () => scheduleSaveSeance('todo'), { type:'category', categoryId:'todo' }));
+  // Origin sources first, so a point linked into the Todo list only counts once —
+  // via its real origin — instead of showing up a second time as a Todo mirror.
   seanceMatin.discuter.forEach(it => consider(it, '🌅 Matin — À discuter', () => scheduleSaveSeanceMatin(), { type:'category', categoryId:'matin_discuter' }));
   seanceMatin.faire.forEach(it => consider(it, '🌅 Matin — À faire', () => scheduleSaveSeanceMatin(), { type:'category', categoryId:'matin_faire' }));
   seanceOpeBoard.staging.forEach(it => consider(it, '🛠 OPE — Non triés', () => scheduleSaveSeanceOpe(), { type:'category', categoryId:'ope_staging' }));
@@ -2082,6 +2088,9 @@ function collectDueDateItems(){
       () => { if(isOpen) scheduleSaveProjectData(); else lsSet('project:' + p.id, JSON.stringify(data)); },
       { type:'project', projectId: p.id }));
   });
+  // Todo list last: only its genuinely manual points (or ones whose origin wasn't
+  // already counted above) get added here.
+  todoList.forEach(it => consider(it, '✅ To do', () => scheduleSaveSeance('todo'), { type:'category', categoryId:'todo' }));
   results.sort((a,b) => (a.item.dueDate||'') < (b.item.dueDate||'') ? -1 : 1);
   return results;
 }
