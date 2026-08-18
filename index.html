@@ -310,11 +310,12 @@
   .settings-add-input{flex:1;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--graphite);}
   .settings-hint{font-size:12.5px;color:var(--steel);line-height:1.5;margin:0 0 12px;}
   .pm-link-info{background:var(--amber-tint);border:1px solid var(--amber);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--graphite);line-height:1.5;margin:10px 0 0;}
-  .pm-task-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .pm-task-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .pm-task-row .pm-task-check{margin-top:3px;flex-shrink:0;}
   .pm-task-row:last-child{border-bottom:none;}
   .pm-task-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
-  .pm-task-num{font-size:12px;font-weight:700;color:var(--steel);font-family:var(--font-mono);min-width:16px;flex-shrink:0;}
-  .pm-task-text{flex:1;font-size:13.5px;color:var(--graphite);}
+  .pm-task-num{font-size:12px;font-weight:700;color:var(--steel);font-family:var(--font-mono);min-width:16px;flex-shrink:0;margin-top:2px;}
+  .pm-task-text{flex:1;font-size:13.5px;color:var(--graphite);line-height:1.4;word-break:break-word;cursor:pointer;padding:2px 0;-webkit-user-select:none;user-select:none;}
   .pm-task-text-input, .ccm-task-text-input{flex:1;border:none;background:none;font-size:13.5px;font-family:var(--font-body);color:var(--graphite);padding:2px 0;min-width:0;}
   .pm-task-text-input:focus, .ccm-task-text-input:focus{outline:1px solid var(--amber);border-radius:3px;background:var(--paper);}
   .pm-task-text-input.done, .ccm-task-text-input.done{text-decoration:line-through;color:var(--steel-light);}
@@ -679,6 +680,12 @@
     .stat-box{flex:1;min-width:100px;}
     #reportPreview{padding:20px 16px;}
     .modal{width:92vw;max-height:88vh;padding:20px;}
+    .modal-actions{flex-direction:column;align-items:stretch;gap:8px;}
+    .modal-actions button{width:100%;text-align:center;padding:11px;border-radius:6px;margin:0;}
+    .modal-actions .btn-text{border:1px solid var(--line);background:var(--paper);}
+    .dash-filter-bar{flex-direction:column;align-items:stretch;}
+    .dash-filter-bar > input, .dash-filter-bar select{width:100%;}
+    .dash-filter-bar .choice-chip{width:fit-content;}
     .fg-item, .fg-add{width:100px;}
     .fg-item img{width:100px;height:76px;}
     .proj-title-display{font-size:22px !important;}
@@ -687,6 +694,10 @@
     .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;}
     .tab-btn{padding:11px 12px;white-space:nowrap;}
     .options-panel-list{flex-direction:column;}
+    .modal{padding:16px;}
+    .pm-task-row{gap:5px;padding:5px 0;}
+    .pm-task-num{min-width:13px;font-size:11px;}
+    .pm-task-del{padding:0 2px;font-size:15px;}
   }
 
   @media print{
@@ -770,7 +781,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.6.1'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.6.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1544,13 +1555,16 @@ function openPointModal(opts){
     dueDateInput.value = item.dueDate || '';
   }
   let workingTasks = (item && Array.isArray(item.tasks)) ? item.tasks.map(t => ({ ...t })) : [];
+  let editingTaskIdx = null;
   function renderTasksList(){
     const el = $('#pmTasksList');
     el.innerHTML = workingTasks.length ? workingTasks.map((t, i) => `
       <div class="pm-task-row" data-idx="${i}">
         <input type="checkbox" class="pm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
         <span class="pm-task-num">${i+1}.</span>
-        <input type="text" class="pm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">
+        ${editingTaskIdx === i
+          ? `<input type="text" class="pm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
+          : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuyé pour modifier">${escapeHtml(t.text)}</span>`}
         <button type="button" class="pm-task-del" data-idx="${i}">×</button>
       </div>
     `).join('') : '<p class="settings-hint" style="margin:4px 0;">Aucune tâche pour l\u2019instant.</p>';
@@ -1558,11 +1572,26 @@ function openPointModal(opts){
       workingTasks[Number(cb.dataset.idx)].checked = cb.checked;
       renderTasksList();
     }));
-    el.querySelectorAll('.pm-task-text-input').forEach(inp => inp.addEventListener('input', () => {
-      workingTasks[Number(inp.dataset.idx)].text = inp.value;
-    }));
+    el.querySelectorAll('.pm-task-text-input').forEach(inp => {
+      inp.addEventListener('input', () => { workingTasks[Number(inp.dataset.idx)].text = inp.value; });
+      inp.addEventListener('blur', () => { editingTaskIdx = null; renderTasksList(); });
+      inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); inp.blur(); } });
+      inp.focus();
+      inp.setSelectionRange(inp.value.length, inp.value.length);
+    });
+    el.querySelectorAll('.pm-task-text').forEach(span => {
+      let pressTimer = null;
+      const startPress = () => { pressTimer = setTimeout(() => { editingTaskIdx = Number(span.dataset.idx); renderTasksList(); }, 550); };
+      const cancelPress = () => clearTimeout(pressTimer);
+      span.addEventListener('pointerdown', startPress);
+      span.addEventListener('pointerup', cancelPress);
+      span.addEventListener('pointerleave', cancelPress);
+      span.addEventListener('pointercancel', cancelPress);
+    });
     el.querySelectorAll('.pm-task-del').forEach(btn => btn.addEventListener('click', () => {
-      workingTasks.splice(Number(btn.dataset.idx), 1);
+      const idx = Number(btn.dataset.idx);
+      workingTasks.splice(idx, 1);
+      if(editingTaskIdx === idx) editingTaskIdx = null;
       renderTasksList();
     }));
   }
@@ -3478,13 +3507,16 @@ function openCcPointModal(opts){
   $('#ccmDueClear').addEventListener('click', () => { dueDateInput.value = ''; });
 
   let workingTasks = (item && Array.isArray(item.tasks)) ? item.tasks.map(t => ({ ...t })) : [];
+  let editingTaskIdx = null;
   function renderTasksList(){
     const el = $('#ccmTasksList');
     el.innerHTML = workingTasks.length ? workingTasks.map((t, i) => `
       <div class="pm-task-row" data-idx="${i}">
         <input type="checkbox" class="ccm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
         <span class="pm-task-num">${i+1}.</span>
-        <input type="text" class="ccm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">
+        ${editingTaskIdx === i
+          ? `<input type="text" class="ccm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
+          : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuyé pour modifier">${escapeHtml(t.text)}</span>`}
         <button type="button" class="ccm-task-del" data-idx="${i}">×</button>
       </div>
     `).join('') : '<p class="settings-hint" style="margin:4px 0;">Aucune tâche pour l\u2019instant.</p>';
@@ -3492,11 +3524,26 @@ function openCcPointModal(opts){
       workingTasks[Number(cb.dataset.idx)].checked = cb.checked;
       renderTasksList();
     }));
-    el.querySelectorAll('.ccm-task-text-input').forEach(inp => inp.addEventListener('input', () => {
-      workingTasks[Number(inp.dataset.idx)].text = inp.value;
-    }));
+    el.querySelectorAll('.ccm-task-text-input').forEach(inp => {
+      inp.addEventListener('input', () => { workingTasks[Number(inp.dataset.idx)].text = inp.value; });
+      inp.addEventListener('blur', () => { editingTaskIdx = null; renderTasksList(); });
+      inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); inp.blur(); } });
+      inp.focus();
+      inp.setSelectionRange(inp.value.length, inp.value.length);
+    });
+    el.querySelectorAll('.pm-task-text').forEach(span => {
+      let pressTimer = null;
+      const startPress = () => { pressTimer = setTimeout(() => { editingTaskIdx = Number(span.dataset.idx); renderTasksList(); }, 550); };
+      const cancelPress = () => clearTimeout(pressTimer);
+      span.addEventListener('pointerdown', startPress);
+      span.addEventListener('pointerup', cancelPress);
+      span.addEventListener('pointerleave', cancelPress);
+      span.addEventListener('pointercancel', cancelPress);
+    });
     el.querySelectorAll('.ccm-task-del').forEach(btn => btn.addEventListener('click', () => {
-      workingTasks.splice(Number(btn.dataset.idx), 1);
+      const idx = Number(btn.dataset.idx);
+      workingTasks.splice(idx, 1);
+      if(editingTaskIdx === idx) editingTaskIdx = null;
       renderTasksList();
     }));
   }
@@ -4408,19 +4455,26 @@ async function renderSettingsView(){
 /* ============================= MANUEL D'UTILISATION ============================= */
 
 const MANUAL_SECTIONS = [
-  { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de la Séance du matin, de la Séance OPE et de la To do list. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (client en gras, flux affiché, deux barres de progression — Planification et Points à traiter —, badge « points restants » coloré selon leur nombre, projets terminés en bas et estompés)." },
-  { icon:'📅', title:'Échéances', body:"Deux listes triées chronologiquement : les rendez-vous à venir (tous projets confondus) tout en haut, puis les échéances de projets avec une petite barre comparant le planning prévu et l'avancement réel (vert = dans les temps, rouge = en retard)." },
+  { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de l'Agenda du jour, de la Séance du matin, de la Séance OPE, de la To do list, de 1 à 1 et d'À commander. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (client en gras, flux affiché, deux barres de progression — Planification et Points à traiter —, badge « points restants » coloré selon leur nombre, projets terminés en bas et estompés)." },
+  { icon:'📅', title:'Agenda (calendrier)', body:"Vue mensuelle avec le numéro de semaine (S34, S35…) à gauche de chaque ligne. Un point bleu sur un jour signale un rendez-vous, un point de l'agenda du jour ou une échéance programmée ce jour-là. Clique un jour (passé ou futur) pour voir ce qui y est prévu — ça sert aussi de trace de ce qui a été fait tel ou tel jour." },
+  { icon:'🏁', title:'Échéances', body:"Trois listes triées chronologiquement : les échéances de projets (planning vs réel), puis les « Points à échéance » — tout point, où qu'il soit, auquel tu as donné une date." },
   { icon:'📁', title:'Créer / modifier un projet', body:"« + Nouveau projet » ouvre un formulaire : client, N° de commande, nom, coordinateur, flux (fixes ou personnalisés, ajoutables dans Réglages) et options de projet à cocher. La date de création est automatique. L'icône ✎ dans l'en-tête rouvre ce même formulaire. ✓ marque le projet comme terminé, ⧉ le duplique comme modèle (flux/coordinateur/options repris, reste vierge), 📦 l'archive (le sort des listes sans le supprimer)." },
   { icon:'🗂', title:'Gestion de projet (dans un projet)', body:"Regroupe trois vues accessibles par un petit sous-menu en haut : « Checklist planification » (dépend du flux), « Fiche de visite » et « Planning intentionnel ». Deux autres onglets restent séparés à côté : « Notes générales » et « Rapport »." },
   { icon:'✅', title:'Checklist de planification', body:"Son contenu dépend du flux du projet (Réglages → Checklists par flux). Les parties sont repliées par défaut. Chaque point n'affiche que la case et le titre ; clique dessus pour dérouler la note, la photo, et une option « 🚫 Ignorer » (le point compte comme fait mais s'affiche en rouge dans le rapport — un point coché normalement s'affiche en vert, sans barré, pour rester lisible)." },
   { icon:'🧾', title:'Fiche de visite de chantier', body:"Nom du client et N° AU pré-remplis depuis le projet. Plusieurs champs (emplacement, sols/murs, accès, stationnement, environnement, matériels, levage) sont des cases à cocher prédéfinies + « Autre » avec note. Le champ portes génère une carte Dimensions/Note par porte selon leur nombre. Galerie photo en haut." },
-  { icon:'📐', title:'Planning intentionnel', body:"D'abord les Visites et RDV : ajoute une date, un type (commercial/technique/autre) et un objet — une alerte s'affiche automatiquement la veille et le jour même, et ils apparaissent triés dans Échéances. Ensuite, une date de début de projet et un tableau de tâches (Début/Durée en semaines, glisser-déposer pour réordonner) qui calcule automatiquement l'échéance du projet — ou force une date manuelle si tu préfères. Début réel/Durée réelle permettent de comparer le prévu au réel." },
-  { icon:'📝', title:'Notes générales', body:"Disponible sur tous les projets, quel que soit le flux : texte libre, et une mini-checklist « Points complémentaires » (même système de note/ignorer que la checklist principale, avec un compteur d'avancement)." },
-  { icon:'🌅', title:'Séance du matin / ✅ To do list', body:"Deux listes indépendantes : ajoute un point, coche-le pour le faire descendre en bas de liste, en transparence. Clique un point pour dérouler sa note." },
-  { icon:'🛠', title:'Séance OPE', body:"Tableau à deux colonnes « Dernière séance » / « Séance du jour ». Ajoute un point en haut ou directement dans une colonne, glisse-le où tu veux. « Déplacer » ajoute le contenu du jour à « Dernière séance » (sans écraser ce qui s'y trouve déjà)." },
-  { icon:'🔗', title:'Liaison Séances/Projets ↔ To do', body:"Activable dans Réglages : les nouveaux points de la Séance du matin, de la Séance OPE et des « Points complémentaires » d'un projet sont recopiés dans la To do list et restent liés (cocher, modifier ou supprimer l'un agit sur tous). La To do list peut être filtrée par origine (manuel / matin / OPE / projet)." },
-  { icon:'🖶', title:'Rapport (par projet)', body:"Coche ce que tu veux inclure — Checklist, Fiche de visite, Notes générales — puis télécharge en HTML ou imprime/exporte en PDF." },
-  { icon:'⚙', title:'Réglages', body:"Chaque catégorie est repliée par défaut (sauf Version et QR code) — clique sur son titre pour la déplier ; tout se referme en quittant Réglages. On y trouve : Coordinateurs, Checklists par flux (+ ajout de flux personnalisés, export vierge imprimable), Options de projet, Bloc-notes, Rapport des tâches (Séances/To do/résumé ou détail de tous les projets, sélectif), Routine du matin (+ mode rappel à chaque ouverture), Points souvent ignorés, Apparence & données (mode sombre, export/import complet), QR code de partage et numéro de version." },
+  { icon:'📐', title:'Planning intentionnel', body:"D'abord les Visites et RDV : ajoute une date, un type (commercial/technique/sous-traitant/autre) et un objet — une alerte s'affiche automatiquement la veille et le jour même, et ils apparaissent triés dans l'Agenda. On peut aussi créer un RDV directement depuis l'Agenda en cliquant un jour. Ensuite, une date de début de projet et un tableau de tâches (Début/Durée en semaines, glisser-déposer pour réordonner) qui calcule automatiquement l'échéance du projet — ou force une date manuelle si tu préfères. Début réel/Durée réelle permettent de comparer le prévu au réel." },
+  { icon:'📝', title:'Notes générales / Points complémentaires', body:"Disponible sur tous les projets, quel que soit le flux : texte libre, et une mini-checklist « Points complémentaires » avec les mêmes fonctionnalités que partout ailleurs (tâches, échéance, ignorer, envoi vers À commander ou l'Agenda du jour)." },
+  { icon:'🪟', title:'Ajouter / modifier un point (fenêtre universelle)', body:"Utilisée pour tous les points (To do, Séance du matin, Séance OPE, 1 à 1, À commander, Agenda du jour, Points complémentaires). Touche « + Ajouter un point » pour en créer un, ou touche n'importe où sur un point existant (sauf sa case) pour l'ouvrir. On y trouve : le titre, la liste (change la catégorie d'un point si tu t'es trompé), les tâches (ajoute des sous-étapes numérotées ; le texte se lit en entier, maintiens le doigt ~1 seconde dessus pour le modifier), une note, une échéance (calendrier + raccourci « Aujourd'hui »), et selon le contexte : Urgent (To do), Ignorer, Ajouter/retirer de l'agenda du jour, Ajouter à commander, Aller à la source (pour un point lié), Imprimer ce point, et Supprimer." },
+  { icon:'🌅', title:'Séance du matin', body:"Deux colonnes : « À discuter » et « À faire ». Ajoute un point, glisse-le d'une colonne à l'autre. Coche-le pour l'envoyer dans l'Historique en bas (décoche-le depuis l'Historique pour le remettre dans sa colonne d'origine)." },
+  { icon:'🛠', title:'Séance OPE', body:"Une zone « non triés » au-dessus de deux colonnes « Dernière séance » / « Séance du jour ». Glisse un point où tu veux. « Déplacer » ajoute le contenu du jour à « Dernière séance » (sans écraser ce qui s'y trouve déjà). Coche un point pour l'envoyer dans l'Historique, comme la Séance du matin." },
+  { icon:'✅', title:'To do list', body:"Filtre par origine (manuel / matin / OPE / 1 à 1 / commander / projet). Un point peut être marqué Urgent (texte rouge, remonte en haut). Comme les autres listes, les points cochés partent dans l'Historique en bas." },
+  { icon:'1️⃣', title:'Séance 1 à 1', body:"Une liste dédiée pour préparer tes entretiens individuels, avec le même fonctionnement que les autres (ajout, liaison, historique)." },
+  { icon:'🛒', title:'À commander', body:"Regroupe tout ce qu'il faut commander, quel que soit le projet d'origine. Un point complémentaire peut y être envoyé directement via le bouton dédié dans sa fenêtre." },
+  { icon:'📅', title:'Agenda du jour', body:"Ta liste du jour. Trois façons d'y arriver : ajoute un point directement dedans, envoie un point existant via « Ajouter à l'agenda du jour » dans sa fenêtre, ou donne-lui simplement une échéance d'aujourd'hui (ou passée) — il apparaît alors automatiquement dans la section « Planifiés pour aujourd'hui ». Un point non traité le jour prévu passe en rouge avec la mention « En retard depuis le… » dès le lendemain. Coche-le pour l'envoyer dans l'Historique (et garder une trace de ce qui a été fait tel jour, visible aussi dans l'Agenda calendrier)." },
+  { icon:'☑', title:'Confirmation avant de cocher', body:"Partout, cocher un point comme terminé demande une confirmation (« Le point a-t-il été effectivement traité ? ») pour éviter les coches accidentelles. Décocher, en revanche, ne demande rien." },
+  { icon:'🔗', title:'Liaison Séances/Projets ↔ To do', body:"Activable dans Réglages : les nouveaux points de la Séance du matin, de la Séance OPE, de 1 à 1, d'À commander et des « Points complémentaires » d'un projet sont recopiés dans la To do list et restent liés (cocher, modifier le texte/la note/l'échéance/les tâches, ou supprimer l'un agit sur toutes ses copies). Chaque point lié a un bouton « Aller à la source » pour naviguer directement vers ses autres emplacements." },
+  { icon:'🖶', title:'Rapport (par projet)', body:"Coche ce que tu veux inclure — Checklist, Fiche de visite, Notes générales (avec les tâches de chaque point complémentaire, numérotées) — puis télécharge en HTML ou imprime/exporte en PDF." },
+  { icon:'⚙', title:'Réglages', body:"Chaque catégorie est repliée par défaut (sauf Export/Import, QR code et Version) — clique sur son titre pour la déplier ; tout se referme en quittant Réglages. On y trouve : Coordinateurs, Checklists par flux (+ ajout de flux personnalisés, export vierge imprimable), Options de projet, Bloc-notes, Rapport des tâches (par liste, sélectif), Notifications (activer/désactiver), Routine du matin (+ mode rappel à chaque ouverture), Points souvent ignorés, Apparence & données (mode sombre), Export/Import complet, QR code de partage et numéro de version." },
   { icon:'💾', title:'Où sont mes données ?', body:"Tout est enregistré localement, dans ce navigateur, sur cet appareil — rien n'est partagé avec d'autres personnes ou appareils. Pense à exporter régulièrement une sauvegarde depuis Réglages." }
 ];
 
