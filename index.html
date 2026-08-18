@@ -155,6 +155,7 @@
   .dv-empty h2{font-family:var(--font-display);font-size:22px;color:var(--graphite);margin:6px 0;}
   .dv-empty p{font-size:13.5px;max-width:360px;line-height:1.6;}
   .dashboard-header{margin-bottom:20px;}
+  .dash-version-badge{font-size:10.5px;color:var(--steel-light);font-family:var(--font-mono);white-space:nowrap;margin-top:6px;}
   .seance-summary-row{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
   .seance-summary-card{
     flex:1;min-width:220px;background:var(--paper-2);border:1px solid var(--line);border-radius:8px;
@@ -781,7 +782,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.6.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.6.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -2019,6 +2020,25 @@ let dashSearchQuery = '';
 let dashFilterFlux = 'all';
 let dashFilterCoord = 'all';
 let dashFilterOverdueOnly = false;
+function getDashSortOrder(){ return appSettings.dashSortOrder || 'created'; }
+function setDashSortOrder(v){ appSettings.dashSortOrder = v; saveSettings(); }
+function sortDashboardRows(rowsIn){
+  const arr = [...rowsIn];
+  const fluxOrder = getAllFluxOptions();
+  const order = getDashSortOrder();
+  if(order === 'flux'){
+    arr.sort((a,b) => (a.p.numFlux||'').localeCompare(b.p.numFlux||'', 'fr'));
+  } else if(order === 'fluxOrder'){
+    arr.sort((a,b) => fluxOrder.indexOf(a.p.numFlux) - fluxOrder.indexOf(b.p.numFlux));
+  } else if(order === 'client'){
+    arr.sort((a,b) => (a.p.client||'').localeCompare(b.p.client||'', 'fr'));
+  } else if(order === 'lastUsed'){
+    arr.sort((a,b) => (b.lastMod||0) - (a.lastMod||0));
+  } else { // 'created' (default)
+    arr.sort((a,b) => (b.p.createdAt||0) - (a.p.createdAt||0));
+  }
+  return [...arr.filter(r => !r.p.finished), ...arr.filter(r => r.p.finished)];
+}
 let dashShowArchived = false;
 
 function dashboardProjectMatches(p){
@@ -2077,7 +2097,7 @@ async function renderDashboardView(){
   const overdue = allRows.filter(r => r.isOverdue);
   const stalled = allRows.filter(r => r.isStalled && !r.isOverdue);
 
-  const rows = allRows.filter(r => dashboardProjectMatches(r.p) && (!dashFilterOverdueOnly || r.isOverdue));
+  const rows = sortDashboardRows(allRows.filter(r => dashboardProjectMatches(r.p) && (!dashFilterOverdueOnly || r.isOverdue)));
 
   const alertsHtml = (overdue.length || stalled.length) ? `
     <div class="alert-section">
@@ -2101,6 +2121,13 @@ async function renderDashboardView(){
         ${coordList.map(c => `<option value="${escapeHtml(c)}" ${dashFilterCoord===c?'selected':''}>${escapeHtml(c)}</option>`).join('')}
       </select>
       <label class="choice-chip"><input type="checkbox" id="dashFilterOverdue" ${dashFilterOverdueOnly?'checked':''}> En retard uniquement</label>
+      <select id="dashSortOrder">
+        <option value="created" ${getDashSortOrder()==='created'?'selected':''}>Tri : Date de création</option>
+        <option value="flux" ${getDashSortOrder()==='flux'?'selected':''}>Tri : Par flux</option>
+        <option value="fluxOrder" ${getDashSortOrder()==='fluxOrder'?'selected':''}>Tri : Numéro du flux</option>
+        <option value="client" ${getDashSortOrder()==='client'?'selected':''}>Tri : Client (A→Z)</option>
+        <option value="lastUsed" ${getDashSortOrder()==='lastUsed'?'selected':''}>Tri : Dernière utilisation</option>
+      </select>
     </div>
   `;
 
@@ -2132,7 +2159,10 @@ async function renderDashboardView(){
   dv.innerHTML = `
     ${seanceSummaryHtml}
     <div class="dashboard-header">
-      <h2>Tableau de bord</h2>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <h2 style="margin:0;">Tableau de bord</h2>
+        <span class="dash-version-badge">v${APP_VERSION}</span>
+      </div>
       <p>${projects.length} projet(s) · ${totalChecked}/${totalPossible} points cochés au total</p>
     </div>
     ${alertsHtml}
@@ -2158,6 +2188,7 @@ async function renderDashboardView(){
   $('#dashFilterFlux').addEventListener('change', e => { dashFilterFlux = e.target.value; renderDashboardView(); });
   $('#dashFilterCoord').addEventListener('change', e => { dashFilterCoord = e.target.value; renderDashboardView(); });
   $('#dashFilterOverdue').addEventListener('change', e => { dashFilterOverdueOnly = e.target.checked; renderDashboardView(); });
+  $('#dashSortOrder').addEventListener('change', e => { setDashSortOrder(e.target.value); renderDashboardView(); });
   const archBtn = $('#dashToggleArchivedBtn');
   if(archBtn) archBtn.addEventListener('click', () => { dashShowArchived = !dashShowArchived; renderDashboardView(); });
 }
@@ -4302,6 +4333,12 @@ async function renderSettingsView(){
         <p class="settings-hint" style="margin:0;">Tu utilises actuellement la <b>version ${APP_VERSION}</b> de Gestion de Projet.</p>
       </div>
     </div>
+    <div class="fiche-section" style="margin-top:20px;">
+      <div class="fiche-section-head"><h4>🆕 Historique des mises à jour</h4></div>
+      <div class="fiche-fields" style="grid-template-columns:1fr;">
+        ${buildChangelogHtml()}
+      </div>
+    </div>
   `;
 
   function addValue(key){
@@ -4453,6 +4490,82 @@ async function renderSettingsView(){
 }
 
 /* ============================= MANUEL D'UTILISATION ============================= */
+
+/* ============================= NOUVEAUTÉS / HISTORIQUE DES MISES À JOUR ============================= */
+// Ajoute une nouvelle entrée en TÊTE de ce tableau à chaque mise à jour de l'appli.
+const CHANGELOG = [
+  { version:'2.6.5', changes:[
+    "Tri des projets sur le tableau de bord (date de création, par flux, numéro du flux, client A→Z, dernière utilisation) — le choix est mémorisé.",
+    "Fenêtre « Nouveautés » qui s'affiche une fois à chaque mise à jour, + historique complet dans Réglages."
+  ]},
+  { version:'2.6.4', changes:[
+    "Le numéro de version s'affiche aussi, discrètement, en haut à droite du tableau de bord."
+  ]},
+  { version:'2.6.3', changes:[
+    "Le texte d'une tâche se lit à nouveau en entier ; maintiens le doigt dessus ~1 seconde pour le modifier.",
+    "Correction d'affichage de la case « En retard uniquement » sur mobile.",
+    "Manuel d'utilisation entièrement remis à jour."
+  ]},
+  { version:'2.6.2', changes:[
+    "Polish mobile : barre de recherche et fenêtre de modification d'un point mieux adaptées aux petits écrans."
+  ]},
+  { version:'2.6.1', changes:[
+    "Le texte d'une tâche redevient modifiable, bouton « Imprimer ce point », et la fenêtre ne déborde plus de l'écran avec beaucoup de tâches."
+  ]},
+  { version:'2.6.0', changes:[
+    "Les tâches d'un point sont numérotées et apparaissent dans les rapports.",
+    "Correctif : ouvrir un point planifié dans l'Agenda du jour l'ouvre bien, au lieu de naviguer directement vers sa source."
+  ]},
+  { version:'2.5.0', changes:[
+    "Nouveau système « Agenda du jour » : copie un point pour le traiter aujourd'hui, retard automatique si non traité, historique daté, échéances visibles dans le calendrier et les Échéances.",
+    "Chaque point peut désormais recevoir une échéance (calendrier), et des tâches internes numérotées.",
+    "Confirmation avant de cocher un point comme terminé, pour éviter les erreurs.",
+    "Bouton « Aller à la source » sur tout point lié."
+  ]},
+  { version:'2.3.0', changes:[
+    "Fenêtre pop-up universelle pour ajouter/modifier un point, avec changement de liste possible en un clic.",
+    "Historique (points terminés) pour toutes les listes, avec bouton pour le vider.",
+    "Nouvelles listes « 1 à 1 » et « À commander »."
+  ]}
+];
+
+function checkForChangelogPopup(){
+  const seen = lsGet('lastSeenVersion');
+  lsSet('lastSeenVersion', APP_VERSION);
+  if(seen === APP_VERSION) return;
+  const entry = CHANGELOG.find(c => c.version === APP_VERSION) || CHANGELOG[0];
+  if(!entry) return;
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal">
+      <h3>🆕 Nouveautés — v${escapeHtml(entry.version)}</h3>
+      <div class="modal-scroll">
+        <ul style="margin:0;padding-left:20px;font-size:13.5px;line-height:1.6;color:var(--graphite);">
+          ${entry.changes.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="changelogCloseBtn">Compris</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+  const close = () => document.body.removeChild(backdrop);
+  $('#changelogCloseBtn').addEventListener('click', close);
+  backdrop.addEventListener('click', e => { if(e.target === backdrop) close(); });
+}
+
+function buildChangelogHtml(){
+  return CHANGELOG.map(c => `
+    <div class="manual-section">
+      <div class="manual-section-title">🆕 Version ${escapeHtml(c.version)}</div>
+      <ul style="margin:6px 0 0;padding-left:20px;font-size:13px;line-height:1.6;color:var(--graphite);">
+        ${c.changes.map(ch => `<li>${escapeHtml(ch)}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+}
 
 const MANUAL_SECTIONS = [
   { icon:'🏠', title:'Tableau de bord', body:"L'écran d'accueil. En haut, un résumé de l'Agenda du jour, de la Séance du matin, de la Séance OPE, de la To do list, de 1 à 1 et d'À commander. En dessous, les alertes (retard/inactivité), une barre de recherche + filtres (flux, coordinateur, en retard uniquement), puis tes projets en cartes (client en gras, flux affiché, deux barres de progression — Planification et Points à traiter —, badge « points restants » coloré selon leur nombre, projets terminés en bas et estompés)." },
@@ -6029,8 +6142,10 @@ async function init(){
 
   if(!lsGet('hasSeenManual')){
     lsSet('hasSeenManual', '1');
+    lsSet('lastSeenVersion', APP_VERSION);
     openManualModal();
   } else {
+    checkForChangelogPopup();
     checkAndMaybeShowRoutine();
     checkVisitAlerts();
   }
