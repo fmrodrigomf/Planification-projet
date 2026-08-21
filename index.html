@@ -311,9 +311,10 @@
   .settings-add-input{flex:1;border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:13px;background:var(--paper);color:var(--graphite);}
   .settings-hint{font-size:12.5px;color:var(--steel);line-height:1.5;margin:0 0 12px;}
   .pm-link-info{background:var(--amber-tint);border:1px solid var(--amber);border-radius:5px;padding:8px 12px;font-size:12px;color:var(--graphite);line-height:1.5;margin:10px 0 0;}
-  .pm-task-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .pm-task-group{border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:10px;}
+  .pm-task-group:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .pm-task-row{display:flex;align-items:flex-start;gap:8px;padding:4px 0;}
   .pm-task-row .pm-task-check{margin-top:3px;flex-shrink:0;}
-  .pm-task-row:last-child{border-bottom:none;}
   .pm-task-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .pm-task-num{font-size:12px;font-weight:700;color:var(--steel);font-family:var(--font-mono);min-width:16px;flex-shrink:0;margin-top:2px;}
   .pm-task-text{flex:1;font-size:13.5px;color:var(--graphite);line-height:1.4;word-break:break-word;cursor:pointer;padding:2px 0;-webkit-user-select:none;user-select:none;}
@@ -323,10 +324,9 @@
   .pm-task-text.done{text-decoration:line-through;color:var(--steel-light);}
   .pm-task-del{background:none;border:none;color:var(--steel-light);font-size:16px;cursor:pointer;padding:0 4px;flex-shrink:0;}
   .pm-task-del:hover{color:var(--danger);}
-  .pm-subtask-toggle-row{padding-left:24px;margin-top:2px;margin-bottom:6px;}
-  .pm-task-sub-toggle, .ccm-task-sub-toggle{background:var(--paper);border:1px solid var(--line);color:var(--graphite);font-size:14px;font-weight:600;cursor:pointer;padding:9px 14px;border-radius:6px;min-height:38px;}
+  .pm-task-sub-toggle, .ccm-task-sub-toggle{background:var(--paper);border:1px solid var(--line);color:var(--graphite);font-size:12px;font-weight:600;cursor:pointer;padding:7px 10px;border-radius:6px;flex-shrink:0;white-space:nowrap;min-height:34px;}
   .pm-task-sub-toggle:hover, .ccm-task-sub-toggle:hover{border-color:var(--amber);color:var(--amber-dark);}
-  .pm-subtask-panel{padding-left:24px;margin:0 0 10px;border-left:2px solid var(--line);padding-top:2px;padding-bottom:4px;}
+  .pm-subtask-panel{padding-left:24px;margin:8px 0 2px;border-left:2px solid var(--line);padding-top:2px;padding-bottom:4px;}
   .pm-subtask-row{display:flex;align-items:center;gap:7px;padding:4px 0 4px 10px;}
   .pm-subtask-row input[type=checkbox]{width:14px;height:14px;accent-color:var(--amber-dark);cursor:pointer;flex-shrink:0;}
   .pm-subtask-text{flex:1;font-size:12.5px;color:var(--graphite);}
@@ -668,7 +668,7 @@
   .modal label{display:block;font-size:11.5px;font-weight:700;color:var(--steel);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px;}
   .modal input{width:100%;border:1px solid var(--line);border-radius:4px;padding:9px 10px;font-size:14px;font-family:var(--font-body);background:var(--paper);color:var(--graphite);}
   .modal input:focus{outline:2px solid var(--amber);outline-offset:-1px;background:var(--paper-2);}
-  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-shrink:0;flex-wrap:wrap;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:14px;border-top:1px solid var(--line);flex-shrink:0;flex-wrap:wrap;}
   .btn-text{background:none;border:none;color:var(--steel);font-size:13px;cursor:pointer;padding:9px 12px;}
   .confirm-msg{font-size:14px;color:var(--graphite);line-height:1.5;margin:0;}
 
@@ -697,8 +697,8 @@
     .stat-box{flex:1;min-width:100px;}
     #reportPreview{padding:20px 16px;}
     .modal{width:92vw;max-height:88vh;padding:20px;}
-    .modal-actions{flex-direction:column;align-items:stretch;gap:8px;}
-    .modal-actions button{width:100%;text-align:center;padding:11px;border-radius:6px;margin:0;}
+    .modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .modal-actions button{width:100%;text-align:center;padding:11px 8px;border-radius:6px;margin:0;font-size:12.5px;}
     .modal-actions .btn-text{border:1px solid var(--line);background:var(--paper);}
     .dash-filter-bar{flex-direction:column;align-items:stretch;}
     .dash-filter-bar > input, .dash-filter-bar select{width:100%;}
@@ -798,7 +798,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.6.9'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.7.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1576,15 +1576,16 @@ function openPointModal(opts){
   let expandedSubtaskIdx = new Set();
   function subtaskPanelHtml(t, i){
     const subs = t.subtasks || [];
+    const subOrder = subs.map((s, si) => si).sort((a, b) => (subs[a].checked?1:0) - (subs[b].checked?1:0));
     return `
       <div class="pm-subtask-panel" data-idx="${i}">
-        ${subs.map((s, si) => `
+        ${subOrder.map(si => { const s = subs[si]; return `
           <div class="pm-subtask-row" data-idx="${i}" data-sidx="${si}">
             <input type="checkbox" class="pm-subtask-check" data-idx="${i}" data-sidx="${si}" ${s.checked?'checked':''}>
             <span class="pm-subtask-text ${s.checked?'done':''}">${escapeHtml(s.text)}</span>
             <button type="button" class="pm-subtask-del" data-idx="${i}" data-sidx="${si}">\u00d7</button>
           </div>
-        `).join('')}
+        `; }).join('')}
         <div style="display:flex;gap:6px;margin-top:6px;">
           <input type="text" class="pm-new-subtask-input" data-idx="${i}" placeholder="Nouvelle sous-t\u00e2che\u2026">
           <button type="button" class="pm-add-subtask-btn" data-idx="${i}">+</button>
@@ -1594,23 +1595,25 @@ function openPointModal(opts){
   }
   function renderTasksList(){
     const el = $('#pmTasksList');
-    el.innerHTML = workingTasks.length ? workingTasks.map((t, i) => {
+    const order = workingTasks.map((t, i) => i).sort((a, b) => (workingTasks[a].checked?1:0) - (workingTasks[b].checked?1:0));
+    el.innerHTML = workingTasks.length ? order.map((i, pos) => {
+      const t = workingTasks[i];
       const subs = t.subtasks || [];
       const subDone = subs.filter(s => s.checked).length;
-      const subLabel = subs.length ? ('\u25b8 ' + subDone + '/' + subs.length + ' sous-t\u00e2ches') : '+ sous-t\u00e2che';
+      const subLabel = subs.length ? ('\ud83d\uddc2 ' + subDone + '/' + subs.length) : '+ sous-t\u00e2che';
       return `
-      <div class="pm-task-row" data-idx="${i}">
-        <input type="checkbox" class="pm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
-        <span class="pm-task-num">${i+1}.</span>
-        ${editingTaskIdx === i
-          ? `<input type="text" class="pm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
-          : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuy\u00e9 pour modifier">${escapeHtml(t.text)}</span>`}
-        <button type="button" class="pm-task-del" data-idx="${i}">\u00d7</button>
+      <div class="pm-task-group" data-idx="${i}">
+        <div class="pm-task-row">
+          <input type="checkbox" class="pm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
+          <span class="pm-task-num">${pos+1}.</span>
+          ${editingTaskIdx === i
+            ? `<input type="text" class="pm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
+            : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuy\u00e9 pour modifier">${escapeHtml(t.text)}</span>`}
+          <button type="button" class="pm-task-sub-toggle" data-idx="${i}">${subLabel}</button>
+          <button type="button" class="pm-task-del" data-idx="${i}">\u00d7</button>
+        </div>
+        ${expandedSubtaskIdx.has(i) ? subtaskPanelHtml(t, i) : ''}
       </div>
-      <div class="pm-subtask-toggle-row">
-        <button type="button" class="pm-task-sub-toggle" data-idx="${i}">${subLabel}</button>
-      </div>
-      ${expandedSubtaskIdx.has(i) ? subtaskPanelHtml(t, i) : ''}
     `; }).join('') : '<p class="settings-hint" style="margin:4px 0;">Aucune t\u00e2che pour l\u2019instant.</p>';
     el.querySelectorAll('.pm-task-check').forEach(cb => cb.addEventListener('change', () => {
       workingTasks[Number(cb.dataset.idx)].checked = cb.checked;
@@ -3635,15 +3638,16 @@ function openCcPointModal(opts){
   let expandedSubtaskIdx = new Set();
   function subtaskPanelHtml(t, i){
     const subs = t.subtasks || [];
+    const subOrder = subs.map((s, si) => si).sort((a, b) => (subs[a].checked?1:0) - (subs[b].checked?1:0));
     return `
       <div class="pm-subtask-panel" data-idx="${i}">
-        ${subs.map((s, si) => `
+        ${subOrder.map(si => { const s = subs[si]; return `
           <div class="pm-subtask-row" data-idx="${i}" data-sidx="${si}">
             <input type="checkbox" class="ccm-subtask-check" data-idx="${i}" data-sidx="${si}" ${s.checked?'checked':''}>
             <span class="pm-subtask-text ${s.checked?'done':''}">${escapeHtml(s.text)}</span>
             <button type="button" class="ccm-subtask-del" data-idx="${i}" data-sidx="${si}">\u00d7</button>
           </div>
-        `).join('')}
+        `; }).join('')}
         <div style="display:flex;gap:6px;margin-top:6px;">
           <input type="text" class="ccm-new-subtask-input" data-idx="${i}" placeholder="Nouvelle sous-t\u00e2che\u2026">
           <button type="button" class="ccm-add-subtask-btn" data-idx="${i}">+</button>
@@ -3653,23 +3657,25 @@ function openCcPointModal(opts){
   }
   function renderTasksList(){
     const el = $('#ccmTasksList');
-    el.innerHTML = workingTasks.length ? workingTasks.map((t, i) => {
+    const order = workingTasks.map((t, i) => i).sort((a, b) => (workingTasks[a].checked?1:0) - (workingTasks[b].checked?1:0));
+    el.innerHTML = workingTasks.length ? order.map((i, pos) => {
+      const t = workingTasks[i];
       const subs = t.subtasks || [];
       const subDone = subs.filter(s => s.checked).length;
-      const subLabel = subs.length ? ('\u25b8 ' + subDone + '/' + subs.length + ' sous-t\u00e2ches') : '+ sous-t\u00e2che';
+      const subLabel = subs.length ? ('\ud83d\uddc2 ' + subDone + '/' + subs.length) : '+ sous-t\u00e2che';
       return `
-      <div class="pm-task-row" data-idx="${i}">
-        <input type="checkbox" class="ccm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
-        <span class="pm-task-num">${i+1}.</span>
-        ${editingTaskIdx === i
-          ? `<input type="text" class="ccm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
-          : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuy\u00e9 pour modifier">${escapeHtml(t.text)}</span>`}
-        <button type="button" class="ccm-task-del" data-idx="${i}">\u00d7</button>
+      <div class="pm-task-group" data-idx="${i}">
+        <div class="pm-task-row">
+          <input type="checkbox" class="ccm-task-check" data-idx="${i}" ${t.checked?'checked':''}>
+          <span class="pm-task-num">${pos+1}.</span>
+          ${editingTaskIdx === i
+            ? `<input type="text" class="ccm-task-text-input ${t.checked?'done':''}" data-idx="${i}" value="${escapeHtml(t.text)}">`
+            : `<span class="pm-task-text ${t.checked?'done':''}" data-idx="${i}" title="Maintenir appuy\u00e9 pour modifier">${escapeHtml(t.text)}</span>`}
+          <button type="button" class="ccm-task-sub-toggle" data-idx="${i}">${subLabel}</button>
+          <button type="button" class="ccm-task-del" data-idx="${i}">\u00d7</button>
+        </div>
+        ${expandedSubtaskIdx.has(i) ? subtaskPanelHtml(t, i) : ''}
       </div>
-      <div class="pm-subtask-toggle-row">
-        <button type="button" class="ccm-task-sub-toggle" data-idx="${i}">${subLabel}</button>
-      </div>
-      ${expandedSubtaskIdx.has(i) ? subtaskPanelHtml(t, i) : ''}
     `; }).join('') : '<p class="settings-hint" style="margin:4px 0;">Aucune t\u00e2che pour l\u2019instant.</p>';
     el.querySelectorAll('.ccm-task-check').forEach(cb => cb.addEventListener('change', () => {
       workingTasks[Number(cb.dataset.idx)].checked = cb.checked;
@@ -4638,6 +4644,19 @@ async function renderSettingsView(){
 /* ============================= NOUVEAUTÉS / HISTORIQUE DES MISES À JOUR ============================= */
 // Ajoute une nouvelle entrée en TÊTE de ce tableau à chaque mise à jour de l'appli.
 const CHANGELOG = [
+  { version:'2.7.3', changes:[
+    "Les boutons du bas des fenêtres de point (Supprimer, À commander, Imprimer…) s'affichent maintenant sur 2 colonnes au lieu d'être empilés un par un, pour gagner de la place sur mobile."
+  ]},
+  { version:'2.7.2', changes:[
+    "Correctif d'affichage : une ligne de séparation nette a été ajoutée entre la liste des tâches (défilable) et les boutons du bas (Supprimer, Annuler, Enregistrer…), qui donnaient l'impression d'être coupés sur les petits écrans."
+  ]},
+  { version:'2.7.1', changes:[
+    "Une tâche ou sous-tâche cochée comme faite descend automatiquement en bas de sa liste, pour ne pas déranger la vue sur ce qui reste à faire."
+  ]},
+  { version:'2.7.0', changes:[
+    "Le bouton des sous-tâches est maintenant juste à côté du bouton de suppression, plus lisible avec beaucoup de tâches.",
+    "Une vraie ligne de séparation apparaît entre chaque tâche (et ses sous-tâches), pour bien voir où l'une finit et l'autre commence en faisant défiler la liste."
+  ]},
   { version:'2.6.7', changes:[
     "Séance OPE : chaque point est numéroté et peut être réordonné avec les flèches ▲▼, dans chaque colonne.",
     "Sous-tâches : chaque tâche d'un point peut maintenant avoir ses propres sous-tâches (touche « + sous-tâche » sous une tâche pour les gérer)."
