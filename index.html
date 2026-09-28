@@ -798,7 +798,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.7.3'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.7.4'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1380,7 +1380,8 @@ function customConfirm(message, opts){
   });
 }
 
-function customPrompt(title, placeholder){
+function customPrompt(title, placeholder, opts){
+  opts = opts || {};
   return new Promise(resolve => {
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
@@ -1390,7 +1391,7 @@ function customPrompt(title, placeholder){
         <input type="text" id="cpInput" placeholder="${escapeHtml(placeholder||'')}">
         <div class="modal-actions">
           <button class="btn-text" id="cpCancel">Annuler</button>
-          <button class="btn btn-primary" id="cpOk">Ajouter</button>
+          <button class="btn ${opts.danger ? 'btn-danger-solid' : 'btn-primary'}" id="cpOk">${escapeHtml(opts.okText || 'Ajouter')}</button>
         </div>
       </div>`;
     document.body.appendChild(backdrop);
@@ -4353,6 +4354,9 @@ async function renderSettingsView(){
         <p class="settings-hint">Toutes les données de cette appli sont enregistrées localement, dans ce navigateur, sur cet appareil uniquement — elles ne sont pas partagées avec d'autres personnes ni d'autres appareils. Utilise « Exporter » / « Importer » pour transférer ou sauvegarder tes projets ailleurs.</p>
         <button id="themeToggleBtn" class="btn btn-ghost" style="align-self:flex-start;">${appSettings.theme === 'dark' ? '☀️ Passer en mode clair' : '🌙 Passer en mode sombre'}</button>
         <button id="openManualBtn" class="btn btn-ghost" style="align-self:flex-start;">📖 Manuel d'utilisation</button>
+        <hr style="width:100%;border:none;border-top:1px solid var(--line);margin:16px 0;">
+        <p class="settings-hint" style="color:var(--danger, #d33);"><b>⚠ Zone à risque.</b> Le bouton ci-dessous efface définitivement toutes les données de l'appli sur cet appareil (projets, séances, réglages...). Pense à exporter une sauvegarde avant si besoin.</p>
+        <button id="deleteAllDataBtn" class="btn btn-danger-solid" style="align-self:flex-start;">🗑 Supprimer toutes les données</button>
       </div>
     </div>
     <div class="fiche-section" style="margin-top:20px;">
@@ -4539,6 +4543,7 @@ async function renderSettingsView(){
   $('#exportBtn').addEventListener('click', exportAllData);
   $('#importBtn').addEventListener('click', () => $('#importFileInput').click());
   $('#openManualBtn').addEventListener('click', openManualModal);
+  $('#deleteAllDataBtn').addEventListener('click', deleteAllAppData);
   $('#linkSeanceTodoToggle').addEventListener('change', e => {
     appSettings.linkSeanceTodo = e.target.checked;
     saveSettings();
@@ -4644,6 +4649,9 @@ async function renderSettingsView(){
 /* ============================= NOUVEAUTÉS / HISTORIQUE DES MISES À JOUR ============================= */
 // Ajoute une nouvelle entrée en TÊTE de ce tableau à chaque mise à jour de l'appli.
 const CHANGELOG = [
+  { version:'2.7.4', changes:[
+    "Nouveau bouton « Supprimer toutes les données » dans Réglages → Apparence & données, pour repartir de zéro sur cet appareil. Double confirmation obligatoire (dont taper « SUPPRIMER ») avant tout effacement, car l'action est irréversible."
+  ]},
   { version:'2.7.3', changes:[
     "Les boutons du bas des fenêtres de point (Supprimer, À commander, Imprimer…) s'affichent maintenant sur 2 colonnes au lieu d'être empilés un par un, pour gagner de la place sur mobile."
   ]},
@@ -6253,6 +6261,32 @@ async function importAllData(file){
   }catch(e){
     showToast("Échec de l'import : fichier invalide");
   }
+}
+
+async function deleteAllAppData(){
+  const step1 = await customConfirm(
+    "Cette action supprime définitivement TOUTES les données de l'appli sur cet appareil : projets, séances, to do list, réglages, checklists personnalisées... Cette action est irréversible et ne peut pas être annulée. Veux-tu continuer ?",
+    { okText:'Continuer', cancelText:'Annuler', danger:true }
+  );
+  if(!step1) return;
+  const typed = await customPrompt('Pour confirmer, tape SUPPRIMER ci-dessous puis valide.', 'SUPPRIMER', { okText:'Supprimer définitivement', danger:true });
+  if(typed !== 'SUPPRIMER'){
+    showToast(typed === null ? 'Suppression annulée' : "Texte incorrect — suppression annulée");
+    return;
+  }
+  try{
+    const keysToRemove = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(LS_PREFIX)) keysToRemove.push(k);
+    }
+    keysToRemove.forEach(k => { try{ localStorage.removeItem(k); }catch(e){} });
+  }catch(e){
+    showToast("Erreur lors de la suppression des données");
+    return;
+  }
+  showToast('Toutes les données ont été supprimées — rechargement…');
+  setTimeout(() => location.reload(), 900);
 }
 
 /* ============================= INIT ============================= */
