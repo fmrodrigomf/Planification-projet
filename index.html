@@ -798,7 +798,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.7.4'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.7.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1960,6 +1960,10 @@ function getFluxTemplate(flux){
 }
 function fluxHasChecklist(flux){
   return getFluxTemplate(flux).some(p => p.sections.some(s => s.items.length > 0));
+}
+function fluxHasHub(flux){
+  // "PRJ interne" only uses Notes générales & Rapport — no Checklist/Fiche de visite/Planning.
+  return flux !== 'PRJ interne';
 }
 
 function getActiveOptionDefs(data){
@@ -4649,6 +4653,9 @@ async function renderSettingsView(){
 /* ============================= NOUVEAUTÉS / HISTORIQUE DES MISES À JOUR ============================= */
 // Ajoute une nouvelle entrée en TÊTE de ce tableau à chaque mise à jour de l'appli.
 const CHANGELOG = [
+  { version:'2.7.5', changes:[
+    "Pour le flux « PRJ interne », l'onglet « Gestion de projet » (Checklist / Fiche de visite / Planning) est retiré — seuls « Notes générales » et « Rapport » restent affichés."
+  ]},
   { version:'2.7.4', changes:[
     "Nouveau bouton « Supprimer toutes les données » dans Réglages → Apparence & données, pour repartir de zéro sur cet appareil. Double confirmation obligatoire (dont taper « SUPPRIMER ») avant tout effacement, car l'action est irréversible."
   ]},
@@ -4980,10 +4987,15 @@ function renderProjectHeader(){
   archBtn.title = p.archived ? 'Désarchiver le projet' : 'Archiver le projet';
   archBtn.classList.toggle('active-finished', !!p.archived);
 
-  const checklistApplicable = fluxHasChecklist(p.numFlux);
-  if(!checklistApplicable && currentTab === 'checklist'){
+  const hubApplicable = fluxHasHub(p.numFlux);
+  const checklistApplicable = hubApplicable && fluxHasChecklist(p.numFlux);
+  if(!hubApplicable && ['checklist','fiche','planning'].includes(currentTab)){
+    currentTab = 'notes';
+  } else if(!checklistApplicable && currentTab === 'checklist'){
     currentTab = 'fiche';
   }
+  const hubBtn = $('#tabBtnHub');
+  if(hubBtn) hubBtn.style.display = hubApplicable ? '' : 'none';
 
   const parts = [
     ['Client', p.client], ['N° commande', p.numCommande], ['Coordinateur', p.coordinateur],
