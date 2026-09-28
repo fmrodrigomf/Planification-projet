@@ -798,7 +798,7 @@
 <script>
 /* ============================= DATA TEMPLATES ============================= */
 
-const APP_VERSION = '2.7.5'; // bumped with every update from now on (patch +1, roll to next minor at .10)
+const APP_VERSION = '2.7.6'; // bumped with every update from now on (patch +1, roll to next minor at .10)
 const FLUX_OPTIONS = ['MI-0', 'MI-1', 'MI-2', 'PRJ', 'PRJ interne'];
 const DEFAULT_AIRMASTER_ITEMS = [
   "Déterminer la version d\u2019AirMaster nécessaire : 1.0, 2.0 ou 4.0",
@@ -1656,6 +1656,11 @@ function openPointModal(opts){
       if(!workingTasks[idx].subtasks) workingTasks[idx].subtasks = [];
       workingTasks[idx].subtasks.push({ id: uid(), text: val, checked:false });
       renderTasksList();
+      // Re-render replaces the input with a fresh empty one — refocus it so the
+      // on-screen keyboard (mobile) stays open and the next subtask can be typed
+      // straight away, instead of silently going nowhere.
+      const freshInput = el.querySelector('.pm-new-subtask-input[data-idx="' + idx + '"]');
+      if(freshInput) freshInput.focus();
     }
     el.querySelectorAll('.pm-add-subtask-btn').forEach(btn => btn.addEventListener('click', () => addSubtask(Number(btn.dataset.idx))));
     el.querySelectorAll('.pm-new-subtask-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addSubtask(Number(inp.dataset.idx)); } }));
@@ -1753,6 +1758,21 @@ function openPointModal(opts){
     const newCategoryId = catSelect.value;
     const urgent = urgentCb.checked;
     const dueDate = dueDateInput.value || null;
+    // Safety net: if a task or subtask was typed but never explicitly "added"
+    // (e.g. the on-screen keyboard lost focus before the tap registered),
+    // commit that pending text now instead of silently losing it on save.
+    const pendingTaskInput = $('#pmNewTaskInput');
+    if(pendingTaskInput && pendingTaskInput.value.trim()){
+      workingTasks.push({ id: uid(), text: pendingTaskInput.value.trim(), checked:false });
+    }
+    document.querySelectorAll('.pm-new-subtask-input').forEach(inp => {
+      const val = inp.value.trim();
+      if(!val) return;
+      const idx = Number(inp.dataset.idx);
+      if(!workingTasks[idx]) return;
+      if(!workingTasks[idx].subtasks) workingTasks[idx].subtasks = [];
+      workingTasks[idx].subtasks.push({ id: uid(), text: val, checked:false });
+    });
     workingTasks = workingTasks.filter(t => t.text.trim());
 
     if(mode === 'add'){
@@ -3722,6 +3742,11 @@ function openCcPointModal(opts){
       if(!workingTasks[idx].subtasks) workingTasks[idx].subtasks = [];
       workingTasks[idx].subtasks.push({ id: uid(), text: val, checked:false });
       renderTasksList();
+      // Re-render replaces the input with a fresh empty one — refocus it so the
+      // on-screen keyboard (mobile) stays open and the next subtask can be typed
+      // straight away, instead of silently going nowhere.
+      const freshInput = el.querySelector('.ccm-new-subtask-input[data-idx="' + idx + '"]');
+      if(freshInput) freshInput.focus();
     }
     el.querySelectorAll('.ccm-add-subtask-btn').forEach(btn => btn.addEventListener('click', () => addSubtask(Number(btn.dataset.idx))));
     el.querySelectorAll('.ccm-new-subtask-input').forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addSubtask(Number(inp.dataset.idx)); } }));
@@ -3807,6 +3832,21 @@ function openCcPointModal(opts){
     const note = noteInput.value;
     const ignored = ignoreCb.checked;
     const dueDate = dueDateInput.value || null;
+    // Safety net: if a task or subtask was typed but never explicitly "added"
+    // (e.g. the on-screen keyboard lost focus before the tap registered),
+    // commit that pending text now instead of silently losing it on save.
+    const pendingTaskInput = $('#ccmNewTaskInput');
+    if(pendingTaskInput && pendingTaskInput.value.trim()){
+      workingTasks.push({ id: uid(), text: pendingTaskInput.value.trim(), checked:false });
+    }
+    document.querySelectorAll('.ccm-new-subtask-input').forEach(inp => {
+      const val = inp.value.trim();
+      if(!val) return;
+      const idx = Number(inp.dataset.idx);
+      if(!workingTasks[idx]) return;
+      if(!workingTasks[idx].subtasks) workingTasks[idx].subtasks = [];
+      workingTasks[idx].subtasks.push({ id: uid(), text: val, checked:false });
+    });
     workingTasks = workingTasks.filter(t => t.text.trim());
     if(mode === 'add'){
       if(!currentData.customChecklist) currentData.customChecklist = [];
@@ -4653,6 +4693,9 @@ async function renderSettingsView(){
 /* ============================= NOUVEAUTÉS / HISTORIQUE DES MISES À JOUR ============================= */
 // Ajoute une nouvelle entrée en TÊTE de ce tableau à chaque mise à jour de l'appli.
 const CHANGELOG = [
+  { version:'2.7.6', changes:[
+    "Correctif (surtout mobile) : ajouter une tâche ou une sous-tâche fermait le clavier sans redonner le focus au champ, ce qui pouvait faire perdre le texte suivant tapé trop vite. Le champ reprend maintenant le focus automatiquement, et « Enregistrer » récupère aussi tout texte resté tapé mais jamais explicitement ajouté."
+  ]},
   { version:'2.7.5', changes:[
     "Pour le flux « PRJ interne », l'onglet « Gestion de projet » (Checklist / Fiche de visite / Planning) est retiré — seuls « Notes générales » et « Rapport » restent affichés."
   ]},
